@@ -160,7 +160,6 @@ dependencies = [
  "color-eyre",
  "eyre",
  "serde",
- "serde_derive",
  "serde_json",
  "thiserror",
  "tokio",
@@ -389,6 +388,9 @@ name = "serde"
 version = "1.0.142"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e590c437916fb6b221e1d00df6e3294f3fccd70ca7e92541c475d6ed6ef5fee2"
+dependencies = [
+ "serde_derive",
+]
 
 [[package]]
 name = "serde_derive"

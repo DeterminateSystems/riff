@@ -3,7 +3,7 @@ use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use eyre::WrapErr;
 use tracing_error::ErrorLayer;
