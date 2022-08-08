@@ -41,6 +41,10 @@
               version = "unreleased";
               src = self;
 
+              nativeBuildInputs = with pkgs; [
+                clippy
+              ];
+
               preBuild = ''
                 cargo clippy --all-targets --all-features -- -D warnings
               '';
