@@ -3,11 +3,12 @@ use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-use serde::{Deserialize, Serialize};
+use clap::{Args, Parser, Subcommand};
 use eyre::WrapErr;
+use serde::{Deserialize, Serialize};
+use tempfile::TempDir;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
-use clap::{Args, Parser, Subcommand};
 
 #[derive(Debug, Parser)]
 #[clap(name = "fsm")]
@@ -79,9 +80,9 @@ async fn cmd_shell(shell_args: Shell) -> color_eyre::Result<()> {
 
     eprint!("Generated 'flake.nix':\n{}", flake_nix);
 
-    let flake_dir = std::env::temp_dir();
+    let flake_dir = TempDir::new()?;
 
-    let flake_nix_path = flake_dir.join("flake.nix");
+    let flake_nix_path = flake_dir.path().join("flake.nix");
 
     // FIXME: do async I/O?
     std::fs::write(&flake_nix_path, &flake_nix).expect("Unable to write flake.nix");
@@ -90,10 +91,7 @@ async fn cmd_shell(shell_args: Shell) -> color_eyre::Result<()> {
         .arg("develop")
         .args(&["--extra-experimental-features", "flakes nix-command"])
         .arg("-L")
-        .arg(format!(
-            "path://{}",
-            flake_dir.into_os_string().into_string().unwrap()
-        ))
+        .arg(format!("path://{}", flake_dir.path().to_str().unwrap()))
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
