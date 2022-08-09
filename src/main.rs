@@ -5,7 +5,6 @@ use std::process::{Command, Stdio};
 
 use clap::{Args, Parser, Subcommand};
 use eyre::WrapErr;
-use serde::{Deserialize, Serialize};
 use tempfile::TempDir;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -153,31 +152,18 @@ impl DevEnvironment {
         self.build_inputs.push("rustc".to_string());
         self.build_inputs.push("cargo".to_string());
 
-        // FIXME: instead of calling 'cargo metadata', we could just
-        // use the cargo crate here.
+        use cargo::core::Workspace;
+        use cargo::util::config::Config;
 
-        // FIXME: chicken/egg problem: we need 'cargo' in $PATH first.
-        let output = Command::new("cargo")
-            .arg("metadata")
-            .arg("--format-version")
-            .arg("1")
-            .arg("--manifest-path")
-            .arg(project_dir.join("Cargo.toml"))
-            .stderr(Stdio::inherit())
-            .output()
-            .expect("Could not execute 'cargo metadata'."); // FIXME
+        let cfg = Config::default().unwrap();
 
-        if !output.status.success() {
-            panic!("'cargo metadata' failed: {}", output.status);
-        }
+        let workspace = Workspace::new(&project_dir.join("Cargo.toml"), &cfg).unwrap();
 
-        let manifest: Manifest = serde_json::from_str(&String::from_utf8(output.stdout).unwrap())
-            .expect("Could not parse 'cargo metadata' output.");
+        let (_package_set, resolve) = cargo::ops::resolve_ws(&workspace).unwrap();
 
-        let package_names: HashMap<_, _> = manifest
-            .packages
-            .into_iter()
-            .map(|pkg| (pkg.name.clone(), pkg))
+        let package_names: HashMap<_, _> = resolve
+            .iter()
+            .map(|pkg_id| (pkg_id.name(), pkg_id))
             .collect();
 
         if package_names.contains_key("expat-sys") {
@@ -202,15 +188,4 @@ impl DevEnvironment {
 
         Ok(())
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Manifest {
-    packages: Vec<Package>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Package {
-    name: String,
-    manifest_path: PathBuf,
 }

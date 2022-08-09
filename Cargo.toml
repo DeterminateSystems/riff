@@ -3,14 +3,11 @@ name = "fsm"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+cargo = { version = "0.63" }
 clap = { version = "3.2.16", features = ["derive"] }
 color-eyre = "0.6.2"
 eyre = "0.6.8"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
 tempfile = "3.3"
 thiserror = "1.0.32"
 tokio = { version = "1.20.1", features = ["macros", "rt-multi-thread"] }
