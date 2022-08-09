@@ -113,17 +113,7 @@ impl DevEnvironment {
     fn to_flake(&self) -> String {
         // TODO: use rnix for generating Nix?
         format!(
-            r#"{{
-  outputs = {{ self, nixpkgs }}: {{
-    devShells.x86_64-linux.default =
-      with import nixpkgs {{ system = "x86_64-linux"; }};
-      stdenv.mkDerivation {{
-        name = "fsm-shell";
-        buildInputs = [ {} ];
-      }};
-  }};
-}}
-"#,
+            include_str!("flake-template.inc"),
             self.build_inputs.join(" ")
         )
     }
