@@ -20,9 +20,14 @@
     in
     {
       devShell = forAllSystems ({ system, pkgs, ... }:
+        let
+          rustPlatform = pkgs.makeRustPlatform {
+            inherit (pkgs) rustc cargo;
+          };
+        in
         pkgs.mkShell {
           name = "fsm-shell";
-
+          RUST_SRC_PATH = "${rustPlatform.rustLibSrc}";
           buildInputs = with pkgs; [
             cargo
             rustc
