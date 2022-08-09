@@ -90,6 +90,7 @@ async fn cmd_shell(shell_args: Shell) -> color_eyre::Result<()> {
 
     Command::new("nix")
         .arg("develop")
+        .args(&["--extra-experimental-features", "flakes nix-command"])
         .arg("-L")
         .arg(format!(
             "path://{}",
