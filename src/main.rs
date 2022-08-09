@@ -4,11 +4,9 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 use serde::{Deserialize, Serialize};
-
 use eyre::WrapErr;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
-
 use clap::{Args, Parser, Subcommand};
 
 #[derive(Debug, Parser)]
