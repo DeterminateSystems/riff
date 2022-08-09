@@ -31,6 +31,8 @@
             nixpkgs-fmt
             rustfmt
             findutils # for xargs
+            pkgconfig
+            openssl
           ];
         });
 
@@ -43,7 +45,12 @@
               src = self;
 
               nativeBuildInputs = with pkgs; [
+                pkgconfig
                 clippy
+              ];
+
+              buildInputs = with pkgs; [
+                openssl
               ];
 
               preBuild = ''
