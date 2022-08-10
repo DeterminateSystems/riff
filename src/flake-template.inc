@@ -6,6 +6,7 @@
       stdenv.mkDerivation {{
         name = "fsm-shell";
         buildInputs = [ {} ];
+        {}
       }};
   }};
 }}

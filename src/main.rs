@@ -108,6 +108,7 @@ fn get_project_dir(project_dir: Option<PathBuf>) -> PathBuf {
 #[derive(Default)]
 struct DevEnvironment {
     build_inputs: HashSet<String>,
+    extra_attrs: HashMap<String, String>,
 }
 
 impl DevEnvironment {
@@ -115,7 +116,8 @@ impl DevEnvironment {
         // TODO: use rnix for generating Nix?
         format!(
             include_str!("flake-template.inc"),
-            self.build_inputs.iter().join(" ")
+            self.build_inputs.iter().join(" "),
+            self.extra_attrs.iter().map(|(name, value)| format!("\"{}\" = \"{}\";", name, value)).join("\n"),
         )
     }
 
@@ -181,6 +183,10 @@ impl DevEnvironment {
         if package_names.contains_key("rdkafka-sys") {
             self.build_inputs.insert("rdkafka".to_string());
             self.build_inputs.insert("pkg-config".to_string());
+            // FIXME: ugly. Unless the 'dynamic-linking' feature is
+            // set, rdkafka-sys will try to build its own
+            // statically-linked rdkafka from source.
+            self.extra_attrs.insert("CARGO_FEATURE_DYNAMIC_LINKING".to_owned(), "1".to_owned());
         }
 
         Ok(())
