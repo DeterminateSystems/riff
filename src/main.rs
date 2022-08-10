@@ -159,6 +159,10 @@ impl DevEnvironment {
             .map(|pkg_id| (pkg_id.name(), pkg_id))
             .collect();
 
+        if package_names.contains_key("pkg-config") {
+            self.build_inputs.insert("pkg-config".to_string());
+        }
+
         if package_names.contains_key("expat-sys") {
             self.build_inputs.insert("expat".to_string());
         }
@@ -177,7 +181,6 @@ impl DevEnvironment {
 
         if package_names.contains_key("openssl-sys") {
             self.build_inputs.insert("openssl".to_string());
-            self.build_inputs.insert("pkg-config".to_string());
         }
 
         if package_names.contains_key("prost-build") {
@@ -186,7 +189,6 @@ impl DevEnvironment {
 
         if package_names.contains_key("rdkafka-sys") {
             self.build_inputs.insert("rdkafka".to_string());
-            self.build_inputs.insert("pkg-config".to_string());
             // FIXME: ugly. Unless the 'dynamic-linking' feature is
             // set, rdkafka-sys will try to build its own
             // statically-linked rdkafka from source.
