@@ -1,8 +1,35 @@
+use std::collections::{HashMap, HashSet};
 use std::error::Error;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 
+use clap::{Args, Parser, Subcommand};
 use eyre::WrapErr;
+use itertools::Itertools;
+use tempfile::TempDir;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+
+#[derive(Debug, Parser)]
+#[clap(name = "fsm")]
+#[clap(about = "Automatically set up build environments using Nix", long_about = None)]
+struct Cli {
+    #[clap(subcommand)]
+    command: Commands,
+}
+
+#[derive(Debug, Subcommand)]
+enum Commands {
+    Shell(Shell),
+}
+
+/// Start a development shell
+#[derive(Debug, Args)]
+struct Shell {
+    /// The root directory of the project
+    #[clap(long, value_parser)]
+    project_dir: Option<PathBuf>,
+}
 
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
@@ -33,7 +60,139 @@ async fn main() -> color_eyre::Result<()> {
 }
 
 async fn main_impl() -> color_eyre::Result<()> {
-    println!("Hello, world!");
+    let args = Cli::parse();
+
+    match args.command {
+        Commands::Shell(shell_args) => cmd_shell(shell_args).await,
+    }
+}
+
+async fn cmd_shell(shell_args: Shell) -> color_eyre::Result<()> {
+    let project_dir = get_project_dir(shell_args.project_dir);
+
+    eprintln!("Project directory is '{}'.", project_dir.display());
+
+    let mut dev_env = DevEnvironment::default();
+
+    dev_env.detect(&project_dir)?;
+
+    let flake_nix = dev_env.to_flake();
+
+    eprint!("Generated 'flake.nix':\n{}", flake_nix);
+
+    let flake_dir = TempDir::new()?;
+
+    let flake_nix_path = flake_dir.path().join("flake.nix");
+
+    // FIXME: do async I/O?
+    std::fs::write(&flake_nix_path, &flake_nix).expect("Unable to write flake.nix");
+
+    Command::new("nix")
+        .arg("develop")
+        .args(&["--extra-experimental-features", "flakes nix-command"])
+        .arg("-L")
+        .arg(format!("path://{}", flake_dir.path().to_str().unwrap()))
+        .stdin(Stdio::inherit())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status()
+        .expect("Could not execute 'nix develop'."); // FIXME
 
     Ok(())
+}
+
+fn get_project_dir(project_dir: Option<PathBuf>) -> PathBuf {
+    project_dir.unwrap_or_else(|| std::env::current_dir().unwrap())
+}
+
+#[derive(Default)]
+struct DevEnvironment {
+    build_inputs: HashSet<String>,
+    extra_attrs: HashMap<String, String>,
+}
+
+impl DevEnvironment {
+    fn to_flake(&self) -> String {
+        // TODO: use rnix for generating Nix?
+        format!(
+            include_str!("flake-template.inc"),
+            self.build_inputs.iter().join(" "),
+            self.extra_attrs
+                .iter()
+                .map(|(name, value)| format!("\"{}\" = \"{}\";", name, value))
+                .join("\n"),
+        )
+    }
+
+    fn detect(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
+        let mut any_found = false;
+
+        if project_dir.join("Cargo.toml").exists() {
+            self.add_deps_from_cargo(project_dir)?;
+            any_found = true;
+        }
+
+        if !any_found {
+            eprintln!(
+                "'{}' does not contain a project recognized by FSM.",
+                project_dir.display()
+            );
+        }
+
+        Ok(())
+    }
+
+    fn add_deps_from_cargo(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
+        eprintln!("Adding Cargo dependencies...");
+
+        self.build_inputs.insert("rustc".to_string());
+        self.build_inputs.insert("cargo".to_string());
+
+        let cfg = cargo::util::config::Config::default().unwrap();
+
+        let workspace = cargo::core::Workspace::new(&project_dir.join("Cargo.toml"), &cfg).unwrap();
+
+        let (_package_set, resolve) = cargo::ops::resolve_ws(&workspace).unwrap();
+
+        let package_names: HashMap<_, _> = resolve
+            .iter()
+            .map(|pkg_id| (pkg_id.name(), pkg_id))
+            .collect();
+
+        if package_names.contains_key("expat-sys") {
+            self.build_inputs.insert("expat".to_string());
+        }
+
+        if package_names.contains_key("freetype-sys") {
+            self.build_inputs.insert("freetype".to_string());
+        }
+
+        if package_names.contains_key("servo-fontconfig-sys") {
+            self.build_inputs.insert("fontconfig".to_string());
+        }
+
+        if package_names.contains_key("libsqlite3-sys") {
+            self.build_inputs.insert("sqlite".to_string());
+        }
+
+        if package_names.contains_key("openssl-sys") {
+            self.build_inputs.insert("openssl".to_string());
+        }
+
+        if package_names.contains_key("prost-build") {
+            self.build_inputs.insert("protobuf".to_string());
+        }
+
+        if package_names.contains_key("rdkafka-sys") {
+            self.build_inputs.insert("rdkafka".to_string());
+            self.build_inputs.insert("pkg-config".to_string());
+            // FIXME: ugly. Unless the 'dynamic-linking' feature is
+            // set, rdkafka-sys will try to build its own
+            // statically-linked rdkafka from source.
+            self.extra_attrs
+                .insert("CARGO_FEATURE_DYNAMIC_LINKING".to_owned(), "1".to_owned());
+        }
+
+        Ok(())
+    }
 }
