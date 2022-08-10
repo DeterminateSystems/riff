@@ -142,12 +142,9 @@ impl DevEnvironment {
         self.build_inputs.push("rustc".to_string());
         self.build_inputs.push("cargo".to_string());
 
-        use cargo::core::Workspace;
-        use cargo::util::config::Config;
+        let cfg = cargo::util::config::Config::default().unwrap();
 
-        let cfg = Config::default().unwrap();
-
-        let workspace = Workspace::new(&project_dir.join("Cargo.toml"), &cfg).unwrap();
+        let workspace = cargo::core::Workspace::new(&project_dir.join("Cargo.toml"), &cfg).unwrap();
 
         let (_package_set, resolve) = cargo::ops::resolve_ws(&workspace).unwrap();
 
