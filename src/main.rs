@@ -117,7 +117,10 @@ impl DevEnvironment {
         format!(
             include_str!("flake-template.inc"),
             self.build_inputs.iter().join(" "),
-            self.extra_attrs.iter().map(|(name, value)| format!("\"{}\" = \"{}\";", name, value)).join("\n"),
+            self.extra_attrs
+                .iter()
+                .map(|(name, value)| format!("\"{}\" = \"{}\";", name, value))
+                .join("\n"),
         )
     }
 
@@ -186,7 +189,8 @@ impl DevEnvironment {
             // FIXME: ugly. Unless the 'dynamic-linking' feature is
             // set, rdkafka-sys will try to build its own
             // statically-linked rdkafka from source.
-            self.extra_attrs.insert("CARGO_FEATURE_DYNAMIC_LINKING".to_owned(), "1".to_owned());
+            self.extra_attrs
+                .insert("CARGO_FEATURE_DYNAMIC_LINKING".to_owned(), "1".to_owned());
         }
 
         Ok(())
