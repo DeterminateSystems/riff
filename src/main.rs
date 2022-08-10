@@ -136,7 +136,7 @@ impl DevEnvironment {
         Ok(())
     }
 
-    fn add_deps_from_cargo(&mut self, project_dir: &Path) -> Result<(), std::io::Error> {
+    fn add_deps_from_cargo(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
         eprintln!("Adding Cargo dependencies...");
 
         self.build_inputs.push("rustc".to_string());
