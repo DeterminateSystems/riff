@@ -22,7 +22,7 @@
       devShell = forAllSystems ({ system, pkgs, ... }:
         pkgs.mkShell {
           name = "fsm-shell";
-
+          RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
           buildInputs = with pkgs; [
             cargo
             rustc
