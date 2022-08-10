@@ -100,23 +100,22 @@ async fn cmd_shell(shell_args: Shell) -> color_eyre::Result<()> {
     nix_lock_command
         .arg("flake")
         .arg("lock")
+        .args(&["--extra-experimental-features", "flakes nix-command"])
         .arg("-L")
-        .arg(format!("path://{}", flake_dir.path().to_str().unwrap()))
-        .stdin(Stdio::null()) // TODO(@Hoverbear): Capture and only output if not successful.
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
+        .arg(format!("path://{}", flake_dir.path().to_str().unwrap()));
     tracing::trace!(command = ?nix_lock_command, "Running");
     let nix_lock_exit = nix_lock_command
-        .status()
+        .output()
         .wrap_err("Could not execute `nix flake lock`")?;
 
-    if !nix_lock_exit.success() {
+    if !nix_lock_exit.status.success() {
         return Err(eyre!(
-            "`nix flake lock` exited with code {}",
+            "`nix flake lock` exited with code {}:\n{}",
             nix_lock_exit
-                .code()
+                .status.code()
                 .map(|x| x.to_string())
-                .unwrap_or_else(|| "unknown".to_string())
+                .unwrap_or_else(|| "unknown".to_string()),
+            std::str::from_utf8(&nix_lock_exit.stdout)?,
         ));
     }
 
@@ -131,18 +130,19 @@ async fn cmd_shell(shell_args: Shell) -> color_eyre::Result<()> {
         .stderr(Stdio::inherit());
     tracing::trace!(command = ?nix_develop_command, "Running");
     let nix_develop_exit = nix_develop_command
-        .status()
+        .output()
         .wrap_err("Could not execute `nix develop`")?;
 
     // At this point we have handed off to the user shell. The next lines run after the user CTRL+D's out.
 
-    if !nix_develop_exit.success() {
+    if !nix_develop_exit.status.success() {
         return Err(eyre!(
-            "`nix develop` exited with code {}",
-            nix_lock_exit
-                .code()
+            "`nix develop` exited with code {}:\n{}",
+            nix_develop_exit
+                .status.code()
                 .map(|x| x.to_string())
-                .unwrap_or_else(|| "unknown".to_string())
+                .unwrap_or_else(|| "unknown".to_string()),
+            std::str::from_utf8(&nix_develop_exit.stdout)?,
         ));
     }
 
