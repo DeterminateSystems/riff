@@ -118,7 +118,7 @@ impl DevEnvironment {
         )
     }
 
-    fn detect(&mut self, project_dir: &Path) -> Result<(), std::io::Error> {
+    fn detect(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
         let mut any_found = false;
 
         if project_dir.join("Cargo.toml").exists() {
