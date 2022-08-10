@@ -506,11 +506,13 @@ dependencies = [
 name = "fsm"
 version = "0.1.0"
 dependencies = [
+ "atty",
  "cargo",
  "clap",
  "color-eyre",
  "eyre",
  "itertools",
+ "owo-colors",
  "tempfile",
  "thiserror",
  "tokio",

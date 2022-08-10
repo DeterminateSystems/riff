@@ -3,9 +3,11 @@ use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
+use atty::Stream;
 use clap::{Args, Parser, Subcommand};
-use eyre::WrapErr;
+use eyre::{eyre, WrapErr};
 use itertools::Itertools;
+use owo_colors::OwoColorize;
 use tempfile::TempDir;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -45,12 +47,19 @@ async fn main() -> color_eyre::Result<()> {
                     _ => return Err(e).wrap_err_with(|| "parsing RUST_LOG directives"),
                 }
             }
-            EnvFilter::try_new(&format!("{}={}", env!("CARGO_PKG_NAME"), "debug"))?
+            EnvFilter::try_new(&format!("{}={}", env!("CARGO_PKG_NAME"), "info"))?
         }
     };
 
+    // Initialize tracing with tracing-error, and eyre
+    let fmt_layer = tracing_subscriber::fmt::Layer::new()
+        .with_ansi(atty::is(Stream::Stderr))
+        .with_writer(std::io::stderr)
+        .pretty();
+
     tracing_subscriber::registry()
         .with(filter_layer)
+        .with(fmt_layer)
         .with(ErrorLayer::default())
         .try_init()?;
 
@@ -70,7 +79,7 @@ async fn main_impl() -> color_eyre::Result<()> {
 async fn cmd_shell(shell_args: Shell) -> color_eyre::Result<()> {
     let project_dir = get_project_dir(shell_args.project_dir);
 
-    eprintln!("Project directory is '{}'.", project_dir.display());
+    tracing::debug!("Project directory is '{}'.", project_dir.display());
 
     let mut dev_env = DevEnvironment::default();
 
@@ -78,7 +87,7 @@ async fn cmd_shell(shell_args: Shell) -> color_eyre::Result<()> {
 
     let flake_nix = dev_env.to_flake();
 
-    eprint!("Generated 'flake.nix':\n{}", flake_nix);
+    tracing::trace!("Generated 'flake.nix':\n{}", flake_nix);
 
     let flake_dir = TempDir::new()?;
 
@@ -87,16 +96,55 @@ async fn cmd_shell(shell_args: Shell) -> color_eyre::Result<()> {
     // FIXME: do async I/O?
     std::fs::write(&flake_nix_path, &flake_nix).expect("Unable to write flake.nix");
 
-    Command::new("nix")
+    let mut nix_lock_command = Command::new("nix");
+    nix_lock_command
+        .arg("flake")
+        .arg("lock")
+        .arg("-L")
+        .arg(format!("path://{}", flake_dir.path().to_str().unwrap()))
+        .stdin(Stdio::null()) // TODO(@Hoverbear): Capture and only output if not successful.
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    tracing::trace!(command = ?nix_lock_command, "Running");
+    let nix_lock_exit = nix_lock_command
+        .status()
+        .wrap_err("Could not execute `nix flake lock`")?;
+
+    if !nix_lock_exit.success() {
+        return Err(eyre!(
+            "`nix flake lock` exited with code {}",
+            nix_lock_exit
+                .code()
+                .map(|x| x.to_string())
+                .unwrap_or_else(|| "unknown".to_string())
+        ));
+    }
+
+    let mut nix_develop_command = Command::new("nix");
+    nix_develop_command
         .arg("develop")
         .args(&["--extra-experimental-features", "flakes nix-command"])
         .arg("-L")
         .arg(format!("path://{}", flake_dir.path().to_str().unwrap()))
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
+        .stderr(Stdio::inherit());
+    tracing::trace!(command = ?nix_develop_command, "Running");
+    let nix_develop_exit = nix_develop_command
         .status()
-        .expect("Could not execute 'nix develop'."); // FIXME
+        .wrap_err("Could not execute `nix develop`")?;
+
+    // At this point we have handed off to the user shell. The next lines run after the user CTRL+D's out.
+
+    if !nix_develop_exit.success() {
+        return Err(eyre!(
+            "`nix develop` exited with code {}",
+            nix_lock_exit
+                .code()
+                .map(|x| x.to_string())
+                .unwrap_or_else(|| "unknown".to_string())
+        ));
+    }
 
     Ok(())
 }
@@ -142,17 +190,50 @@ impl DevEnvironment {
         Ok(())
     }
 
+    #[tracing::instrument(skip_all, fields(project_dir = %project_dir.display()))]
     fn add_deps_from_cargo(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
-        eprintln!("Adding Cargo dependencies...");
+        tracing::debug!("Adding Cargo dependencies...");
 
-        self.build_inputs.insert("rustc".to_string());
-        self.build_inputs.insert("cargo".to_string());
+        let mut found_build_inputs = HashSet::new();
+        found_build_inputs.insert("rustc".to_string());
+        found_build_inputs.insert("cargo".to_string());
 
-        let cfg = cargo::util::config::Config::default().unwrap();
+        let mut cfg = cargo::util::config::Config::default()
+            .map_err(|e| eyre!(e))
+            .wrap_err("Could not get default `cargo` instance")?;
 
-        let workspace = cargo::core::Workspace::new(&project_dir.join("Cargo.toml"), &cfg).unwrap();
+        // TODO(@hoverbear): Add verbosity option
+        cfg.configure(
+            0,     // verbose
+            true,  // quiet
+            None,  // color
+            false, // frozen
+            false, // locked
+            false, // offline
+            &None, // target_dir
+            &[],   // unstable_flags
+            &[],   // cli_config
+        )
+        .map_err(|e| eyre!(e))
+        .wrap_err("Could not configure `cargo`")?;
 
-        let (_package_set, resolve) = cargo::ops::resolve_ws(&workspace).unwrap();
+        let workspace = cargo::core::Workspace::new(&project_dir.join("Cargo.toml"), &cfg)
+            .map_err(|e| eyre!(e))
+            .wrap_err_with(|| {
+                format!(
+                    "Could not create workspace from `{}`",
+                    project_dir.display()
+                )
+            })?;
+
+        let (_package_set, resolve) = cargo::ops::resolve_ws(&workspace)
+            .map_err(|e| eyre!(e))
+            .wrap_err_with(|| {
+                format!(
+                    "Could not resolve workspace from `{}`",
+                    project_dir.display()
+                )
+            })?;
 
         let package_names: HashMap<_, _> = resolve
             .iter()
@@ -164,37 +245,51 @@ impl DevEnvironment {
         }
 
         if package_names.contains_key("expat-sys") {
-            self.build_inputs.insert("expat".to_string());
+            found_build_inputs.insert("expat".to_string());
         }
 
         if package_names.contains_key("freetype-sys") {
-            self.build_inputs.insert("freetype".to_string());
+            found_build_inputs.insert("freetype".to_string());
         }
 
         if package_names.contains_key("servo-fontconfig-sys") {
-            self.build_inputs.insert("fontconfig".to_string());
+            found_build_inputs.insert("fontconfig".to_string());
         }
 
         if package_names.contains_key("libsqlite3-sys") {
-            self.build_inputs.insert("sqlite".to_string());
+            found_build_inputs.insert("sqlite".to_string());
         }
 
         if package_names.contains_key("openssl-sys") {
-            self.build_inputs.insert("openssl".to_string());
+            found_build_inputs.insert("openssl".to_string());
         }
 
         if package_names.contains_key("prost-build") {
-            self.build_inputs.insert("protobuf".to_string());
+            found_build_inputs.insert("protobuf".to_string());
         }
 
         if package_names.contains_key("rdkafka-sys") {
-            self.build_inputs.insert("rdkafka".to_string());
+            found_build_inputs.insert("rdkafka".to_string());
+            found_build_inputs.insert("pkg-config".to_string());
             // FIXME: ugly. Unless the 'dynamic-linking' feature is
             // set, rdkafka-sys will try to build its own
             // statically-linked rdkafka from source.
             self.extra_attrs
                 .insert("CARGO_FEATURE_DYNAMIC_LINKING".to_owned(), "1".to_owned());
         }
+
+        eprintln!(
+            "{check} {lang}: {colored_inputs}",
+            check = "✓".green(),
+            lang = "🦀 rust".bold().red(),
+            colored_inputs = {
+                let mut sorted_build_inputs = found_build_inputs.iter().collect::<Vec<_>>();
+                sorted_build_inputs.sort();
+                sorted_build_inputs.iter().map(|v| v.cyan()).join(", ")
+            }
+        );
+
+        self.build_inputs = found_build_inputs;
 
         Ok(())
     }
