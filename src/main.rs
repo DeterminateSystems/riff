@@ -136,16 +136,9 @@ async fn cmd_shell(shell_args: Shell) -> color_eyre::Result<()> {
 
     // At this point we have handed off to the user shell. The next lines run after the user CTRL+D's out.
 
-    if !nix_develop_exit.status.success() {
-        return Err(eyre!(
-            "`nix develop` exited with code {}:\n{}",
-            nix_develop_exit
-                .status
-                .code()
-                .map(|x| x.to_string())
-                .unwrap_or_else(|| "unknown".to_string()),
-            std::str::from_utf8(&nix_develop_exit.stdout)?,
-        ));
+    if let Some(code) = nix_develop_exit.status.code() {
+        // If the user returns, say, an EOF, we return the same code up
+        std::process::exit(code);
     }
 
     Ok(())
