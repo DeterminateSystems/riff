@@ -177,6 +177,7 @@ impl DevEnvironment {
 
         if package_names.contains_key("openssl-sys") {
             self.build_inputs.insert("openssl".to_string());
+            self.build_inputs.insert("pkg-config".to_string());
         }
 
         if package_names.contains_key("prost-build") {
