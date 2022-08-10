@@ -221,7 +221,7 @@ impl DevEnvironment {
                 )
             })?;
 
-        let (_package_set, resolve) = cargo::ops::resolve_ws(&workspace)
+        let (package_set, resolve) = cargo::ops::resolve_ws(&workspace)
             .map_err(|e| eyre!(e))
             .wrap_err_with(|| {
                 format!(
@@ -230,54 +230,36 @@ impl DevEnvironment {
                 )
             })?;
 
-        let package_names: HashMap<_, _> = resolve
-            .iter()
-            .map(|pkg_id| (pkg_id.name(), pkg_id))
-            .collect();
 
-        if package_names.contains_key("pkg-config") {
-            found_build_inputs.insert("pkg-config".to_string());
-        }
+        for package in package_set.get_many(resolve.iter()).unwrap() {
+            // TODO(@hoverbear): Add a `Deserializable` implementor we can get from this.
+            let custom_metadata = match package.manifest().custom_metadata() {
+                Some(custom_metadata) => custom_metadata,
+                None => continue,
+            };
 
-        if package_names.contains_key("expat-sys") {
-            found_build_inputs.insert("expat".to_string());
-        }
+            let metadata_table = match custom_metadata {
+                toml_edit::easy::value::Value::Table(metadata_table) => metadata_table,
+                _ => continue,
+            };
 
-        if package_names.contains_key("freetype-sys") {
-            found_build_inputs.insert("freetype".to_string());
-        }
+            let fsm_table = match metadata_table.get("fsm") {
+                Some(toml_edit::easy::value::Value::Table(metadata_table)) => metadata_table,
+                Some(_) | None => continue,
+            };
 
-        if package_names.contains_key("servo-fontconfig-sys") {
-            found_build_inputs.insert("fontconfig".to_string());
-        }
+            let build_inputs_table = match fsm_table.get("build-inputs") {
+                Some(toml_edit::easy::value::Value::Table(build_inputs_table)) => build_inputs_table,
+                Some(_) | None => continue,
+            };
 
-        if package_names.contains_key("libsqlite3-sys") {
-            found_build_inputs.insert("sqlite".to_string());
-        }
-
-        if package_names.contains_key("libusb1-sys") {
-            found_build_inputs.insert("libusb".to_string());
-        }
-
-        if package_names.contains_key("hidapi") {
-            found_build_inputs.insert("udev".to_string());
-        }
-
-        if package_names.contains_key("openssl-sys") {
-            found_build_inputs.insert("openssl".to_string());
-        }
-
-        if package_names.contains_key("prost-build") {
-            found_build_inputs.insert("protobuf".to_string());
-        }
-
-        if package_names.contains_key("rdkafka-sys") {
-            found_build_inputs.insert("rdkafka".to_string());
-            // FIXME: ugly. Unless the 'dynamic-linking' feature is
-            // set, rdkafka-sys will try to build its own
-            // statically-linked rdkafka from source.
-            self.extra_attrs
-                .insert("CARGO_FEATURE_DYNAMIC_LINKING".to_owned(), "1".to_owned());
+            let mut package_build_inputs = HashSet::with_capacity(build_inputs_table.len());
+            for (key, _value) in build_inputs_table.iter() {
+                // TODO(@hoverbear): Add version checking
+                package_build_inputs.insert(key.to_string());
+            }
+            tracing::debug!(package_name = %package.name(), inputs = %package_build_inputs.iter().join(", "), "Detected `package.fsm.build-inputs`");
+            found_build_inputs = found_build_inputs.union(&package_build_inputs).cloned().collect();
         }
 
         eprintln!(

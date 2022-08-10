@@ -13,6 +13,7 @@ itertools = "0.10"
 tempfile = "3.3"
 thiserror = "1.0.32"
 tokio = { version = "1.20.1", features = ["macros", "rt-multi-thread"] }
+toml_edit = "0.14"
 tracing = "0.1.36"
 tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.15", features = ["env-filter"] }
