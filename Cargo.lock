@@ -510,6 +510,7 @@ dependencies = [
  "clap",
  "color-eyre",
  "eyre",
+ "itertools",
  "tempfile",
  "thiserror",
  "tokio",

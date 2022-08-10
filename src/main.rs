@@ -1,10 +1,11 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 use clap::{Args, Parser, Subcommand};
 use eyre::WrapErr;
+use itertools::Itertools;
 use tempfile::TempDir;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -106,7 +107,7 @@ fn get_project_dir(project_dir: Option<PathBuf>) -> PathBuf {
 
 #[derive(Default)]
 struct DevEnvironment {
-    build_inputs: Vec<String>,
+    build_inputs: HashSet<String>,
 }
 
 impl DevEnvironment {
@@ -114,7 +115,7 @@ impl DevEnvironment {
         // TODO: use rnix for generating Nix?
         format!(
             include_str!("flake-template.inc"),
-            self.build_inputs.join(" ")
+            self.build_inputs.iter().join(" ")
         )
     }
 
@@ -139,8 +140,8 @@ impl DevEnvironment {
     fn add_deps_from_cargo(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
         eprintln!("Adding Cargo dependencies...");
 
-        self.build_inputs.push("rustc".to_string());
-        self.build_inputs.push("cargo".to_string());
+        self.build_inputs.insert("rustc".to_string());
+        self.build_inputs.insert("cargo".to_string());
 
         let cfg = cargo::util::config::Config::default().unwrap();
 
@@ -154,23 +155,32 @@ impl DevEnvironment {
             .collect();
 
         if package_names.contains_key("expat-sys") {
-            self.build_inputs.push("expat".to_string());
+            self.build_inputs.insert("expat".to_string());
         }
 
         if package_names.contains_key("freetype-sys") {
-            self.build_inputs.push("freetype".to_string());
+            self.build_inputs.insert("freetype".to_string());
         }
 
         if package_names.contains_key("servo-fontconfig-sys") {
-            self.build_inputs.push("fontconfig".to_string());
+            self.build_inputs.insert("fontconfig".to_string());
         }
 
         if package_names.contains_key("libsqlite3-sys") {
-            self.build_inputs.push("sqlite".to_string());
+            self.build_inputs.insert("sqlite".to_string());
         }
 
         if package_names.contains_key("openssl-sys") {
-            self.build_inputs.push("openssl".to_string());
+            self.build_inputs.insert("openssl".to_string());
+        }
+
+        if package_names.contains_key("prost-build") {
+            self.build_inputs.insert("protobuf".to_string());
+        }
+
+        if package_names.contains_key("rdkafka-sys") {
+            self.build_inputs.insert("rdkafka".to_string());
+            self.build_inputs.insert("pkg-config".to_string());
         }
 
         Ok(())
