@@ -236,7 +236,7 @@ impl DevEnvironment {
             .collect();
 
         if package_names.contains_key("pkg-config") {
-            self.build_inputs.insert("pkg-config".to_string());
+            found_build_inputs.insert("pkg-config".to_string());
         }
 
         if package_names.contains_key("expat-sys") {
