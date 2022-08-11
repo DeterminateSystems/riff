@@ -273,7 +273,6 @@ impl DevEnvironment {
 
         if package_names.contains_key("rdkafka-sys") {
             found_build_inputs.insert("rdkafka".to_string());
-            found_build_inputs.insert("pkg-config".to_string());
             // FIXME: ugly. Unless the 'dynamic-linking' feature is
             // set, rdkafka-sys will try to build its own
             // statically-linked rdkafka from source.
