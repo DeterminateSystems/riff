@@ -193,14 +193,21 @@ impl DevEnvironment {
             Lazy::new(|| {
                 let mut m = HashMap::new();
                 // TODO(@hoverbear): Macro for this?
-                m.insert("openssl-sys", ["openssl"].into_iter().collect());
-                m.insert("pkg-config", ["pkg-config"].into_iter().collect());
-                m.insert("expat-sys", ["expat"].into_iter().collect());
-                m.insert("freetype-sys", ["freetype"].into_iter().collect());
-                m.insert("servo-fontconfig-sys", ["fontconfig"].into_iter().collect());
-                m.insert("libsqlite3-sys", ["sqlite"].into_iter().collect());
-                m.insert("libusb1-sys", ["libusb"].into_iter().collect());
-                m.insert("hidapi", ["udev"].into_iter().collect());
+                macro_rules! crate_to_build_inputs {
+                    ($collection:ident, $rust_package:expr, $nix_packages:expr) => {
+                        $collection.insert($rust_package, $nix_packages.into_iter().collect())
+                    }
+                }
+                crate_to_build_inputs!(m, "openssl-sys", ["openssl"]);
+                crate_to_build_inputs!(m, "pkg-config", ["pkg-config"]);
+                crate_to_build_inputs!(m, "expat-sys", ["expat"]);
+                crate_to_build_inputs!(m, "freetype-sys", ["freetype"]);
+                crate_to_build_inputs!(m, "servo-fontconfig-sys", ["fontconfig"]);
+                crate_to_build_inputs!(m, "libsqlite3-sys", ["sqlite"]);
+                crate_to_build_inputs!(m, "libusb1-sys", ["libusb"]);
+                crate_to_build_inputs!(m, "hidapi", ["udev"]);
+                crate_to_build_inputs!(m, "libgit2-sys", ["libgit2"]);
+                crate_to_build_inputs!(m, "rdkafka-sys", ["rdkafka"]);
                 m
             });
 
