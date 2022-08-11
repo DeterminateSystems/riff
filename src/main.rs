@@ -1,7 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use tokio::process::{Command};
+use std::process::Stdio;
 
 use atty::Stream;
 use clap::{Args, Parser, Subcommand};
@@ -93,8 +94,7 @@ async fn cmd_shell(shell_args: Shell) -> color_eyre::Result<()> {
 
     let flake_nix_path = flake_dir.path().join("flake.nix");
 
-    // FIXME: do async I/O?
-    std::fs::write(&flake_nix_path, &flake_nix).expect("Unable to write flake.nix");
+    tokio::fs::write(&flake_nix_path, &flake_nix).await.wrap_err("Unable to write flake.nix")?;
 
     let mut nix_lock_command = Command::new("nix");
     nix_lock_command
@@ -106,6 +106,7 @@ async fn cmd_shell(shell_args: Shell) -> color_eyre::Result<()> {
     tracing::trace!(command = ?nix_lock_command, "Running");
     let nix_lock_exit = nix_lock_command
         .output()
+        .await
         .wrap_err("Could not execute `nix flake lock`")?;
 
     if !nix_lock_exit.status.success() {
@@ -131,7 +132,10 @@ async fn cmd_shell(shell_args: Shell) -> color_eyre::Result<()> {
         .stderr(Stdio::inherit());
     tracing::trace!(command = ?nix_develop_command, "Running");
     let nix_develop_exit = nix_develop_command
-        .output()
+        .spawn()
+        .wrap_err("Failed to spawn `nix develop`")?
+        .wait_with_output()
+        .await
         .wrap_err("Could not execute `nix develop`")?;
 
     // At this point we have handed off to the user shell. The next lines run after the user CTRL+D's out.
