@@ -255,6 +255,14 @@ impl DevEnvironment {
             found_build_inputs.insert("sqlite".to_string());
         }
 
+        if package_names.contains_key("libusb1-sys") {
+            found_build_inputs.insert("libusb".to_string());
+        }
+
+        if package_names.contains_key("hidapi") {
+            found_build_inputs.insert("udev".to_string());
+        }
+
         if package_names.contains_key("openssl-sys") {
             found_build_inputs.insert("openssl".to_string());
         }
