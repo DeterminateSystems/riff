@@ -230,7 +230,6 @@ impl DevEnvironment {
                 )
             })?;
 
-
         for package in package_set.get_many(resolve.iter()).unwrap() {
             // TODO(@hoverbear): Add a `Deserializable` implementor we can get from this.
             let custom_metadata = match package.manifest().custom_metadata() {
@@ -249,7 +248,9 @@ impl DevEnvironment {
             };
 
             let build_inputs_table = match fsm_table.get("build-inputs") {
-                Some(toml_edit::easy::value::Value::Table(build_inputs_table)) => build_inputs_table,
+                Some(toml_edit::easy::value::Value::Table(build_inputs_table)) => {
+                    build_inputs_table
+                }
                 Some(_) | None => continue,
             };
 
@@ -259,7 +260,10 @@ impl DevEnvironment {
                 package_build_inputs.insert(key.to_string());
             }
             tracing::debug!(package_name = %package.name(), inputs = %package_build_inputs.iter().join(", "), "Detected `package.fsm.build-inputs`");
-            found_build_inputs = found_build_inputs.union(&package_build_inputs).cloned().collect();
+            found_build_inputs = found_build_inputs
+                .union(&package_build_inputs)
+                .cloned()
+                .collect();
         }
 
         eprintln!(
