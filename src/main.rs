@@ -196,7 +196,7 @@ impl DevEnvironment {
                 macro_rules! crate_to_build_inputs {
                     ($collection:ident, $rust_package:expr, $nix_packages:expr) => {
                         $collection.insert($rust_package, $nix_packages.into_iter().collect())
-                    }
+                    };
                 }
                 crate_to_build_inputs!(m, "openssl-sys", ["openssl"]);
                 crate_to_build_inputs!(m, "pkg-config", ["pkg-config"]);
