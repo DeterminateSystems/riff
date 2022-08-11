@@ -1,8 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::path::{Path, PathBuf};
-use tokio::process::{Command};
 use std::process::Stdio;
+use tokio::process::Command;
 
 use atty::Stream;
 use clap::{Args, Parser, Subcommand};
@@ -94,7 +94,9 @@ async fn cmd_shell(shell_args: Shell) -> color_eyre::Result<()> {
 
     let flake_nix_path = flake_dir.path().join("flake.nix");
 
-    tokio::fs::write(&flake_nix_path, &flake_nix).await.wrap_err("Unable to write flake.nix")?;
+    tokio::fs::write(&flake_nix_path, &flake_nix)
+        .await
+        .wrap_err("Unable to write flake.nix")?;
 
     let mut nix_lock_command = Command::new("nix");
     nix_lock_command
