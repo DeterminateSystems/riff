@@ -236,7 +236,7 @@ impl DevEnvironment {
             .collect();
 
         if package_names.contains_key("pkg-config") {
-            self.build_inputs.insert("pkg-config".to_string());
+            found_build_inputs.insert("pkg-config".to_string());
         }
 
         if package_names.contains_key("expat-sys") {
@@ -255,6 +255,14 @@ impl DevEnvironment {
             found_build_inputs.insert("sqlite".to_string());
         }
 
+        if package_names.contains_key("libusb1-sys") {
+            found_build_inputs.insert("libusb".to_string());
+        }
+
+        if package_names.contains_key("hidapi") {
+            found_build_inputs.insert("udev".to_string());
+        }
+
         if package_names.contains_key("openssl-sys") {
             found_build_inputs.insert("openssl".to_string());
         }
@@ -265,7 +273,6 @@ impl DevEnvironment {
 
         if package_names.contains_key("rdkafka-sys") {
             found_build_inputs.insert("rdkafka".to_string());
-            found_build_inputs.insert("pkg-config".to_string());
             // FIXME: ugly. Unless the 'dynamic-linking' feature is
             // set, rdkafka-sys will try to build its own
             // statically-linked rdkafka from source.
