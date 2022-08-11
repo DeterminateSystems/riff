@@ -7,9 +7,9 @@ use atty::Stream;
 use clap::{Args, Parser, Subcommand};
 use eyre::{eyre, WrapErr};
 use itertools::Itertools;
+use once_cell::sync::Lazy;
 use owo_colors::OwoColorize;
 use tempfile::TempDir;
-use once_cell::sync::Lazy;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -189,19 +189,20 @@ impl DevEnvironment {
     #[tracing::instrument(skip_all, fields(project_dir = %project_dir.display()))]
     fn add_deps_from_cargo(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
         // Mapping of `$CRATE_NAME -> $NIXPKGS_NAME`
-        static KNOWN_CRATE_TO_BUILD_INPUTS: Lazy<HashMap<&'static str, HashSet<&'static str>>> = Lazy::new(|| {
-            let mut m = HashMap::new();
-            // TODO(@hoverbear): Macro for this?
-            m.insert("openssl-sys", ["openssl"].into_iter().collect());
-            m.insert("pkg-config", ["pkg-config"].into_iter().collect());
-            m.insert("expat-sys", ["expat"].into_iter().collect());
-            m.insert("freetype-sys", ["freetype"].into_iter().collect());
-            m.insert("servo-fontconfig-sys", ["fontconfig"].into_iter().collect());
-            m.insert("libsqlite3-sys", ["sqlite"].into_iter().collect());
-            m.insert("libusb1-sys", ["libusb"].into_iter().collect());
-            m.insert("hidapi", ["udev"].into_iter().collect());
-            m
-        });
+        static KNOWN_CRATE_TO_BUILD_INPUTS: Lazy<HashMap<&'static str, HashSet<&'static str>>> =
+            Lazy::new(|| {
+                let mut m = HashMap::new();
+                // TODO(@hoverbear): Macro for this?
+                m.insert("openssl-sys", ["openssl"].into_iter().collect());
+                m.insert("pkg-config", ["pkg-config"].into_iter().collect());
+                m.insert("expat-sys", ["expat"].into_iter().collect());
+                m.insert("freetype-sys", ["freetype"].into_iter().collect());
+                m.insert("servo-fontconfig-sys", ["fontconfig"].into_iter().collect());
+                m.insert("libsqlite3-sys", ["sqlite"].into_iter().collect());
+                m.insert("libusb1-sys", ["libusb"].into_iter().collect());
+                m.insert("hidapi", ["udev"].into_iter().collect());
+                m
+            });
 
         tracing::debug!("Adding Cargo dependencies...");
 
@@ -249,10 +250,18 @@ impl DevEnvironment {
         for package in package_set.get_many(resolve.iter()).unwrap() {
             let mut package_build_inputs = HashSet::new();
 
-            if let Some(known_build_inputs) = KNOWN_CRATE_TO_BUILD_INPUTS.get(package.name().as_str()) {
-                let known_build_inputs = known_build_inputs.iter().map(ToString::to_string).collect::<HashSet<_>>();
+            if let Some(known_build_inputs) =
+                KNOWN_CRATE_TO_BUILD_INPUTS.get(package.name().as_str())
+            {
+                let known_build_inputs = known_build_inputs
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect::<HashSet<_>>();
                 tracing::debug!(package_name = %package.name(), inputs = %known_build_inputs.iter().join(", "), "Detected known build inputs");
-                found_build_inputs = found_build_inputs.union(&known_build_inputs).cloned().collect();
+                found_build_inputs = found_build_inputs
+                    .union(&known_build_inputs)
+                    .cloned()
+                    .collect();
             }
 
             // TODO(@hoverbear): Add a `Deserializable` implementor we can get from this.
