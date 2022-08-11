@@ -47,10 +47,7 @@
               nativeBuildInputs = with pkgs; [
                 pkgconfig
                 clippy
-              ];
-
-              buildInputs = with pkgs; [
-                openssl
+                perl # necessary to build the vendored openssl
               ];
 
               preBuild = ''
