@@ -31,8 +31,7 @@
             nixpkgs-fmt
             rustfmt
             findutils # for xargs
-            pkgconfig
-            openssl
+            patchelf
           ];
         });
 

@@ -28,12 +28,31 @@ jobs:
     # Runs clippy as part of the preBuild.
     - name: Build
       run: nix build -L
+    - name: Patch the interpreter to work on Ubuntu
+      run: |
+        cp result/bin/fsm fsm
+        chmod u+w fsm
+        nix develop -c patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 fsm
     - name: Create artifact for fsm
       uses: actions/upload-artifact@v3
       with:
         name: fsm
         path: |
-          result/bin/fsm
+          fsm
+
+  FsmShell:
+    needs: Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Download prebuilt fsm
+      uses: actions/download-artifact@v3
+      with:
+        name: fsm
+    - name: Run `fsm --help`
+      run: |
+        chmod +x fsm
+        ./fsm --help
 
   Spelling:
     runs-on: ubuntu-latest
