@@ -192,7 +192,6 @@ impl DevEnvironment {
         static KNOWN_CRATE_TO_BUILD_INPUTS: Lazy<HashMap<&'static str, HashSet<&'static str>>> =
             Lazy::new(|| {
                 let mut m = HashMap::new();
-                // TODO(@hoverbear): Macro for this?
                 macro_rules! crate_to_build_inputs {
                     ($collection:ident, $rust_package:expr, $nix_packages:expr) => {
                         $collection.insert($rust_package, $nix_packages.into_iter().collect())
