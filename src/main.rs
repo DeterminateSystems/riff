@@ -7,6 +7,7 @@ use atty::Stream;
 use clap::{Args, Parser, Subcommand};
 use eyre::{eyre, WrapErr};
 use itertools::Itertools;
+use once_cell::sync::Lazy;
 use owo_colors::OwoColorize;
 use tempfile::TempDir;
 use tracing_error::ErrorLayer;
@@ -187,6 +188,28 @@ impl DevEnvironment {
 
     #[tracing::instrument(skip_all, fields(project_dir = %project_dir.display()))]
     fn add_deps_from_cargo(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
+        // Mapping of `$CRATE_NAME -> $NIXPKGS_NAME`
+        static KNOWN_CRATE_TO_BUILD_INPUTS: Lazy<HashMap<&'static str, HashSet<&'static str>>> =
+            Lazy::new(|| {
+                let mut m = HashMap::new();
+                macro_rules! crate_to_build_inputs {
+                    ($collection:ident, $rust_package:expr, $nix_packages:expr) => {
+                        $collection.insert($rust_package, $nix_packages.into_iter().collect())
+                    };
+                }
+                crate_to_build_inputs!(m, "openssl-sys", ["openssl"]);
+                crate_to_build_inputs!(m, "pkg-config", ["pkg-config"]);
+                crate_to_build_inputs!(m, "expat-sys", ["expat"]);
+                crate_to_build_inputs!(m, "freetype-sys", ["freetype"]);
+                crate_to_build_inputs!(m, "servo-fontconfig-sys", ["fontconfig"]);
+                crate_to_build_inputs!(m, "libsqlite3-sys", ["sqlite"]);
+                crate_to_build_inputs!(m, "libusb1-sys", ["libusb"]);
+                crate_to_build_inputs!(m, "hidapi", ["udev"]);
+                crate_to_build_inputs!(m, "libgit2-sys", ["libgit2"]);
+                crate_to_build_inputs!(m, "rdkafka-sys", ["rdkafka"]);
+                m
+            });
+
         tracing::debug!("Adding Cargo dependencies...");
 
         let mut found_build_inputs = HashSet::new();
@@ -221,7 +244,7 @@ impl DevEnvironment {
                 )
             })?;
 
-        let (_package_set, resolve) = cargo::ops::resolve_ws(&workspace)
+        let (package_set, resolve) = cargo::ops::resolve_ws(&workspace)
             .map_err(|e| eyre!(e))
             .wrap_err_with(|| {
                 format!(
@@ -230,54 +253,55 @@ impl DevEnvironment {
                 )
             })?;
 
-        let package_names: HashMap<_, _> = resolve
-            .iter()
-            .map(|pkg_id| (pkg_id.name(), pkg_id))
-            .collect();
+        for package in package_set.get_many(resolve.iter()).unwrap() {
+            let mut package_build_inputs = HashSet::new();
 
-        if package_names.contains_key("pkg-config") {
-            found_build_inputs.insert("pkg-config".to_string());
-        }
+            if let Some(known_build_inputs) =
+                KNOWN_CRATE_TO_BUILD_INPUTS.get(package.name().as_str())
+            {
+                let known_build_inputs = known_build_inputs
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect::<HashSet<_>>();
+                tracing::debug!(package_name = %package.name(), inputs = %known_build_inputs.iter().join(", "), "Detected known build inputs");
+                found_build_inputs = found_build_inputs
+                    .union(&known_build_inputs)
+                    .cloned()
+                    .collect();
+            }
 
-        if package_names.contains_key("expat-sys") {
-            found_build_inputs.insert("expat".to_string());
-        }
+            // TODO(@hoverbear): Add a `Deserializable` implementor we can get from this.
+            let custom_metadata = match package.manifest().custom_metadata() {
+                Some(custom_metadata) => custom_metadata,
+                None => continue,
+            };
 
-        if package_names.contains_key("freetype-sys") {
-            found_build_inputs.insert("freetype".to_string());
-        }
+            let metadata_table = match custom_metadata {
+                toml_edit::easy::value::Value::Table(metadata_table) => metadata_table,
+                _ => continue,
+            };
 
-        if package_names.contains_key("servo-fontconfig-sys") {
-            found_build_inputs.insert("fontconfig".to_string());
-        }
+            let fsm_table = match metadata_table.get("fsm") {
+                Some(toml_edit::easy::value::Value::Table(metadata_table)) => metadata_table,
+                Some(_) | None => continue,
+            };
 
-        if package_names.contains_key("libsqlite3-sys") {
-            found_build_inputs.insert("sqlite".to_string());
-        }
+            let build_inputs_table = match fsm_table.get("build-inputs") {
+                Some(toml_edit::easy::value::Value::Table(build_inputs_table)) => {
+                    build_inputs_table
+                }
+                Some(_) | None => continue,
+            };
 
-        if package_names.contains_key("libusb1-sys") {
-            found_build_inputs.insert("libusb".to_string());
-        }
-
-        if package_names.contains_key("hidapi") {
-            found_build_inputs.insert("udev".to_string());
-        }
-
-        if package_names.contains_key("openssl-sys") {
-            found_build_inputs.insert("openssl".to_string());
-        }
-
-        if package_names.contains_key("prost-build") {
-            found_build_inputs.insert("protobuf".to_string());
-        }
-
-        if package_names.contains_key("rdkafka-sys") {
-            found_build_inputs.insert("rdkafka".to_string());
-            // FIXME: ugly. Unless the 'dynamic-linking' feature is
-            // set, rdkafka-sys will try to build its own
-            // statically-linked rdkafka from source.
-            self.extra_attrs
-                .insert("CARGO_FEATURE_DYNAMIC_LINKING".to_owned(), "1".to_owned());
+            for (key, _value) in build_inputs_table.iter() {
+                // TODO(@hoverbear): Add version checking
+                package_build_inputs.insert(key.to_string());
+            }
+            tracing::debug!(package_name = %package.name(), inputs = %package_build_inputs.iter().join(", "), "Detected `package.fsm.build-inputs` in `Crate.toml`");
+            found_build_inputs = found_build_inputs
+                .union(&package_build_inputs)
+                .cloned()
+                .collect();
         }
 
         eprintln!(
