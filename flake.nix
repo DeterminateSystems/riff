@@ -1,11 +1,29 @@
 {
   description = "fsm";
 
-  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-22.05";
+
+    # glibc 2.31
+    glibcNixpkgs.url = "github:nixos/nixpkgs/nixos-20.09";
+
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    naersk = {
+      url = "github:nix-community/naersk";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
 
   outputs =
     { self
     , nixpkgs
+    , glibcNixpkgs
+    , fenix
+    , naersk
     , ...
     } @ inputs:
     let
@@ -17,43 +35,65 @@
         inherit system;
         pkgs = import nixpkgs { inherit system; };
       });
+
+      forAllSystemsOldGlibc = f: genAttrs allSystems (system: f {
+        inherit system;
+        pkgs = import glibcNixpkgs { inherit system; };
+      });
+
+      fenixToolchain = system: with fenix.packages.${system};
+        combine [
+          stable.clippy
+          stable.rustc
+          stable.cargo
+          stable.rustfmt
+          stable.rust-src
+        ];
     in
     {
       devShell = forAllSystems ({ system, pkgs, ... }:
+        let
+          toolchain = fenixToolchain system;
+        in
         pkgs.mkShell {
           name = "fsm-shell";
-          RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+
+          RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
+
           buildInputs = with pkgs; [
-            cargo
-            rustc
-            clippy
+            toolchain
+
             codespell
             nixpkgs-fmt
-            rustfmt
             findutils # for xargs
             patchelf
           ];
         });
 
-      packages = forAllSystems
+      packages = forAllSystemsOldGlibc
         ({ system, pkgs, ... }:
+          let
+            naerskLib = pkgs.callPackage naersk {
+              cargo = fenixToolchain system;
+              rustc = fenixToolchain system;
+            };
+          in
           {
-            package = pkgs.rustPlatform.buildRustPackage rec {
+            package = naerskLib.buildPackage rec {
               pname = "fsm";
               version = "unreleased";
               src = self;
 
               nativeBuildInputs = with pkgs; [
-                pkgconfig
-                clippy
+                pkg-config
                 perl # necessary to build the vendored openssl
               ];
 
-              preBuild = ''
-                cargo clippy --all-targets --all-features -- -D warnings
-              '';
-
-              cargoLock.lockFile = ./Cargo.lock;
+              override = { preBuild ? "", ... }: {
+                preBuild = preBuild + ''
+                  logRun "cargo clippy --all-targets --all-features -- -D warnings"
+                '';
+              };
             };
           });
 
