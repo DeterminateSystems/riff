@@ -27,9 +27,10 @@
       genAttrs = names: f: builtins.listToAttrs (map (n: nameValuePair n (f n)) names);
       allSystems = [ "x86_64-linux" "aarch64-linux" "i686-linux" "x86_64-darwin" "aarch64-darwin" ];
 
-      forAllSystems = f: genAttrs allSystems (system: f {
+      forAllSystems = f: genAttrs allSystems (system: f rec {
         inherit system;
         pkgs = import nixpkgs { inherit system; };
+        lib = pkgs.lib;
       });
 
       fenixToolchain = system: with fenix.packages.${system};
@@ -62,7 +63,7 @@
         });
 
       packages = forAllSystems
-        ({ system, pkgs, ... }:
+        ({ system, pkgs, lib, ... }:
           let
             naerskLib = pkgs.callPackage naersk {
               cargo = fenixToolchain system;
@@ -73,6 +74,11 @@
               pname = "fsm";
               version = "unreleased";
               src = self;
+
+              buildInputs = [
+              ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs.darwin.apple_sdk.frameworks; [
+                SystemConfiguration
+              ]);
 
               override = { preBuild ? "", ... }: {
                 preBuild = preBuild + ''
