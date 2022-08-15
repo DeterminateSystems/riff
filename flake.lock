@@ -21,22 +21,6 @@
         "type": "github"
       }
     },
-    "glibcNixpkgs": {
-      "locked": {
-        "lastModified": 1635350005,
-        "narHash": "sha256-tAMJnUwfaDEB2aa31jGcu7R7bzGELM9noc91L2PbVjg=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "1c1f5649bb9c1b0d98637c8c365228f57126f361",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-20.09",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "naersk": {
       "inputs": {
         "nixpkgs": [
@@ -76,7 +60,6 @@
     "root": {
       "inputs": {
         "fenix": "fenix",
-        "glibcNixpkgs": "glibcNixpkgs",
         "naersk": "naersk",
         "nixpkgs": "nixpkgs"
       }

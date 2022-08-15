@@ -4,9 +4,6 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-22.05";
 
-    # glibc 2.31
-    glibcNixpkgs.url = "github:nixos/nixpkgs/nixos-20.09";
-
     fenix = {
       url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -21,7 +18,6 @@
   outputs =
     { self
     , nixpkgs
-    , glibcNixpkgs
     , fenix
     , naersk
     , ...
@@ -29,16 +25,11 @@
     let
       nameValuePair = name: value: { inherit name value; };
       genAttrs = names: f: builtins.listToAttrs (map (n: nameValuePair n (f n)) names);
-      allSystems = [ "x86_64-linux" "aarch64-linux" "i686-linux" "x86_64-darwin" ];
+      allSystems = [ "x86_64-linux" "aarch64-linux" "i686-linux" "x86_64-darwin" "aarch64-darwin" ];
 
       forAllSystems = f: genAttrs allSystems (system: f {
         inherit system;
         pkgs = import nixpkgs { inherit system; };
-      });
-
-      forAllSystemsOldGlibc = f: genAttrs allSystems (system: f {
-        inherit system;
-        pkgs = import glibcNixpkgs { inherit system; };
       });
 
       fenixToolchain = system: with fenix.packages.${system};
@@ -48,6 +39,7 @@
           stable.cargo
           stable.rustfmt
           stable.rust-src
+          targets.x86_64-unknown-linux-musl.stable.rust-std
         ];
     in
     {
@@ -66,28 +58,21 @@
             codespell
             nixpkgs-fmt
             findutils # for xargs
-            patchelf
           ];
         });
 
-      packages = forAllSystemsOldGlibc
+      packages = forAllSystems
         ({ system, pkgs, ... }:
           let
             naerskLib = pkgs.callPackage naersk {
               cargo = fenixToolchain system;
               rustc = fenixToolchain system;
             };
-          in
-          {
-            package = naerskLib.buildPackage rec {
+
+            sharedAttrs = {
               pname = "fsm";
               version = "unreleased";
               src = self;
-
-              nativeBuildInputs = with pkgs; [
-                pkg-config
-                perl # necessary to build the vendored openssl
-              ];
 
               override = { preBuild ? "", ... }: {
                 preBuild = preBuild + ''
@@ -95,8 +80,18 @@
                 '';
               };
             };
+          in
+          {
+            fsm = naerskLib.buildPackage
+              (sharedAttrs // { });
+
+            fsmStatic = naerskLib.buildPackage
+              (sharedAttrs // {
+                CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
+              });
+
           });
 
-      defaultPackage = forAllSystems ({ system, ... }: self.packages.${system}.package);
+      defaultPackage = forAllSystems ({ system, ... }: self.packages.${system}.fsm);
     };
 }
