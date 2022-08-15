@@ -1,21 +1,37 @@
 # fsm
 
-Software written in languages such as Rust often needs some *native
-dependencies* that are not handled by the language's package manager;
-developers are supposed to install these manually, usually via the
-system package manager. `fsm` (Flying Spaghetti Monster) is a tool
-that handles these native dependencies for you. It lets you start a
-shell in which the native dependencies required by your project are
-present automatically.
+`fsm` (Flying Spaghetti Monster) is a tool that automatically provides
+external dependencies for building software projects. When developing
+in a language like Rust, you typically use a language-specific package
+manager like Cargo to handle dependencies. However, these tools often
+don't handle dependencies written in other languages very well, expect
+you to install these via your system package manager, and fail
+mysteriously when they're missing:
 
-`fsm` uses the [Nix package manager](nixos.org/nix/) to fetch or build
-native dependencies, but you do not need to know Nix or write any Nix
-files. Since Nix development shells are transient, you don't have to
-worry about the installation of a dependency breaking anything on your
-system: when you exit the shell, the dependencies are gone.
+```
+   Compiling openssl-sys v0.9.75
+error: failed to run custom build command for `openssl-sys v0.9.75`
+  run pkg_config fail: "`\"pkg-config\" \"--libs\" \"--cflags\"
+    \"openssl\"` did not exit successfully: \n... No package 'openssl' found\n"
+```
+
+It's then up to you to install the missing dependency, which is often
+laborious and error-prone.
+
+`fsm` instead lets you start a shell in which the external
+dependencies required by your project are present automatically. These
+shells are *transient*, meaning that they don't affect anything
+outside the shell. No software is installed globally, so you don't
+have to worry that the installation of a dependency will break
+anything on your system — when you exit the shell, the dependencies
+are gone.
 
 `fsm` currently supports Rust/Cargo-based projects, with support for
 other languages to be added in the future.
+
+Internally, `fsm` uses the [Nix package manager](nixos.org/nix/) to
+fetch or build native dependencies, but you do not need to know Nix or
+write any Nix files.
 
 ## Installation
 
