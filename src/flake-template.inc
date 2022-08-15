@@ -5,8 +5,12 @@
       with import nixpkgs {{ system = "x86_64-linux"; }};
       stdenv.mkDerivation {{
         name = "fsm-shell";
-        buildInputs = [ {} ];
-        {}
+        buildInputs = [ {build_inputs} ];
+        {environment_variables}
+
+        # Done to ensure "__FORIFTY_SOURCE requires compiling with optimization" errors don't fail builds
+        # This was noted in `spirv-tools-sys` and others.
+        hardeningDisable = [ "fortify" ];
       }};
   }};
 }}

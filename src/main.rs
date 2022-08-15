@@ -121,7 +121,7 @@ async fn cmd_shell(shell_args: Shell) -> color_eyre::Result<()> {
                 .code()
                 .map(|x| x.to_string())
                 .unwrap_or_else(|| "unknown".to_string()),
-            std::str::from_utf8(&nix_lock_exit.stdout)?,
+            std::str::from_utf8(&nix_lock_exit.stderr)?,
         ));
     }
 
@@ -160,7 +160,7 @@ fn get_project_dir(project_dir: Option<PathBuf>) -> PathBuf {
 #[derive(Default)]
 struct DevEnvironment {
     build_inputs: HashSet<String>,
-    extra_attrs: HashMap<String, String>,
+    environment_variables: HashMap<String, String>,
 }
 
 impl DevEnvironment {
@@ -168,8 +168,9 @@ impl DevEnvironment {
         // TODO: use rnix for generating Nix?
         format!(
             include_str!("flake-template.inc"),
-            self.build_inputs.iter().join(" "),
-            self.extra_attrs
+            build_inputs = self.build_inputs.iter().join(" "),
+            environment_variables = self
+                .environment_variables
                 .iter()
                 .map(|(name, value)| format!("\"{}\" = \"{}\";", name, value))
                 .join("\n"),
@@ -196,13 +197,26 @@ impl DevEnvironment {
 
     #[tracing::instrument(skip_all, fields(project_dir = %project_dir.display()))]
     async fn add_deps_from_cargo(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
-        // Mapping of `$CRATE_NAME -> $NIXPKGS_NAME`
-        static KNOWN_CRATE_TO_BUILD_INPUTS: Lazy<HashMap<&'static str, HashSet<&'static str>>> =
+        // We do this because of `clippy::type-complexity`
+        struct KnownCrateRegistryValue {
+            build_inputs: HashSet<&'static str>,
+            environment_variables: HashMap<&'static str, &'static str>,
+        }
+        static KNOWN_CRATE_REGISTRY: Lazy<HashMap<&'static str, KnownCrateRegistryValue>> =
             Lazy::new(|| {
                 let mut m = HashMap::new();
                 macro_rules! crate_to_build_inputs {
-                    ($collection:ident, $rust_package:expr, $nix_packages:expr) => {
-                        $collection.insert($rust_package, $nix_packages.into_iter().collect())
+                    ($collection:ident, $rust_package:expr, $build_inputs:expr) => {
+                        crate_to_build_inputs!($collection, $rust_package, $build_inputs, env = []);
+                    };
+                    ($collection:ident, $rust_package:expr, $build_inputs:expr, env = $environment_variables:expr) => {
+                        $collection.insert(
+                            $rust_package,
+                            KnownCrateRegistryValue {
+                                build_inputs: $build_inputs.into_iter().collect(),
+                                environment_variables: $environment_variables.into_iter().collect(),
+                            },
+                        )
                     };
                 }
                 crate_to_build_inputs!(m, "openssl-sys", ["openssl"]);
@@ -215,6 +229,12 @@ impl DevEnvironment {
                 crate_to_build_inputs!(m, "hidapi", ["udev"]);
                 crate_to_build_inputs!(m, "libgit2-sys", ["libgit2"]);
                 crate_to_build_inputs!(m, "rdkafka-sys", ["rdkafka"]);
+                crate_to_build_inputs!(
+                    m,
+                    "clang-sys",
+                    ["llvmPackages.libclang", "llvm"],
+                    env = [("LIBCLANG_PATH", "${llvmPackages.libclang.lib}/lib"),]
+                );
                 m
             });
 
@@ -249,22 +269,42 @@ impl DevEnvironment {
         let stdout = std::str::from_utf8(&output.stdout)?;
         let metadata: CargoMetadata = serde_json::from_str(stdout)?;
 
+        let mut found_envs = HashMap::new();
+        let mut found_build_inputs = HashSet::new();
+        found_build_inputs.insert("rustc".to_string());
+        found_build_inputs.insert("cargo".to_string());
+        found_build_inputs.insert("rustfmt".to_string());
+
         for package in metadata.packages {
             let name = package.name.as_str().unwrap(); // FIXME
-            let mut package_build_inputs: HashSet<String> = HashSet::new();
 
-            if let Some(known_build_inputs) = KNOWN_CRATE_TO_BUILD_INPUTS.get(name) {
+            if let Some(KnownCrateRegistryValue {
+                build_inputs: known_build_inputs,
+                environment_variables: known_envs,
+            }) = KNOWN_CRATE_REGISTRY.get(name)
+            {
                 let known_build_inputs = known_build_inputs
                     .iter()
                     .map(ToString::to_string)
                     .collect::<HashSet<_>>();
 
-                tracing::debug!(package_name = %name, inputs = %known_build_inputs.iter().join(", "), "Detected known build inputs");
+                tracing::debug!(
+                    package_name = %name,
+                    buildInputs = %known_build_inputs.iter().join(", "),
+                    environment_variables = %known_envs.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                    "Detected known crate information"
+                );
                 found_build_inputs = found_build_inputs
                     .union(&known_build_inputs)
                     .cloned()
                     .collect();
+
+                for (known_key, known_value) in known_envs {
+                    found_envs.insert(known_key.to_string(), known_value.to_string());
+                }
             }
+
+            // Attempt to detect `package.fsm.build-inputs` in `Crate.toml`
 
             // TODO(@hoverbear): Add a `Deserializable` implementor we can get from this.
             let metadata_object = match package.metadata {
@@ -277,35 +317,73 @@ impl DevEnvironment {
                 Some(_) | None => continue,
             };
 
-            let build_inputs_object = match fsm_object.get("build-inputs") {
-                Some(serde_json::Value::Object(build_inputs_object)) => build_inputs_object,
-                Some(_) | None => continue,
+            let package_build_inputs = match fsm_object.get("build-inputs") {
+                Some(serde_json::Value::Object(build_inputs_table)) => {
+                    let mut package_build_inputs = HashSet::new();
+                    for (key, _value) in build_inputs_table.iter() {
+                        // TODO(@hoverbear): Add version checking
+                        package_build_inputs.insert(key.to_string());
+                    }
+                    package_build_inputs
+                }
+                Some(_) | None => Default::default(),
             };
 
-            for (key, _value) in build_inputs_object.iter() {
-                // TODO(@hoverbear): Add version checking
-                package_build_inputs.insert(key.to_string());
-            }
+            let package_envs = match fsm_object.get("environment-variables") {
+                Some(serde_json::Value::Object(envs_table)) => {
+                    let mut package_envs = HashMap::new();
+                    for (key, value) in envs_table.iter() {
+                        package_envs.insert(
+                            key.to_string(),
+                            value.as_str().ok_or(eyre!("`package.metadata.fsm.environment-variables` entries must have string values"))?.to_string()
+                        );
+                    }
+                    package_envs
+                }
+                Some(_) | None => Default::default(),
+            };
 
-            tracing::debug!(package_name = %name, inputs = %package_build_inputs.iter().join(", "), "Detected `package.fsm.build-inputs` in `Crate.toml`");
+            tracing::debug!(
+                package_name = %name,
+                buildInputs = %package_build_inputs.iter().join(", "),
+                environment_variables = %package_envs.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                "Detected `package.fsm` in `Crate.toml`"
+            );
             found_build_inputs = found_build_inputs
                 .union(&package_build_inputs)
                 .cloned()
                 .collect();
+            for (package_env_key, package_env_value) in package_envs {
+                found_envs.insert(package_env_key, package_env_value);
+            }
         }
 
         eprintln!(
-            "{check} {lang}: {colored_inputs}",
+            "{check} {lang}: {colored_inputs}{maybe_colored_envs}",
             check = "✓".green(),
             lang = "🦀 rust".bold().red(),
             colored_inputs = {
                 let mut sorted_build_inputs = found_build_inputs.iter().collect::<Vec<_>>();
                 sorted_build_inputs.sort();
                 sorted_build_inputs.iter().map(|v| v.cyan()).join(", ")
+            },
+            maybe_colored_envs = {
+                if !found_envs.is_empty() {
+                    let mut sorted_build_inputs =
+                        found_envs.iter().map(|(k, _)| k).collect::<Vec<_>>();
+                    sorted_build_inputs.sort();
+                    format!(
+                        " ({})",
+                        sorted_build_inputs.iter().map(|v| v.green()).join(", ")
+                    )
+                } else {
+                    "".to_string()
+                }
             }
         );
 
         self.build_inputs = found_build_inputs;
+        self.environment_variables = found_envs;
 
         Ok(())
     }

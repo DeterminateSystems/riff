@@ -3,6 +3,9 @@ name = "fsm"
 version = "0.1.0"
 edition = "2021"
 
+[package.metadata.fsm.environment-variables]
+BOOP="SWOOP"
+
 [dependencies]
 atty = "0.2"
 clap = { version = "3.2.17", features = ["derive"] }
