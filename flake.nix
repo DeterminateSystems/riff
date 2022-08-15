@@ -59,7 +59,7 @@
             codespell
             nixpkgs-fmt
             findutils # for xargs
-          ];
+          ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv ]);
         });
 
       packages = forAllSystems
