@@ -173,6 +173,7 @@ fn get_project_dir(project_dir: Option<PathBuf>) -> PathBuf {
 struct DevEnvironment {
     build_inputs: HashSet<String>,
     environment_variables: HashMap<String, String>,
+    ld_library_path: HashSet<String>,
 }
 
 impl DevEnvironment {
@@ -186,6 +187,17 @@ impl DevEnvironment {
                 .iter()
                 .map(|(name, value)| format!("\"{}\" = \"{}\";", name, value))
                 .join("\n"),
+            ld_library_path = if !self.ld_library_path.is_empty() {
+                format!(
+                    "export LD_LIBRARY_PATH=\"{}\"",
+                    self.ld_library_path
+                        .iter()
+                        .map(|v| format!("${{lib.getLib {v}}}/lib"))
+                        .join(":")
+                )
+            } else {
+                "".to_string()
+            }
         )
     }
 
@@ -213,20 +225,48 @@ impl DevEnvironment {
         struct KnownCrateRegistryValue {
             build_inputs: HashSet<&'static str>,
             environment_variables: HashMap<&'static str, &'static str>,
+            ld_library_path_inputs: HashSet<&'static str>,
         }
         static KNOWN_CRATE_REGISTRY: Lazy<HashMap<&'static str, KnownCrateRegistryValue>> =
             Lazy::new(|| {
                 let mut m = HashMap::new();
                 macro_rules! crate_to_build_inputs {
                     ($collection:ident, $rust_package:expr, $build_inputs:expr) => {
-                        crate_to_build_inputs!($collection, $rust_package, $build_inputs, env = []);
+                        crate_to_build_inputs!(
+                            $collection,
+                            $rust_package,
+                            $build_inputs,
+                            env = [],
+                            ld = []
+                        );
                     };
                     ($collection:ident, $rust_package:expr, $build_inputs:expr, env = $environment_variables:expr) => {
+                        crate_to_build_inputs!(
+                            $collection,
+                            $rust_package,
+                            $build_inputs,
+                            env = $environment_variables,
+                            ld = []
+                        );
+                    };
+                    ($collection:ident, $rust_package:expr, $build_inputs:expr, ld = $ld_library_path_inputs:expr) => {
+                        crate_to_build_inputs!(
+                            $collection,
+                            $rust_package,
+                            $build_inputs,
+                            env = [],
+                            ld = $ld_library_path_inputs
+                        );
+                    };
+                    ($collection:ident, $rust_package:expr, $build_inputs:expr, env = $environment_variables:expr, ld = $ld_library_path_inputs:expr) => {
                         $collection.insert(
                             $rust_package,
                             KnownCrateRegistryValue {
                                 build_inputs: $build_inputs.into_iter().collect(),
                                 environment_variables: $environment_variables.into_iter().collect(),
+                                ld_library_path_inputs: $ld_library_path_inputs
+                                    .into_iter()
+                                    .collect(),
                             },
                         )
                     };
@@ -246,6 +286,19 @@ impl DevEnvironment {
                     "clang-sys",
                     ["llvmPackages.libclang", "llvm"],
                     env = [("LIBCLANG_PATH", "${llvmPackages.libclang.lib}/lib"),]
+                );
+                crate_to_build_inputs!(
+                    m,
+                    "winit",
+                    ["xorg.libX11"],
+                    ld = [
+                        "xorg.libX11",
+                        "xorg.libXcursor",
+                        "xorg.libXrandr",
+                        "xorg.libXi",
+                        "libGL",
+                        "glxinfo"
+                    ]
                 );
                 m
             });
@@ -271,6 +324,7 @@ impl DevEnvironment {
 
         let mut found_envs = HashMap::new();
         let mut found_build_inputs = HashSet::new();
+        let mut found_ld_inputs = HashSet::new();
         found_build_inputs.insert("rustc".to_string());
         found_build_inputs.insert("cargo".to_string());
         found_build_inputs.insert("rustfmt".to_string());
@@ -281,6 +335,7 @@ impl DevEnvironment {
             if let Some(KnownCrateRegistryValue {
                 build_inputs: known_build_inputs,
                 environment_variables: known_envs,
+                ld_library_path_inputs: known_ld_inputs,
             }) = KNOWN_CRATE_REGISTRY.get(&*name)
             {
                 let known_build_inputs = known_build_inputs
@@ -288,6 +343,10 @@ impl DevEnvironment {
                     .map(ToString::to_string)
                     .collect::<HashSet<_>>();
 
+                let known_ld_inputs = known_ld_inputs
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect::<HashSet<_>>();
                 tracing::debug!(
                     package_name = %name,
                     buildInputs = %known_build_inputs.iter().join(", "),
@@ -302,6 +361,11 @@ impl DevEnvironment {
                 for (known_key, known_value) in known_envs {
                     found_envs.insert(known_key.to_string(), known_value.to_string());
                 }
+
+                found_ld_inputs = found_ld_inputs
+                    .union(&known_ld_inputs)
+                    .map(|v| v.to_string())
+                    .collect();
             }
 
             // Attempt to detect `package.fsm.build-inputs` in `Crate.toml`
@@ -338,10 +402,23 @@ impl DevEnvironment {
                 Some(_) | None => Default::default(),
             };
 
+            let package_ld_inputs = match fsm_object.get("LD_LIBRARY_PATH-inputs") {
+                Some(serde_json::Value::Object(ld_table)) => {
+                    let mut package_ld_inputs = HashSet::new();
+                    for (key, _value) in ld_table.iter() {
+                        // TODO(@hoverbear): Add version checking
+                        package_ld_inputs.insert(key.to_string());
+                    }
+                    package_ld_inputs
+                }
+                Some(_) | None => Default::default(),
+            };
+
             tracing::debug!(
                 package_name = %name,
                 buildInputs = %package_build_inputs.iter().join(", "),
                 environment_variables = %package_envs.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                ld_library_path_inputs = %package_ld_inputs.iter().join(", "),
                 "Detected `package.fsm` in `Crate.toml`"
             );
             found_build_inputs = found_build_inputs
@@ -358,7 +435,9 @@ impl DevEnvironment {
             check = "✓".green(),
             lang = "🦀 rust".bold().red(),
             colored_inputs = {
-                let mut sorted_build_inputs = found_build_inputs.iter().collect::<Vec<_>>();
+                let mut sorted_build_inputs = found_build_inputs
+                    .union(&found_ld_inputs)
+                    .collect::<Vec<_>>();
                 sorted_build_inputs.sort();
                 sorted_build_inputs.iter().map(|v| v.cyan()).join(", ")
             },
@@ -379,6 +458,7 @@ impl DevEnvironment {
 
         self.build_inputs = found_build_inputs;
         self.environment_variables = found_envs;
+        self.ld_library_path = found_ld_inputs;
 
         Ok(())
     }
