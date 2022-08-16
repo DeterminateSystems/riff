@@ -1,66 +1,103 @@
 {
   description = "fsm";
 
-  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-22.05";
+
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    naersk = {
+      url = "github:nix-community/naersk";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
 
   outputs =
     { self
     , nixpkgs
+    , fenix
+    , naersk
     , ...
     } @ inputs:
     let
       nameValuePair = name: value: { inherit name value; };
       genAttrs = names: f: builtins.listToAttrs (map (n: nameValuePair n (f n)) names);
-      allSystems = [ "x86_64-linux" "aarch64-linux" "i686-linux" "x86_64-darwin" ];
+      allSystems = [ "x86_64-linux" "aarch64-linux" "i686-linux" "x86_64-darwin" "aarch64-darwin" ];
 
-      forAllSystems = f: genAttrs allSystems (system: f {
+      forAllSystems = f: genAttrs allSystems (system: f rec {
         inherit system;
         pkgs = import nixpkgs { inherit system; };
+        lib = pkgs.lib;
       });
+
+      fenixToolchain = system: with fenix.packages.${system};
+        combine [
+          stable.clippy
+          stable.rustc
+          stable.cargo
+          stable.rustfmt
+          stable.rust-src
+          targets.x86_64-unknown-linux-musl.stable.rust-std
+        ];
     in
     {
       devShell = forAllSystems ({ system, pkgs, ... }:
+        let
+          toolchain = fenixToolchain system;
+        in
         pkgs.mkShell {
           name = "fsm-shell";
-          RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+
+          RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
+
           buildInputs = with pkgs; [
-            cargo
-            rustc
-            clippy
+            toolchain
+
             codespell
             nixpkgs-fmt
-            rustfmt
             findutils # for xargs
-            pkgconfig
-            openssl
-          ];
+          ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv ]);
         });
 
       packages = forAllSystems
-        ({ system, pkgs, ... }:
-          {
-            package = pkgs.rustPlatform.buildRustPackage rec {
+        ({ system, pkgs, lib, ... }:
+          let
+            naerskLib = pkgs.callPackage naersk {
+              cargo = fenixToolchain system;
+              rustc = fenixToolchain system;
+            };
+
+            sharedAttrs = {
               pname = "fsm";
               version = "unreleased";
               src = self;
 
-              nativeBuildInputs = with pkgs; [
-                pkgconfig
-                clippy
-              ];
+              buildInputs = [
+              ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs.darwin.apple_sdk.frameworks; [
+                SystemConfiguration
+              ]);
 
-              buildInputs = with pkgs; [
-                openssl
-              ];
-
-              preBuild = ''
-                cargo clippy --all-targets --all-features -- -D warnings
-              '';
-
-              cargoLock.lockFile = ./Cargo.lock;
+              override = { preBuild ? "", ... }: {
+                preBuild = preBuild + ''
+                  logRun "cargo clippy --all-targets --all-features -- -D warnings"
+                '';
+              };
             };
+          in
+          {
+            fsm = naerskLib.buildPackage
+              (sharedAttrs // { });
+
+            fsmStatic = naerskLib.buildPackage
+              (sharedAttrs // {
+                CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
+              });
+
           });
 
-      defaultPackage = forAllSystems ({ system, ... }: self.packages.${system}.package);
+      defaultPackage = forAllSystems ({ system, ... }: self.packages.${system}.fsm);
     };
 }

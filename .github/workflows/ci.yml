@@ -26,8 +26,30 @@ jobs:
         extra_nix_config: |
           access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
     # Runs clippy as part of the preBuild.
-    - name: Build
-      run: nix build -L
+    - name: Build fsm
+      run: nix build .#packages.x86_64-linux.fsm -L
+    - name: Build fsmStatic
+      run: nix build .#packages.x86_64-linux.fsmStatic -L
+    - name: Create artifact for fsmStatic
+      uses: actions/upload-artifact@v3
+      with:
+        name: fsm-x86_64-linux
+        path: |
+          result/bin/fsm
+
+  FsmShell:
+    needs: Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Download prebuilt fsm
+      uses: actions/download-artifact@v3
+      with:
+        name: fsm-x86_64-linux
+    - name: Run `fsm --help`
+      run: |
+        chmod +x fsm
+        ./fsm --help
 
   Spelling:
     runs-on: ubuntu-latest
