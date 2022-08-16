@@ -35,6 +35,18 @@ struct Shell {
     project_dir: Option<PathBuf>,
 }
 
+#[derive(serde::Deserialize)]
+struct CargoMetadata {
+    packages: Vec<Package>,
+}
+
+// TODO: further specify the type of the serde_json::Value?
+#[derive(serde::Deserialize)]
+struct Package {
+    name: String,
+    metadata: HashMap<String, HashMap<String, serde_json::Value>>,
+}
+
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
     color_eyre::config::HookBuilder::default().install()?;
@@ -251,19 +263,7 @@ impl DevEnvironment {
 
         let output = cmd.output().await?;
         if !output.status.success() {
-            todo!("statuscode error");
-        }
-
-        #[derive(serde::Deserialize)]
-        struct CargoMetadata {
-            packages: Vec<Package>,
-        }
-
-        // TODO: impl deserialize manually so we can make name be a String and metadata be an Object?
-        #[derive(serde::Deserialize)]
-        struct Package {
-            name: serde_json::Value,
-            metadata: serde_json::Value,
+            return Err(eyre!("`cargo metadata` failed to execute"));
         }
 
         let stdout = std::str::from_utf8(&output.stdout)?;
@@ -276,12 +276,12 @@ impl DevEnvironment {
         found_build_inputs.insert("rustfmt".to_string());
 
         for package in metadata.packages {
-            let name = package.name.as_str().unwrap(); // FIXME
+            let name = package.name;
 
             if let Some(KnownCrateRegistryValue {
                 build_inputs: known_build_inputs,
                 environment_variables: known_envs,
-            }) = KNOWN_CRATE_REGISTRY.get(name)
+            }) = KNOWN_CRATE_REGISTRY.get(&*name)
             {
                 let known_build_inputs = known_build_inputs
                     .iter()
@@ -307,14 +307,9 @@ impl DevEnvironment {
             // Attempt to detect `package.fsm.build-inputs` in `Crate.toml`
 
             // TODO(@hoverbear): Add a `Deserializable` implementor we can get from this.
-            let metadata_object = match package.metadata {
-                serde_json::Value::Object(metadata_object) => metadata_object,
-                _ => continue,
-            };
-
-            let fsm_object = match metadata_object.get("fsm") {
-                Some(serde_json::Value::Object(fsm_object)) => fsm_object,
-                Some(_) | None => continue,
+            let fsm_object = match package.metadata.get("fsm") {
+                Some(fsm_object) => fsm_object,
+                None => continue,
             };
 
             let package_build_inputs = match fsm_object.get("build-inputs") {
