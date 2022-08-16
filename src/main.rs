@@ -478,10 +478,10 @@ impl DevEnvironment {
             };
 
             tracing::debug!(
-                package_name = %name,
-                buildInputs = %package_build_inputs.iter().join(", "),
-                environment_variables = %package_envs.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
-                ld_library_path_inputs = %package_ld_inputs.iter().join(", "),
+                package = %name,
+                "build-inputs" = %package_build_inputs.iter().join(", "),
+                "environment-variables" = %package_envs.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                "LD_LIBRARY_PATH-inputs" = %package_ld_inputs.iter().join(", "),
                 "Detected `package.fsm` in `Crate.toml`"
             );
             found_build_inputs = found_build_inputs
