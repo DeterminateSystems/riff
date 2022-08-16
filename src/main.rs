@@ -40,10 +40,10 @@ struct CargoMetadata {
     packages: Vec<Package>,
 }
 
-// TODO: impl deserialize manually so we can make name be a String and metadata be an Object?
+// TODO: impl deserialize manually so we can make metadata be an Object?
 #[derive(serde::Deserialize)]
 struct Package {
-    name: serde_json::Value,
+    name: String,
     metadata: serde_json::Value,
 }
 
@@ -276,15 +276,12 @@ impl DevEnvironment {
         found_build_inputs.insert("rustfmt".to_string());
 
         for package in metadata.packages {
-            let name = package
-                .name
-                .as_str()
-                .ok_or_else(|| eyre!("Crate did not have a name or it was not of type String"))?;
+            let name = package.name;
 
             if let Some(KnownCrateRegistryValue {
                 build_inputs: known_build_inputs,
                 environment_variables: known_envs,
-            }) = KNOWN_CRATE_REGISTRY.get(name)
+            }) = KNOWN_CRATE_REGISTRY.get(&*name)
             {
                 let known_build_inputs = known_build_inputs
                     .iter()
