@@ -35,6 +35,18 @@ struct Shell {
     project_dir: Option<PathBuf>,
 }
 
+#[derive(serde::Deserialize)]
+struct CargoMetadata {
+    packages: Vec<Package>,
+}
+
+// TODO: impl deserialize manually so we can make name be a String and metadata be an Object?
+#[derive(serde::Deserialize)]
+struct Package {
+    name: serde_json::Value,
+    metadata: serde_json::Value,
+}
+
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
     color_eyre::config::HookBuilder::default().install()?;
@@ -251,19 +263,7 @@ impl DevEnvironment {
 
         let output = cmd.output().await?;
         if !output.status.success() {
-            todo!("statuscode error");
-        }
-
-        #[derive(serde::Deserialize)]
-        struct CargoMetadata {
-            packages: Vec<Package>,
-        }
-
-        // TODO: impl deserialize manually so we can make name be a String and metadata be an Object?
-        #[derive(serde::Deserialize)]
-        struct Package {
-            name: serde_json::Value,
-            metadata: serde_json::Value,
+            return Err(eyre!("`cargo metadata` failed to execute"));
         }
 
         let stdout = std::str::from_utf8(&output.stdout)?;
@@ -276,7 +276,10 @@ impl DevEnvironment {
         found_build_inputs.insert("rustfmt".to_string());
 
         for package in metadata.packages {
-            let name = package.name.as_str().unwrap(); // FIXME
+            let name = package
+                .name
+                .as_str()
+                .ok_or_else(|| eyre!("Crate did not have a name or it was not of type String"))?;
 
             if let Some(KnownCrateRegistryValue {
                 build_inputs: known_build_inputs,
