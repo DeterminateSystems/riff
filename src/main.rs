@@ -362,6 +362,8 @@ impl DevEnvironment {
                     found_envs.insert(known_key.to_string(), known_value.to_string());
                 }
 
+                // Attempt to detect `package.fsm.build-inputs` in `Crate.toml`
+
                 found_ld_inputs = found_ld_inputs
                     .union(&known_ld_inputs)
                     .map(|v| v.to_string())
