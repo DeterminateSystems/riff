@@ -40,11 +40,11 @@ struct CargoMetadata {
     packages: Vec<Package>,
 }
 
-// TODO: impl deserialize manually so we can make metadata be an Object?
+// TODO: further specify the type of the serde_json::Value?
 #[derive(serde::Deserialize)]
 struct Package {
     name: String,
-    metadata: serde_json::Value,
+    metadata: HashMap<String, HashMap<String, serde_json::Value>>,
 }
 
 #[tokio::main]
@@ -307,14 +307,9 @@ impl DevEnvironment {
             // Attempt to detect `package.fsm.build-inputs` in `Crate.toml`
 
             // TODO(@hoverbear): Add a `Deserializable` implementor we can get from this.
-            let metadata_object = match package.metadata {
-                serde_json::Value::Object(metadata_object) => metadata_object,
-                _ => continue,
-            };
-
-            let fsm_object = match metadata_object.get("fsm") {
-                Some(serde_json::Value::Object(fsm_object)) => fsm_object,
-                Some(_) | None => continue,
+            let fsm_object = match package.metadata.get("fsm") {
+                Some(fsm_object) => fsm_object,
+                None => continue,
             };
 
             let package_build_inputs = match fsm_object.get("build-inputs") {
