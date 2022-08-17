@@ -7,7 +7,7 @@ use crate::dev_env::DevEnvironment;
 /// A registry of known mappings from language specific dependencies to fsm settings
 #[derive(Deserialize, Default, Clone)]
 pub struct DependencyRegistry {
-    version: usize, // Checked for ABI compat
+    pub(crate) version: usize, // Checked for ABI compat
     #[serde(default)]
     pub(crate) language_rust: RustDependencyRegistry,
 }
@@ -44,13 +44,26 @@ pub(crate) enum TryApplyError {
 
 impl RustDependencyConfiguration {
     pub(crate) fn try_apply(self, dev_env: &mut DevEnvironment) -> Result<(), TryApplyError> {
-        dev_env.build_inputs = dev_env.build_inputs.union(&self.build_inputs).cloned().collect();
+        dev_env.build_inputs = dev_env
+            .build_inputs
+            .union(&self.build_inputs)
+            .cloned()
+            .collect();
         for (ref env_key, ref env_val) in self.environment_variables {
-            if let Some(_) = dev_env.environment_variables.insert(env_key.clone(), env_val.clone()) {
-                return Err(TryApplyError::DuplicateEnvironmentVariables(env_key.clone()))
+            if let Some(_) = dev_env
+                .environment_variables
+                .insert(env_key.clone(), env_val.clone())
+            {
+                return Err(TryApplyError::DuplicateEnvironmentVariables(
+                    env_key.clone(),
+                ));
             }
         }
-        dev_env.ld_library_path = dev_env.ld_library_path.union(&self.ld_library_path_inputs).cloned().collect();
+        dev_env.ld_library_path = dev_env
+            .ld_library_path
+            .union(&self.ld_library_path_inputs)
+            .cloned()
+            .collect();
         Ok(())
     }
 }

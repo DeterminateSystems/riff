@@ -9,7 +9,7 @@ use owo_colors::OwoColorize;
 use tokio::process::Command;
 
 use crate::cargo_metadata::CargoMetadata;
-use crate::dependency_registry::{DependencyRegistry, RustDependencyConfiguration};
+use crate::dependency_registry::DependencyRegistry;
 
 #[derive(Default)]
 pub struct DevEnvironment {
@@ -91,14 +91,16 @@ impl DevEnvironment {
 
         let registry: DependencyRegistry = serde_json::from_str(include_str!("../registry.json"))
             .wrap_err("Parsing `registry.json`")?;
+        if registry.version != 1 {
+            return Err(eyre!("Wrong registry version"));
+        }
 
         registry.language_rust.default.try_apply(self)?;
 
         for package in metadata.packages {
             let name = package.name;
 
-            if let Some(dep_config) = registry.language_rust.dependencies.get(name.as_str())
-            {
+            if let Some(dep_config) = registry.language_rust.dependencies.get(name.as_str()) {
                 tracing::debug!(
                     package_name = %name,
                     buildInputs = %dep_config.build_inputs.iter().join(", "),
@@ -134,7 +136,8 @@ impl DevEnvironment {
             check = "✓".green(),
             lang = "🦀 rust".bold().red(),
             colored_inputs = {
-                let mut sorted_build_inputs = self.build_inputs
+                let mut sorted_build_inputs = self
+                    .build_inputs
                     .union(&self.ld_library_path)
                     .collect::<Vec<_>>();
                 sorted_build_inputs.sort();
@@ -142,8 +145,11 @@ impl DevEnvironment {
             },
             maybe_colored_envs = {
                 if !self.environment_variables.is_empty() {
-                    let mut sorted_build_inputs =
-                        self.environment_variables.iter().map(|(k, _)| k).collect::<Vec<_>>();
+                    let mut sorted_build_inputs = self
+                        .environment_variables
+                        .iter()
+                        .map(|(k, _)| k)
+                        .collect::<Vec<_>>();
                     sorted_build_inputs.sort();
                     format!(
                         " ({})",
