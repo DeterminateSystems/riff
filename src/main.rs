@@ -37,14 +37,28 @@ struct Shell {
 
 #[derive(serde::Deserialize)]
 struct CargoMetadata {
-    packages: Vec<Package>,
+    packages: Vec<CargoMetadataPackage>,
 }
 
-// TODO: further specify the type of the serde_json::Value?
 #[derive(serde::Deserialize)]
-struct Package {
+struct CargoMetadataPackage {
     name: String,
-    metadata: Option<HashMap<String, HashMap<String, serde_json::Value>>>,
+    metadata: Option<FsmMetadata>,
+}
+
+#[derive(serde::Deserialize)]
+struct FsmMetadata {
+    fsm: Option<Fsm>,
+}
+
+#[derive(serde::Deserialize)]
+struct Fsm {
+    #[serde(rename = "build-inputs")]
+    build_inputs: Option<HashMap<String, String>>,
+    #[serde(rename = "environment-variables")]
+    environment_variables: Option<HashMap<String, String>>,
+    #[serde(rename = "LD_LIBRARY_PATH-inputs")]
+    ld_library_path_inputs: Option<HashMap<String, String>>,
 }
 
 #[tokio::main]
@@ -418,20 +432,18 @@ impl DevEnvironment {
                 found_ld_inputs = found_ld_inputs.union(&known_ld_inputs).cloned().collect();
             }
 
-            // Attempt to detect `package.fsm.build-inputs` in `Crate.toml`
-            let metadata = match package.metadata {
-                Some(metadata) => metadata,
+            let metadata_object = match package.metadata {
+                Some(metadata_object) => metadata_object,
                 None => continue,
             };
 
-            // TODO(@hoverbear): Add a `Deserializable` implementor we can get from this.
-            let fsm_object = match metadata.get("fsm") {
+            let fsm_object = match metadata_object.fsm {
                 Some(fsm_object) => fsm_object,
                 None => continue,
             };
 
-            let package_build_inputs = match fsm_object.get("build-inputs") {
-                Some(serde_json::Value::Object(build_inputs_table)) => {
+            let package_build_inputs = match &fsm_object.build_inputs {
+                Some(build_inputs_table) => {
                     let mut package_build_inputs = HashSet::new();
                     for (key, _value) in build_inputs_table.iter() {
                         // TODO(@hoverbear): Add version checking
@@ -439,25 +451,22 @@ impl DevEnvironment {
                     }
                     package_build_inputs
                 }
-                Some(_) | None => Default::default(),
+                None => Default::default(),
             };
 
-            let package_envs = match fsm_object.get("environment-variables") {
-                Some(serde_json::Value::Object(envs_table)) => {
+            let package_envs = match &fsm_object.environment_variables {
+                Some(envs_table) => {
                     let mut package_envs = HashMap::new();
                     for (key, value) in envs_table.iter() {
-                        package_envs.insert(
-                            key.to_string(),
-                            value.as_str().ok_or(eyre!("`package.metadata.fsm.environment-variables` entries must have string values"))?.to_string()
-                        );
+                        package_envs.insert(key.to_string(), value.to_string());
                     }
                     package_envs
                 }
-                Some(_) | None => Default::default(),
+                None => Default::default(),
             };
 
-            let package_ld_inputs = match fsm_object.get("LD_LIBRARY_PATH-inputs") {
-                Some(serde_json::Value::Object(ld_table)) => {
+            let package_ld_inputs = match &fsm_object.ld_library_path_inputs {
+                Some(ld_table) => {
                     let mut package_ld_inputs = HashSet::new();
                     for (key, _value) in ld_table.iter() {
                         // TODO(@hoverbear): Add version checking
@@ -465,14 +474,14 @@ impl DevEnvironment {
                     }
                     package_ld_inputs
                 }
-                Some(_) | None => Default::default(),
+                None => Default::default(),
             };
 
             tracing::debug!(
-                package_name = %name,
-                buildInputs = %package_build_inputs.iter().join(", "),
-                environment_variables = %package_envs.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
-                ld_library_path_inputs = %package_ld_inputs.iter().join(", "),
+                package = %name,
+                "build-inputs" = %package_build_inputs.iter().join(", "),
+                "environment-variables" = %package_envs.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                "LD_LIBRARY_PATH-inputs" = %package_ld_inputs.iter().join(", "),
                 "Detected `package.fsm` in `Crate.toml`"
             );
             found_build_inputs = found_build_inputs
