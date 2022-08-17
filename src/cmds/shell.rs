@@ -25,7 +25,6 @@ impl Shell {
             Some(dir) => dir,
             None => std::env::current_dir().wrap_err("Current working directory was invalid")?,
         };
-
         tracing::debug!("Project directory is '{}'.", project_dir.display());
 
         let mut dev_env = DevEnvironment::default();
