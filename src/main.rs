@@ -44,7 +44,7 @@ struct CargoMetadata {
 #[derive(serde::Deserialize)]
 struct Package {
     name: String,
-    metadata: HashMap<String, HashMap<String, serde_json::Value>>,
+    metadata: Option<HashMap<String, HashMap<String, serde_json::Value>>>,
 }
 
 #[tokio::main]
@@ -189,7 +189,7 @@ impl DevEnvironment {
                 .join("\n"),
             ld_library_path = if !self.ld_library_path.is_empty() {
                 format!(
-                    "export LD_LIBRARY_PATH=\"{}\"",
+                    "\"LD_LIBRARY_PATH\" = \"{}\";",
                     self.ld_library_path
                         .iter()
                         .map(|v| format!("${{lib.getLib {v}}}/lib"))
@@ -371,9 +371,13 @@ impl DevEnvironment {
             }
 
             // Attempt to detect `package.fsm.build-inputs` in `Crate.toml`
+            let metadata = match package.metadata {
+                Some(metadata) => metadata,
+                None => continue,
+            };
 
             // TODO(@hoverbear): Add a `Deserializable` implementor we can get from this.
-            let fsm_object = match package.metadata.get("fsm") {
+            let fsm_object = match metadata.get("fsm") {
                 Some(fsm_object) => fsm_object,
                 None => continue,
             };

@@ -8,9 +8,7 @@
         buildInputs = [ {build_inputs} ];
         {environment_variables}
 
-        shellHook = ''
-          {ld_library_path}
-        '';
+        {ld_library_path}
       }};
   }};
 }}
