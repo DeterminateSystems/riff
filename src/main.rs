@@ -52,9 +52,10 @@ struct FsmMetadata {
 }
 
 #[derive(serde::Deserialize)]
-#[serde(rename_all = "kebab-case")]
 struct Fsm {
+    #[serde(rename = "build-inputs")]
     build_inputs: Option<HashMap<String, String>>,
+    #[serde(rename = "environment-variables")]
     environment_variables: Option<HashMap<String, String>>,
     #[serde(rename = "LD_LIBRARY_PATH-inputs")]
     ld_library_path_inputs: Option<HashMap<String, String>>,
