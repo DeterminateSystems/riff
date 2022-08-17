@@ -86,7 +86,6 @@ impl Shell {
 
         // At this point we have handed off to the user shell. The next lines run after the user CTRL+D's out.
 
-        // TODO(@cole-h): should this function return a Result<Option<i32>>, instead of `std::process::exit`ing?
         if let Some(code) = nix_develop_exit.status.code() {
             // If the user returns, say, an EOF, we return the same code up
             std::process::exit(code);
