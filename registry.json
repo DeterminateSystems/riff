@@ -1,0 +1,151 @@
+{
+    "version": 1,
+    "language_rust": {
+        "default": {
+            "build_inputs": [ "rustc", "cargo", "rustfmt" ]
+        },
+        "dependencies": {
+            "ash": {
+                "build_inputs": [ "vulkan-loader", "vulkan-tools", "vulkan-headers", "vulkan-validation-layers" ],
+                "LD_LIBRARY_PATH_inputs": [ "vulkan-loader" ]
+            },
+            "openssl-sys": {
+                "build_inputs": [ "openssl" ]
+            },
+            "alsa-sys": {
+                "build_inputs": [ "alsa-lib" ]
+            },
+            "atk-sys": {
+                "build_inputs": [ "atk" ]
+            },
+            "bindgen": {
+                "build_inputs": [ "rustPlatform.bindgenHook" ]
+            },
+            "bzip2-sys": {
+                "build_inputs": [ "bzip2" ]
+            },
+            "cairo-sys-rs": {
+                "build_inputs": [ "cairo" ]
+            },
+            "clang-sys": {
+                "build_inputs": [ "llvmPackages.libclang", "llvm" ],
+                "environment_variables": {
+                    "LIBCLANG_PATH": "${llvmPackages.libclang.lib}/lib"
+                }
+            },
+            "curl-sys": {
+                "build_inputs": [ "curl" ]
+            },
+            "egl": {
+                "build_inputs": [ "libGL" ]
+            },
+            "expat-sys": {
+                "build_inputs": [ "expat" ]
+            },
+            "freetype-sys": {
+                "build_inputs": [ "freetype" ]
+            },
+            "gdk-pixbuf-sys": {
+                "build_inputs": [ "gdk-pixbuf" ]
+            },
+            "gdk-sys": {
+                "build_inputs": [ "wrapGAppsHook", "gtk3" ]
+            },
+            "gio-sys": {
+                "build_inputs": [ "glib" ]
+            },
+            "gstreamer-audio-sys": {
+                "build_inputs": [ "gst_all_1.gst-plugins-base" ]
+            },
+            "gstreamer-base-sys": {
+                "build_inputs": [ "gst_all_1.gstreamer" ]
+            },
+            "gtk4-sys": {
+                "build_inputs": [ "gtk4" ]
+            },
+            "hidapi": {
+                "build_inputs": [ "udev" ]
+            },
+            "libadwaita-sys": {
+                "build_inputs": [ "libadwaita" ]
+            },
+            "libdbus-sys": {
+                "build_inputs": [ "dbus" ]
+            },
+            "libgit2-sys": {
+                "build_inputs": [ "libgit2" ]
+            },
+            "libshumate-sys": {
+                "build_inputs": [ "libshumate" ]
+            },
+            "libsqlite3-sys": {
+                "build_inputs": [ "sqlite" ]
+            },
+            "libudev-sys": {
+                "build_inputs": [ "eudev" ]
+            },
+            "libusb1-sys": {
+                "build_inputs": [ "libusb" ]
+            },
+            "libz-sys": {
+                "build_inputs": [ "zlib", "cmake" ]
+            },
+            "pango-sys": {
+                "build_inputs": [ "pango" ]
+            },
+            "pkg-config": {
+                "build_inputs": [ "pkg-config" ]
+            },
+            "prost": {
+                "build_inputs": [ "cmake" ]
+            },
+            "qt_3d_render": {
+                "build_inputs": [ "libGL" ]
+            },
+            "qt_gui": {
+                "build_inputs": [ "qt5.full" ]
+            },
+            "rdkafka-sys": {
+                "build_inputs": [ "rdkafka", "cyrus_sasl" ]
+            },
+            "servo-fontconfig-sys": {
+                "build_inputs": [ "fontconfig" ]
+            },
+            "smithay-client-toolkit": {
+                "build_inputs": [ "libxkbcommon", "pkg-config" ]
+            },
+            "spirv-tools-sys": {
+                "build_inputs": [ "spirv-tools" ]
+            },
+            "wayland-sys": {
+                "build_inputs": [ "wayland" ]
+            },
+            "wgpu-hal": {
+                "environment_variables": {
+                    "ALSA_PLUGIN_DIR": "${pkgs.symlinkJoin { name = \"merged-alsa-plugins\"; paths = with pkgs; [ alsaPlugins pipewire.lib ]; }}/lib/alsa-lib"
+                },
+                "LD_LIBRARY_PATH_inputs": ["libGL", "spirv-tools", "vulkan-tools", "vulkan-loader", "vulkan-headers", "vulkan-extension-layer", "vulkan-validation-layers", "mesa", "mesa_drivers", "alsaPlugins", "pipewire"]
+            },
+            "winit": {
+                "build_inputs": ["xorg.libX11"],
+                "LD_LIBRARY_PATH_inputs": [
+                    "xorg.libX11",
+                    "xorg.libXcursor",
+                    "xorg.libXrandr",
+                    "xorg.libXi",
+                    "libGL",
+                    "glxinfo"
+                ]
+            },
+            "xcb": {
+                "build_inputs": ["xorg.libxcb" ]
+            },
+            "xkbcommon-sys": {
+                "build_inputs": ["libxkbcommon"]
+            },
+            "zstd-sys": {
+                "build_inputs": ["zlib", "clang" ]
+            }
+        }
+    }
+}

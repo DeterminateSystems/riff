@@ -1,7 +1,7 @@
 mod cargo_metadata;
 mod cmds;
 mod dev_env;
-mod registry;
+mod dependency_registry;
 
 use std::error::Error;
 

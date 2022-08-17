@@ -9,7 +9,7 @@ use owo_colors::OwoColorize;
 use tokio::process::Command;
 
 use crate::cargo_metadata::CargoMetadata;
-use crate::registry::{KnownCrateRegistryValue, KNOWN_CRATE_REGISTRY};
+use crate::dependency_registry::{DependencyRegistry, RustDependencyConfiguration};
 
 #[derive(Default)]
 pub struct DevEnvironment {
@@ -89,22 +89,20 @@ impl DevEnvironment {
             "Unable to parse output produced by `cargo metadata` into our desired structure",
         )?;
 
-        let mut found_build_inputs = HashSet::new();
-        let mut found_envs = HashMap::new();
-        let mut found_ld_inputs = HashSet::new();
+        let registry: DependencyRegistry = serde_json::from_str(include_str!("../registry.json")).wrap_err("Parsing `registry.json`")?;
 
-        found_build_inputs.insert("rustc".to_string());
-        found_build_inputs.insert("cargo".to_string());
-        found_build_inputs.insert("rustfmt".to_string());
+        let mut found_build_inputs = registry.language_rust.default.build_inputs;
+        let mut found_envs = registry.language_rust.default.environment_variables;
+        let mut found_ld_inputs = registry.language_rust.default.ld_library_path_inputs;
 
         for package in metadata.packages {
             let name = package.name;
 
-            if let Some(KnownCrateRegistryValue {
+            if let Some(RustDependencyConfiguration {
                 build_inputs: known_build_inputs,
                 environment_variables: known_envs,
                 ld_library_path_inputs: known_ld_inputs,
-            }) = KNOWN_CRATE_REGISTRY.get(name.as_str())
+            }) = registry.language_rust.dependencies.get(name.as_str())
             {
                 let known_build_inputs = known_build_inputs
                     .iter()
