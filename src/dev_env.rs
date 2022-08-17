@@ -13,9 +13,9 @@ use crate::dependency_registry::{DependencyRegistry, RustDependencyConfiguration
 
 #[derive(Default)]
 pub struct DevEnvironment {
-    build_inputs: HashSet<String>,
-    environment_variables: HashMap<String, String>,
-    ld_library_path: HashSet<String>,
+    pub(crate) build_inputs: HashSet<String>,
+    pub(crate) environment_variables: HashMap<String, String>,
+    pub(crate) ld_library_path: HashSet<String>,
 }
 
 // TODO(@cole-h): should this become a trait that the various languages we may support have to implement?
@@ -92,44 +92,21 @@ impl DevEnvironment {
         let registry: DependencyRegistry = serde_json::from_str(include_str!("../registry.json"))
             .wrap_err("Parsing `registry.json`")?;
 
-        let mut found_build_inputs = registry.language_rust.default.build_inputs;
-        let mut found_envs = registry.language_rust.default.environment_variables;
-        let mut found_ld_inputs = registry.language_rust.default.ld_library_path_inputs;
+        registry.language_rust.default.try_apply(self)?;
 
         for package in metadata.packages {
             let name = package.name;
 
-            if let Some(RustDependencyConfiguration {
-                build_inputs: known_build_inputs,
-                environment_variables: known_envs,
-                ld_library_path_inputs: known_ld_inputs,
-            }) = registry.language_rust.dependencies.get(name.as_str())
+            if let Some(dep_config) = registry.language_rust.dependencies.get(name.as_str())
             {
-                let known_build_inputs = known_build_inputs
-                    .iter()
-                    .map(ToString::to_string)
-                    .collect::<HashSet<_>>();
-                let known_ld_inputs = known_ld_inputs
-                    .iter()
-                    .map(ToString::to_string)
-                    .collect::<HashSet<_>>();
-
                 tracing::debug!(
                     package_name = %name,
-                    buildInputs = %known_build_inputs.iter().join(", "),
-                    environment_variables = %known_envs.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                    buildInputs = %dep_config.build_inputs.iter().join(", "),
+                    environment_variables = %dep_config.environment_variables.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                    LD_LIBRARY_PATH = %dep_config.ld_library_path_inputs.iter().join(", "),
                     "Detected known crate information"
                 );
-                found_build_inputs = found_build_inputs
-                    .union(&known_build_inputs)
-                    .cloned()
-                    .collect();
-
-                for (known_key, known_value) in known_envs {
-                    found_envs.insert(known_key.to_string(), known_value.to_string());
-                }
-
-                found_ld_inputs = found_ld_inputs.union(&known_ld_inputs).cloned().collect();
+                dep_config.clone().try_apply(self)?;
             }
 
             let metadata_object = match package.metadata {
@@ -137,63 +114,19 @@ impl DevEnvironment {
                 None => continue,
             };
 
-            let fsm_object = match metadata_object.fsm {
+            let dep_config = match metadata_object.fsm {
                 Some(fsm_object) => fsm_object,
                 None => continue,
             };
 
-            let package_build_inputs = match &fsm_object.build_inputs {
-                Some(build_inputs_table) => {
-                    let mut package_build_inputs = HashSet::new();
-                    for (key, _value) in build_inputs_table.iter() {
-                        // TODO(@hoverbear): Add version checking
-                        package_build_inputs.insert(key.to_string());
-                    }
-                    package_build_inputs
-                }
-                None => Default::default(),
-            };
-
-            let package_envs = match &fsm_object.environment_variables {
-                Some(envs_table) => {
-                    let mut package_envs = HashMap::new();
-                    for (key, value) in envs_table.iter() {
-                        package_envs.insert(key.to_string(), value.to_string());
-                    }
-                    package_envs
-                }
-                None => Default::default(),
-            };
-
-            let package_ld_inputs = match &fsm_object.ld_library_path_inputs {
-                Some(ld_table) => {
-                    let mut package_ld_inputs = HashSet::new();
-                    for (key, _value) in ld_table.iter() {
-                        // TODO(@hoverbear): Add version checking
-                        package_ld_inputs.insert(key.to_string());
-                    }
-                    package_ld_inputs
-                }
-                None => Default::default(),
-            };
-
             tracing::debug!(
                 package = %name,
-                "build-inputs" = %package_build_inputs.iter().join(", "),
-                "environment-variables" = %package_envs.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
-                "LD_LIBRARY_PATH-inputs" = %package_ld_inputs.iter().join(", "),
+                "build-inputs" = %dep_config.build_inputs.iter().join(", "),
+                "environment-variables" = %dep_config.environment_variables.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                "LD_LIBRARY_PATH-inputs" = %dep_config.ld_library_path_inputs.iter().join(", "),
                 "Detected `package.fsm` in `Crate.toml`"
             );
-            found_build_inputs = found_build_inputs
-                .union(&package_build_inputs)
-                .cloned()
-                .collect();
-
-            for (package_env_key, package_env_value) in package_envs {
-                found_envs.insert(package_env_key, package_env_value);
-            }
-
-            found_ld_inputs = found_ld_inputs.union(&package_ld_inputs).cloned().collect();
+            dep_config.try_apply(self)?;
         }
 
         eprintln!(
@@ -201,16 +134,16 @@ impl DevEnvironment {
             check = "✓".green(),
             lang = "🦀 rust".bold().red(),
             colored_inputs = {
-                let mut sorted_build_inputs = found_build_inputs
-                    .union(&found_ld_inputs)
+                let mut sorted_build_inputs = self.build_inputs
+                    .union(&self.ld_library_path)
                     .collect::<Vec<_>>();
                 sorted_build_inputs.sort();
                 sorted_build_inputs.iter().map(|v| v.cyan()).join(", ")
             },
             maybe_colored_envs = {
-                if !found_envs.is_empty() {
+                if !self.environment_variables.is_empty() {
                     let mut sorted_build_inputs =
-                        found_envs.iter().map(|(k, _)| k).collect::<Vec<_>>();
+                        self.environment_variables.iter().map(|(k, _)| k).collect::<Vec<_>>();
                     sorted_build_inputs.sort();
                     format!(
                         " ({})",
@@ -221,10 +154,6 @@ impl DevEnvironment {
                 }
             }
         );
-
-        self.build_inputs = found_build_inputs;
-        self.environment_variables = found_envs;
-        self.ld_library_path = found_ld_inputs;
 
         Ok(())
     }
