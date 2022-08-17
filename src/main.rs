@@ -432,7 +432,6 @@ impl DevEnvironment {
                 found_ld_inputs = found_ld_inputs.union(&known_ld_inputs).cloned().collect();
             }
 
-            // TODO(@hoverbear): Add a `Deserializable` implementor we can get from this.
             let metadata_object = match package.metadata {
                 Some(metadata_object) => metadata_object,
                 None => continue,
