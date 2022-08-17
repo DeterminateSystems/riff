@@ -415,12 +415,7 @@ impl DevEnvironment {
                     found_envs.insert(known_key.to_string(), known_value.to_string());
                 }
 
-                // Attempt to detect `package.fsm.build-inputs` in `Crate.toml`
-
-                found_ld_inputs = found_ld_inputs
-                    .union(&known_ld_inputs)
-                    .map(|v| v.to_string())
-                    .collect();
+                found_ld_inputs = found_ld_inputs.union(&known_ld_inputs).cloned().collect();
             }
 
             // Attempt to detect `package.fsm.build-inputs` in `Crate.toml`
@@ -484,9 +479,12 @@ impl DevEnvironment {
                 .union(&package_build_inputs)
                 .cloned()
                 .collect();
+
             for (package_env_key, package_env_value) in package_envs {
                 found_envs.insert(package_env_key, package_env_value);
             }
+
+            found_ld_inputs = found_ld_inputs.union(&package_ld_inputs).cloned().collect();
         }
 
         eprintln!(
