@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use serde::{Deserialize};
+use serde::Deserialize;
 
 /// A registry of known mappings from language specific dependencies to fsm settings
 #[derive(Deserialize, Default)]
@@ -32,10 +32,4 @@ pub(crate) struct RustDependencyConfiguration {
     /// The Nix packages which should have the result of `lib.getLib` run on them placed on the `LD_LIBRARY_PATH`
     #[serde(default)]
     pub(crate) ld_library_path_inputs: HashSet<String>,
-}
-
-impl RustDependencyConfiguration {
-    fn try_union(&self, other: Self) -> Result<Self, ()> {
-        todo!()
-    }
 }

@@ -89,7 +89,8 @@ impl DevEnvironment {
             "Unable to parse output produced by `cargo metadata` into our desired structure",
         )?;
 
-        let registry: DependencyRegistry = serde_json::from_str(include_str!("../registry.json")).wrap_err("Parsing `registry.json`")?;
+        let registry: DependencyRegistry = serde_json::from_str(include_str!("../registry.json"))
+            .wrap_err("Parsing `registry.json`")?;
 
         let mut found_build_inputs = registry.language_rust.default.build_inputs;
         let mut found_envs = registry.language_rust.default.environment_variables;
