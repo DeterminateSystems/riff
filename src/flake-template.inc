@@ -7,6 +7,8 @@
         name = "fsm-shell";
         buildInputs = [ {build_inputs} ];
         {environment_variables}
+
+        {ld_library_path}
       }};
   }};
 }}
