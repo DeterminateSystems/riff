@@ -50,9 +50,10 @@ impl RustDependencyConfiguration {
             .cloned()
             .collect();
         for (ref env_key, ref env_val) in self.environment_variables {
-            if let Some(_) = dev_env
+            if dev_env
                 .environment_variables
                 .insert(env_key.clone(), env_val.clone())
+                .is_some()
             {
                 return Err(TryApplyError::DuplicateEnvironmentVariables(
                     env_key.clone(),
