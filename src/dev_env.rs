@@ -92,7 +92,10 @@ impl DevEnvironment {
         let registry: DependencyRegistry = serde_json::from_str(include_str!("../registry.json"))
             .wrap_err("Parsing `registry.json`")?;
         if registry.version != 1 {
-            return Err(eyre!("Wrong registry version: 1 (expected) != {} (got)", registry.version));
+            return Err(eyre!(
+                "Wrong registry version: 1 (expected) != {} (got)",
+                registry.version
+            ));
         }
 
         registry.language_rust.default.try_apply(self)?;
@@ -153,7 +156,10 @@ impl DevEnvironment {
                     sorted_environment_variables.sort();
                     format!(
                         " ({})",
-                        sorted_environment_variables.iter().map(|v| v.green()).join(", ")
+                        sorted_environment_variables
+                            .iter()
+                            .map(|v| v.green())
+                            .join(", ")
                     )
                 } else {
                     "".to_string()
