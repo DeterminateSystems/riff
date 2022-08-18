@@ -230,3 +230,91 @@ impl DevEnvironment {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use tempfile::TempDir;
+
+    use super::DevEnvironment;
+
+    #[test]
+    fn dev_env_to_flake() {
+        let dev_env = DevEnvironment {
+            build_inputs: ["cargo", "hello"]
+                .into_iter()
+                .map(ToString::to_string)
+                .collect(),
+            environment_variables: [("HELLO", "WORLD"), ("GOODBYE", "WORLD")]
+                .into_iter()
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .collect(),
+            ld_library_path: ["nix", "libGL"]
+                .into_iter()
+                .map(ToString::to_string)
+                .collect(),
+        };
+
+        let flake = dev_env.to_flake();
+        eprintln!("{}", &flake);
+        assert!(
+            flake.contains("buildInputs = [") && flake.contains("cargo") && flake.contains("hello")
+        );
+        assert!(flake.contains(r#""GOODBYE" = "WORLD""#));
+        assert!(flake.contains(r#""HELLO" = "WORLD""#));
+        assert!(
+            flake.contains(r#""LD_LIBRARY_PATH" = "#)
+                && flake.contains("${lib.getLib nix}/lib")
+                && flake.contains("${lib.getLib libGL}/lib")
+        );
+    }
+
+    #[test]
+    fn dev_env_detect_supported_project() {
+        let temp_dir = TempDir::new().unwrap();
+        std::fs::write(temp_dir.path().join("lib.rs"), "fn main () {}").unwrap();
+        std::fs::write(
+            temp_dir.path().join("Cargo.toml"),
+            r#"
+[package]
+name = "fsm-test"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "fsm_test"
+path = "lib.rs"
+
+[package.metadata.fsm.build-inputs]
+hello = "*"
+
+[package.metadata.fsm.environment-variables]
+HI = "BYE"
+
+[package.metadata.fsm.LD_LIBRARY_PATH-inputs]
+libGL = "*"
+
+[dependencies]
+        "#,
+        )
+        .unwrap();
+
+        let mut dev_env = DevEnvironment::default();
+        let detect = tokio_test::block_on(dev_env.detect(temp_dir.path()));
+        assert!(detect.is_ok());
+
+        assert!(dev_env.build_inputs.get("hello").is_some());
+        assert_eq!(
+            dev_env.environment_variables.get("HI"),
+            Some(&String::from("BYE"))
+        );
+        assert!(dev_env.ld_library_path.get("libGL").is_some());
+    }
+
+    #[test]
+    fn dev_env_detect_unsupported_project() {
+        let temp_dir = TempDir::new().unwrap();
+        let mut dev_env = DevEnvironment::default();
+        let detect = tokio_test::block_on(dev_env.detect(temp_dir.path()));
+        assert!(detect.is_err());
+    }
+}

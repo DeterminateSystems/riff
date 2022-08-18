@@ -80,6 +80,8 @@
                 SystemConfiguration
               ]);
 
+              doCheck = true;
+
               override = { preBuild ? "", ... }: {
                 preBuild = preBuild + ''
                   logRun "cargo clippy --all-targets --all-features -- -D warnings"
