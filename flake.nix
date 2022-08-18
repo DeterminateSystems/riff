@@ -42,8 +42,8 @@
           stable.rust-src
         ] ++ nixpkgs.lib.optionals (system == "x86_64-linux") [
           targets.x86_64-unknown-linux-musl.stable.rust-std
-        ] ++ nixpkgs.lib.optionals (system == "aarch64-linux") [
-          targets.aarch64-unknown-linux-musl.stable.rust-std
+        # ] ++ nixpkgs.lib.optionals (system == "aarch64-linux") [
+        #   targets.aarch64-unknown-linux-musl.stable.rust-std
         ]);
     in
     {
@@ -98,11 +98,11 @@
               (sharedAttrs // {
                 CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
               });
-          } // lib.optionalAttrs (system == "aarch64-linux") {
-            fsmStatic = naerskLib.buildPackage
-              (sharedAttrs // {
-                CARGO_BUILD_TARGET = "aarch64-unknown-linux-musl";
-              });
+          # } // lib.optionalAttrs (system == "aarch64-linux") {
+          #   fsmStatic = naerskLib.buildPackage
+          #     (sharedAttrs // {
+          #       CARGO_BUILD_TARGET = "aarch64-unknown-linux-musl";
+          #     });
           });
 
       defaultPackage = forAllSystems ({ system, ... }: self.packages.${system}.fsm);
