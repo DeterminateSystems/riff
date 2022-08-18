@@ -92,7 +92,7 @@ impl DevEnvironment {
         let registry: DependencyRegistry = serde_json::from_str(include_str!("../registry.json"))
             .wrap_err("Parsing `registry.json`")?;
         if registry.version != 1 {
-            return Err(eyre!("Wrong registry version"));
+            return Err(eyre!("Wrong registry version: 1 (expected) != {} (got)", registry.version));
         }
 
         registry.language_rust.default.try_apply(self)?;
@@ -145,15 +145,15 @@ impl DevEnvironment {
             },
             maybe_colored_envs = {
                 if !self.environment_variables.is_empty() {
-                    let mut sorted_build_inputs = self
+                    let mut sorted_environment_variables = self
                         .environment_variables
                         .iter()
                         .map(|(k, _)| k)
                         .collect::<Vec<_>>();
-                    sorted_build_inputs.sort();
+                    sorted_environment_variables.sort();
                     format!(
                         " ({})",
-                        sorted_build_inputs.iter().map(|v| v.green()).join(", ")
+                        sorted_environment_variables.iter().map(|v| v.green()).join(", ")
                     )
                 } else {
                     "".to_string()
