@@ -19,3 +19,6 @@ tokio = { version = "1.20.1", features = ["macros", "rt-multi-thread", "process"
 tracing = "0.1.36"
 tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.15", features = ["env-filter"] }
+
+[dev-dependencies]
+tokio-test = "0.4.2"

@@ -17,6 +17,18 @@ jobs:
     - name: Check rustfmt
       run: nix develop --command cargo fmt -- --check
 
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: cachix/install-nix-action@v17
+      with:
+        extra_nix_config: |
+          access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+    - name: Run tests
+      run: nix develop -c -- cargo test
+      # run: nix develop -c -- cargo test -- --include-ignored
+
   Build:
     runs-on: ubuntu-latest
     steps:
