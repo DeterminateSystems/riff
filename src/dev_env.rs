@@ -66,6 +66,9 @@ impl DevEnvironment {
         cargo_metadata_command.arg(project_dir.join("Cargo.toml"));
 
         tracing::trace!(command = ?cargo_metadata_command, "Running");
+
+        let registry_handle = tokio::task::spawn(DependencyRegistry::new(false));
+
         let cargo_metadata_output = cargo_metadata_command
             .output()
             .await
@@ -89,21 +92,19 @@ impl DevEnvironment {
             "Unable to parse output produced by `cargo metadata` into our desired structure",
         )?;
 
-        let registry: DependencyRegistry = serde_json::from_str(include_str!("../registry.json"))
+        let registry = registry_handle
+            .await
+            .wrap_err("Joining dependency registry builder task")?
             .wrap_err("Parsing `registry.json`")?;
-        if registry.version != 1 {
-            return Err(eyre!(
-                "Wrong registry version: 1 (expected) != {} (got)",
-                registry.version
-            ));
-        }
 
-        registry.language_rust.default.try_apply(self)?;
+        tracing::debug!(fresh = %registry.fresh(), "Cache freshness");
+        let rust_registry = registry.language_rust().await;
+        rust_registry.default.try_apply(self)?;
 
         for package in metadata.packages {
             let name = package.name;
 
-            if let Some(dep_config) = registry.language_rust.dependencies.get(name.as_str()) {
+            if let Some(dep_config) = rust_registry.dependencies.get(name.as_str()) {
                 tracing::debug!(
                     package_name = %name,
                     buildInputs = %dep_config.build_inputs.iter().join(", "),
