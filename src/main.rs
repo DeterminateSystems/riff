@@ -60,6 +60,13 @@ async fn main_impl() -> color_eyre::Result<()> {
     let args = Cli::parse();
 
     match args.command {
-        Commands::Shell(shell) => shell.cmd().await,
-    }
+        Commands::Shell(shell) => {
+            let code = shell.cmd().await?;
+            if let Some(code) = code {
+                std::process::exit(code);
+            }
+        }
+    };
+
+    Ok(())
 }
