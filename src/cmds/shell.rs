@@ -20,7 +20,7 @@ pub struct Shell {
 
 impl Shell {
     // TODO(@cole-h): should this be a trait method? we'll see once we add another subcommand
-    pub async fn cmd(self) -> color_eyre::Result<()> {
+    pub async fn cmd(self) -> color_eyre::Result<Option<i32>> {
         let project_dir = match self.project_dir {
             Some(dir) => dir,
             None => std::env::current_dir().wrap_err("Current working directory was invalid")?,
@@ -86,11 +86,52 @@ impl Shell {
 
         // At this point we have handed off to the user shell. The next lines run after the user CTRL+D's out.
 
-        if let Some(code) = nix_develop_exit.status.code() {
-            // If the user returns, say, an EOF, we return the same code up
-            std::process::exit(code);
-        }
+        Ok(nix_develop_exit.status.code())
+    }
+}
 
-        Ok(())
+#[cfg(test)]
+mod tests {
+    use tempfile::TempDir;
+
+    use super::Shell;
+
+    // We can't run this test by default because it calls Nix. Calling Nix inside Nix doesn't appear
+    // to work very well (at least, for this use case). We also don't want to run this in CI because
+    // the shell is not interactive, leading `nix develop` to exit without evaluating the
+    // `shellHook` (and thus thwarting our attempt to check if the shell actually worked by
+    // inspecting the exit code).
+    #[test]
+    #[ignore]
+    fn shell_succeeds() {
+        let temp_dir = TempDir::new().unwrap();
+        std::fs::write(temp_dir.path().join("lib.rs"), "fn main () {}").unwrap();
+        std::fs::write(
+            temp_dir.path().join("Cargo.toml"),
+            r#"
+[package]
+name = "fsm-test"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "fsm_test"
+path = "lib.rs"
+
+[package.metadata.fsm.environment-variables]
+shellHook = "exit 6"
+
+[dependencies]
+        "#,
+        )
+        .unwrap();
+
+        let shell = Shell {
+            project_dir: Some(temp_dir.path().to_owned()),
+        };
+
+        let shell_cmd = tokio_test::task::spawn(shell.cmd());
+        let shell_cmd = tokio_test::block_on(shell_cmd);
+        assert_eq!(shell_cmd.unwrap(), Some(6));
     }
 }
