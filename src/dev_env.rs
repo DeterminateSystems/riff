@@ -107,9 +107,9 @@ impl DevEnvironment {
             if let Some(dep_config) = rust_registry.dependencies.get(name.as_str()) {
                 tracing::debug!(
                     package_name = %name,
-                    buildInputs = %dep_config.build_inputs.iter().join(", "),
-                    environment_variables = %dep_config.environment_variables.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
-                    LD_LIBRARY_PATH = %dep_config.ld_library_path_inputs.iter().join(", "),
+                    "build-inputs" = %dep_config.build_inputs.iter().join(", "),
+                    "environment-variables" = %dep_config.environment_variables.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                    "ld-library-path-inputs" = %dep_config.ld_library_path_inputs.iter().join(", "),
                     "Detected known crate information"
                 );
                 dep_config.clone().try_apply(self)?;
@@ -129,7 +129,7 @@ impl DevEnvironment {
                 package = %name,
                 "build-inputs" = %dep_config.build_inputs.iter().join(", "),
                 "environment-variables" = %dep_config.environment_variables.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
-                "LD_LIBRARY_PATH-inputs" = %dep_config.ld_library_path_inputs.iter().join(", "),
+                "ld_library-path-inputs" = %dep_config.ld_library_path_inputs.iter().join(", "),
                 "Detected `package.fsm` in `Crate.toml`"
             );
             dep_config.try_apply(self)?;
@@ -170,6 +170,10 @@ impl DevEnvironment {
 
         Ok(())
     }
+}
+
+pub(crate) trait DevEnvironmentAppliable {
+    fn try_apply(&self, dev_env: &mut DevEnvironment) -> Result<(), TryApplyError>;
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -262,8 +266,4 @@ HI = "BYE"
         let detect = tokio_test::block_on(dev_env.detect(temp_dir.path()));
         assert!(detect.is_err());
     }
-}
-
-pub(crate) trait DevEnvironmentAppliable {
-    fn try_apply(&self, dev_env: &mut DevEnvironment) -> Result<(), TryApplyError>;
 }

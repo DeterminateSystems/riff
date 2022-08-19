@@ -122,7 +122,6 @@ impl DependencyRegistry {
                     }
                     Err(err) => {
                         tracing::error!(err = %eyre::eyre!(err), "Could not write to {}", cached_registry_pathbuf.display());
-                        return;
                     }
                 };
             });

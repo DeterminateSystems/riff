@@ -19,13 +19,13 @@ pub struct RustDependencyRegistryData {
 #[derive(Deserialize, Default, Clone)]
 pub struct RustDependencyConfiguration {
     /// The Nix `buildInputs` needed
-    #[serde(default)]
+    #[serde(default, rename = "build-inputs")]
     pub(crate) build_inputs: HashSet<String>,
     /// Any packaging specific environment variables that need to be set
-    #[serde(default)]
+    #[serde(default, rename = "environment_variables")]
     pub(crate) environment_variables: HashMap<String, String>,
     /// The Nix packages which should have the result of `lib.getLib` run on them placed on the `LD_LIBRARY_PATH`
-    #[serde(default)]
+    #[serde(default, rename = "ld-library-path-inputs")]
     pub(crate) ld_library_path_inputs: HashSet<String>,
 }
 
