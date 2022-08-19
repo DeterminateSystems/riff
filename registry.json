@@ -7,7 +7,7 @@
         "dependencies": {
             "ash": {
                 "build_inputs": [ "vulkan-loader", "vulkan-tools", "vulkan-headers", "vulkan-validation-layers" ],
-                "LD_LIBRARY_PATH_inputs": [ "vulkan-loader" ]
+                "ld_library_path_inputs": [ "vulkan-loader" ]
             },
             "openssl-sys": {
                 "build_inputs": [ "openssl" ]
@@ -124,11 +124,11 @@
                 "environment_variables": {
                     "ALSA_PLUGIN_DIR": "${pkgs.symlinkJoin { name = \"merged-alsa-plugins\"; paths = with pkgs; [ alsaPlugins pipewire.lib ]; }}/lib/alsa-lib"
                 },
-                "LD_LIBRARY_PATH_inputs": ["libGL", "spirv-tools", "vulkan-tools", "vulkan-loader", "vulkan-headers", "vulkan-extension-layer", "vulkan-validation-layers", "mesa", "mesa_drivers", "alsaPlugins", "pipewire"]
+                "ld_library_path_inputs": ["libGL", "spirv-tools", "vulkan-tools", "vulkan-loader", "vulkan-headers", "vulkan-extension-layer", "vulkan-validation-layers", "mesa", "mesa_drivers", "alsaPlugins", "pipewire"]
             },
             "winit": {
                 "build_inputs": ["xorg.libX11"],
-                "LD_LIBRARY_PATH_inputs": [
+                "ld_library_path_inputs": [
                     "xorg.libX11",
                     "xorg.libXcursor",
                     "xorg.libXrandr",
