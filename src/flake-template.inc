@@ -17,7 +17,10 @@
         default = with pkgs;
           stdenv.mkDerivation {{
             name = "fsm-shell";
-            buildInputs = [ {build_inputs} ];
+            buildInputs = [ {build_inputs} ] ++ lib.optionals (stdenv.isDarwin) [
+              libiconv
+            ];
+
             {environment_variables}
 
             {ld_library_path}
