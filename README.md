@@ -33,6 +33,13 @@ Internally, `fsm` uses the [Nix package manager](nixos.org/nix/) to
 fetch or build native dependencies, but you do not need to know Nix or
 write any Nix files.
 
+## Requirements
+
+In order to use `fsm`, you will need the following binaries available:
+
+* [`nix`](https://nixos.org/nix/)
+* [`cargo`](https://www.rust-lang.org/tools/install)
+
 ## Installation
 
 TODO: download the statically linked binary
