@@ -155,7 +155,6 @@ impl DependencyRegistry {
 pub struct DependencyRegistryData {
     pub(crate) version: usize, // Checked for ABI compat
     pub(crate) language: DependencyRegistryLanguageData,
-
 }
 
 #[derive(Deserialize, Default, Clone, Debug)]
