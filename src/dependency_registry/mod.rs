@@ -8,13 +8,14 @@ use tokio::{
 };
 use xdg::{BaseDirectories, BaseDirectoriesError};
 
+use crate::FSM_XDG_PREFIX;
+
 use self::rust::RustDependencyRegistryData;
 
 pub(crate) mod rust;
 
 const DEPENDENCY_REGISTRY_REMOTE_URL: &str = "https://fsm-server.fly.dev/fsm-registry.json";
 const DEPENDENCY_REGISTRY_CACHE_PATH: &str = "registry.json";
-const DEPENDENCY_REGISTRY_XDG_PREFIX: &str = "fsm";
 const DEPENDENCY_REGISTRY_FALLBACK: &str = include_str!("../../registry.json");
 
 #[derive(Debug, thiserror::Error)]
@@ -39,7 +40,7 @@ pub struct DependencyRegistry {
 impl DependencyRegistry {
     #[tracing::instrument(skip_all, fields(%offline))]
     pub async fn new(offline: bool) -> Result<Self, DependencyRegistryError> {
-        let xdg_dirs = BaseDirectories::with_prefix(DEPENDENCY_REGISTRY_XDG_PREFIX)?;
+        let xdg_dirs = BaseDirectories::with_prefix(FSM_XDG_PREFIX)?;
         // Create the directory if needed
         let cached_registry_pathbuf =
             xdg_dirs.place_cache_file(Path::new(DEPENDENCY_REGISTRY_CACHE_PATH))?;

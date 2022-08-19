@@ -2,6 +2,7 @@ mod cargo_metadata;
 mod cmds;
 mod dependency_registry;
 mod dev_env;
+mod telemetry;
 
 use std::error::Error;
 
@@ -12,6 +13,8 @@ use tracing_error::ErrorLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 use cmds::Commands;
+
+const FSM_XDG_PREFIX: &str = "fsm";
 
 #[derive(Debug, Parser)]
 #[clap(name = "fsm")]
