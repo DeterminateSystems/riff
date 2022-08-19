@@ -78,7 +78,9 @@
               version = "unreleased";
               src = self;
 
-              buildInputs = [
+              buildInputs = with pkgs; [
+                pkg-config
+                openssl
               ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs.darwin.apple_sdk.frameworks; [
                 SystemConfiguration
               ]);

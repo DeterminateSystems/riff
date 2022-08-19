@@ -221,6 +221,8 @@ mod tests {
 
     #[test]
     fn dev_env_detect_supported_project() {
+        let cache_dir = TempDir::new().unwrap();
+        std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
         let temp_dir = TempDir::new().unwrap();
         std::fs::write(temp_dir.path().join("lib.rs"), "fn main () {}").unwrap();
         std::fs::write(
@@ -236,10 +238,10 @@ name = "fsm_test"
 path = "lib.rs"
 
 [package.metadata.fsm]
-build_inputs = [ "hello" ]
-ld_library_path_inputs = [ "libGL" ]
+build-inputs = [ "hello" ]
+ld-library-path-inputs = [ "libGL" ]
 
-[package.metadata.fsm.environment_variables]
+[package.metadata.fsm.environment-variables]
 HI = "BYE"
 
 [dependencies]

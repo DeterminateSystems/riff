@@ -22,7 +22,7 @@ pub struct RustDependencyConfiguration {
     #[serde(default, rename = "build-inputs")]
     pub(crate) build_inputs: HashSet<String>,
     /// Any packaging specific environment variables that need to be set
-    #[serde(default, rename = "environment_variables")]
+    #[serde(default, rename = "environment-variables")]
     pub(crate) environment_variables: HashMap<String, String>,
     /// The Nix packages which should have the result of `lib.getLib` run on them placed on the `LD_LIBRARY_PATH`
     #[serde(default, rename = "ld-library-path-inputs")]
