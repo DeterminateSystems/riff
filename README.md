@@ -73,3 +73,36 @@ automatically, without installing them into your regular environment.
 # protoc
 protoc: command not found
 ```
+
+## How to describe package inputs
+
+Rather than relying on our hand-made mapping of crates to their inputs, it is also possible to specify a project's inputs in its `Cargo.toml`.
+`fsm` currently supports three kinds of inputs:
+
+* `build_inputs`, which are native dependencies that the crate may want to link against.
+* `environment_variables`, which are environment variables you may want to set in your dev shell.
+* `ld_library_path_inputs`, which are libraries you may need to add to your `LD_LIBRARY_PATH` to ensure proper linking.
+
+They can be used as follows:
+
+```toml
+[package]
+name = "fsm-example"
+version = "0.1.0"
+edition = "2021"
+
+[package.metadata.fsm]
+build_inputs = [ "openssl" ]
+ld_library_path_inputs = [ "libGL" ]
+
+[package.metadata.fsm.environment_variables]
+HI = "BYE"
+
+[dependencies]
+```
+
+The above example will do the following when you run `fsm shell` for that project:
+
+* it will add `openssl` to your build environment
+* it will set the `LD_LIBRARY_PATH` environment variable to contain `libGL`'s library path
+* it will set the environment variable `HI` to have a value of `BYE`
