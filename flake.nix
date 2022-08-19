@@ -101,6 +101,8 @@
             fsmStatic = naerskLib.buildPackage
               (sharedAttrs // {
                 CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
+                OPENSSL_LIB_DIR = "${pkgs.pkgsStatic.openssl.out}/lib";
+                OPENSSL_INCLUDE_DIR = "${pkgs.pkgsStatic.openssl.dev}";
               });
           } // lib.optionalAttrs (system == "aarch64-linux") {
             # fsmStatic = naerskLib.buildPackage
