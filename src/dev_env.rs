@@ -99,6 +99,7 @@ impl DevEnvironment {
 
         tracing::debug!(fresh = %registry.fresh(), "Cache freshness");
         let rust_registry = registry.language_rust().await;
+        tracing::error!(?rust_registry.default, "Boop");
         rust_registry.default.try_apply(self)?;
 
         for package in metadata.packages {

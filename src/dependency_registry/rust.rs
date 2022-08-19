@@ -5,7 +5,7 @@ use serde::Deserialize;
 use crate::dev_env::{DevEnvironment, DevEnvironmentAppliable, TryApplyError};
 
 /// A language specific registry of dependencies to fsm settings
-#[derive(Deserialize, Default, Clone)]
+#[derive(Deserialize, Default, Clone, Debug)]
 pub struct RustDependencyRegistryData {
     /// Settings which are needed for every instance of this language (Eg `cargo` for Rust)
     #[serde(default)]
@@ -16,7 +16,7 @@ pub struct RustDependencyRegistryData {
     pub(crate) dependencies: HashMap<String, RustDependencyConfiguration>,
 }
 /// Dependency specific information needed for fsm
-#[derive(Deserialize, Default, Clone)]
+#[derive(Deserialize, Default, Clone, Debug)]
 pub struct RustDependencyConfiguration {
     /// The Nix `buildInputs` needed
     #[serde(default, rename = "build-inputs")]

@@ -154,6 +154,6 @@ impl DependencyRegistry {
 #[derive(Deserialize, Default, Clone)]
 pub struct DependencyRegistryData {
     pub(crate) version: usize, // Checked for ABI compat
-    #[serde(default)]
+    #[serde(default, rename = "language-rust")]
     pub(crate) language_rust: RustDependencyRegistryData,
 }
