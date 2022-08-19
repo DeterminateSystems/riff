@@ -145,15 +145,20 @@ impl DependencyRegistry {
         }
     }
 
-    pub async fn language_rust(&self) -> RwLockReadGuard<RustDependencyRegistryData> {
-        RwLockReadGuard::map(self.data.read().await, |v| &v.language_rust)
+    pub async fn language(&self) -> RwLockReadGuard<DependencyRegistryLanguageData> {
+        RwLockReadGuard::map(self.data.read().await, |v| &v.language)
     }
 }
 
 /// A registry of known mappings from language specific dependencies to fsm settings
-#[derive(Deserialize, Default, Clone)]
+#[derive(Deserialize, Default, Clone, Debug)]
 pub struct DependencyRegistryData {
     pub(crate) version: usize, // Checked for ABI compat
-    #[serde(default, rename = "language-rust")]
-    pub(crate) language_rust: RustDependencyRegistryData,
+    pub(crate) language: DependencyRegistryLanguageData,
+
+}
+
+#[derive(Deserialize, Default, Clone, Debug)]
+pub struct DependencyRegistryLanguageData {
+    pub(crate) rust: RustDependencyRegistryData,
 }

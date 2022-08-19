@@ -98,13 +98,13 @@ impl DevEnvironment {
             .wrap_err("Parsing `registry.json`")?;
 
         tracing::debug!(fresh = %registry.fresh(), "Cache freshness");
-        let rust_registry = registry.language_rust().await;
-        rust_registry.default.try_apply(self)?;
+        let language_registry = registry.language().await;
+        (*language_registry).rust.default.try_apply(self)?;
 
         for package in metadata.packages {
             let name = package.name;
 
-            if let Some(dep_config) = rust_registry.dependencies.get(name.as_str()) {
+            if let Some(dep_config) = (*language_registry).rust.dependencies.get(name.as_str()) {
                 tracing::debug!(
                     package_name = %name,
                     "build-inputs" = %dep_config.build_inputs.iter().join(", "),

@@ -8,11 +8,9 @@ use crate::dev_env::{DevEnvironment, DevEnvironmentAppliable, TryApplyError};
 #[derive(Deserialize, Default, Clone, Debug)]
 pub struct RustDependencyRegistryData {
     /// Settings which are needed for every instance of this language (Eg `cargo` for Rust)
-    #[serde(default)]
     pub(crate) default: RustDependencyConfiguration,
     /// A mapping of dependencies (by crate name) to configuration
     // TODO(@hoverbear): How do we handle crates with conflicting names? eg a `rocksdb-sys` crate from one repo and another from another having different requirements?
-    #[serde(default)]
     pub(crate) dependencies: HashMap<String, RustDependencyConfiguration>,
 }
 /// Dependency specific information needed for fsm

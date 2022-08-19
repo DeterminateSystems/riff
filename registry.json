@@ -1,150 +1,152 @@
 {
     "version": 1,
-    "language-rust": {
-        "default": {
-            "build-inputs": [ "rustc", "cargo", "rustfmt" ]
-        },
-        "dependencies": {
-            "ash": {
-                "build-inputs": [ "vulkan-loader", "vulkan-tools", "vulkan-headers", "vulkan-validation-layers" ],
-                "ld-library-path-inputs": [ "vulkan-loader" ]
+    "language": {
+        "rust": {
+            "default": {
+                "build-inputs": [ "rustc", "cargo", "rustfmt" ]
             },
-            "openssl-sys": {
-                "build-inputs": [ "openssl" ]
-            },
-            "alsa-sys": {
-                "build-inputs": [ "alsa-lib" ]
-            },
-            "atk-sys": {
-                "build-inputs": [ "atk" ]
-            },
-            "bindgen": {
-                "build-inputs": [ "rustPlatform.bindgenHook" ]
-            },
-            "bzip2-sys": {
-                "build-inputs": [ "bzip2" ]
-            },
-            "cairo-sys-rs": {
-                "build-inputs": [ "cairo" ]
-            },
-            "clang-sys": {
-                "build-inputs": [ "llvmPackages.libclang", "llvm" ],
-                "environment-variables": {
-                    "LIBCLANG_PATH": "${llvmPackages.libclang.lib}/lib"
-                }
-            },
-            "curl-sys": {
-                "build-inputs": [ "curl" ]
-            },
-            "egl": {
-                "build-inputs": [ "libGL" ]
-            },
-            "expat-sys": {
-                "build-inputs": [ "expat" ]
-            },
-            "freetype-sys": {
-                "build-inputs": [ "freetype" ]
-            },
-            "gdk-pixbuf-sys": {
-                "build-inputs": [ "gdk-pixbuf" ]
-            },
-            "gdk-sys": {
-                "build-inputs": [ "wrapGAppsHook", "gtk3" ]
-            },
-            "gio-sys": {
-                "build-inputs": [ "glib" ]
-            },
-            "gstreamer-audio-sys": {
-                "build-inputs": [ "gst_all_1.gst-plugins-base" ]
-            },
-            "gstreamer-base-sys": {
-                "build-inputs": [ "gst_all_1.gstreamer" ]
-            },
-            "gtk4-sys": {
-                "build-inputs": [ "gtk4" ]
-            },
-            "hidapi": {
-                "build-inputs": [ "udev" ]
-            },
-            "libadwaita-sys": {
-                "build-inputs": [ "libadwaita" ]
-            },
-            "libdbus-sys": {
-                "build-inputs": [ "dbus" ]
-            },
-            "libgit2-sys": {
-                "build-inputs": [ "libgit2" ]
-            },
-            "libshumate-sys": {
-                "build-inputs": [ "libshumate" ]
-            },
-            "libsqlite3-sys": {
-                "build-inputs": [ "sqlite" ]
-            },
-            "libudev-sys": {
-                "build-inputs": [ "eudev" ]
-            },
-            "libusb1-sys": {
-                "build-inputs": [ "libusb" ]
-            },
-            "libz-sys": {
-                "build-inputs": [ "zlib", "cmake" ]
-            },
-            "pango-sys": {
-                "build-inputs": [ "pango" ]
-            },
-            "pkg-config": {
-                "build-inputs": [ "pkg-config" ]
-            },
-            "prost": {
-                "build-inputs": [ "cmake" ]
-            },
-            "qt_3d_render": {
-                "build-inputs": [ "libGL" ]
-            },
-            "qt_gui": {
-                "build-inputs": [ "qt5.full" ]
-            },
-            "rdkafka-sys": {
-                "build-inputs": [ "rdkafka", "cyrus_sasl" ]
-            },
-            "servo-fontconfig-sys": {
-                "build-inputs": [ "fontconfig" ]
-            },
-            "smithay-client-toolkit": {
-                "build-inputs": [ "libxkbcommon", "pkg-config" ]
-            },
-            "spirv-tools-sys": {
-                "build-inputs": [ "spirv-tools" ]
-            },
-            "wayland-sys": {
-                "build-inputs": [ "wayland" ]
-            },
-            "wgpu-hal": {
-                "environment-variables": {
-                    "ALSA_PLUGIN_DIR": "${pkgs.symlinkJoin { name = \"merged-alsa-plugins\"; paths = with pkgs; [ alsaPlugins pipewire.lib ]; }}/lib/alsa-lib"
+            "dependencies": {
+                "ash": {
+                    "build-inputs": [ "vulkan-loader", "vulkan-tools", "vulkan-headers", "vulkan-validation-layers" ],
+                    "ld-library-path-inputs": [ "vulkan-loader" ]
                 },
-                "ld-library-path-inputs": ["libGL", "spirv-tools", "vulkan-tools", "vulkan-loader", "vulkan-headers", "vulkan-extension-layer", "vulkan-validation-layers", "mesa", "mesa_drivers", "alsaPlugins", "pipewire"]
-            },
-            "winit": {
-                "build-inputs": ["xorg.libX11"],
-                "ld-library-path-inputs": [
-                    "xorg.libX11",
-                    "xorg.libXcursor",
-                    "xorg.libXrandr",
-                    "xorg.libXi",
-                    "libGL",
-                    "glxinfo"
-                ]
-            },
-            "xcb": {
-                "build-inputs": ["xorg.libxcb" ]
-            },
-            "xkbcommon-sys": {
-                "build-inputs": ["libxkbcommon"]
-            },
-            "zstd-sys": {
-                "build-inputs": ["zlib", "clang" ]
+                "openssl-sys": {
+                    "build-inputs": [ "openssl" ]
+                },
+                "alsa-sys": {
+                    "build-inputs": [ "alsa-lib" ]
+                },
+                "atk-sys": {
+                    "build-inputs": [ "atk" ]
+                },
+                "bindgen": {
+                    "build-inputs": [ "rustPlatform.bindgenHook" ]
+                },
+                "bzip2-sys": {
+                    "build-inputs": [ "bzip2" ]
+                },
+                "cairo-sys-rs": {
+                    "build-inputs": [ "cairo" ]
+                },
+                "clang-sys": {
+                    "build-inputs": [ "llvmPackages.libclang", "llvm" ],
+                    "environment-variables": {
+                        "LIBCLANG_PATH": "${llvmPackages.libclang.lib}/lib"
+                    }
+                },
+                "curl-sys": {
+                    "build-inputs": [ "curl" ]
+                },
+                "egl": {
+                    "build-inputs": [ "libGL" ]
+                },
+                "expat-sys": {
+                    "build-inputs": [ "expat" ]
+                },
+                "freetype-sys": {
+                    "build-inputs": [ "freetype" ]
+                },
+                "gdk-pixbuf-sys": {
+                    "build-inputs": [ "gdk-pixbuf" ]
+                },
+                "gdk-sys": {
+                    "build-inputs": [ "wrapGAppsHook", "gtk3" ]
+                },
+                "gio-sys": {
+                    "build-inputs": [ "glib" ]
+                },
+                "gstreamer-audio-sys": {
+                    "build-inputs": [ "gst_all_1.gst-plugins-base" ]
+                },
+                "gstreamer-base-sys": {
+                    "build-inputs": [ "gst_all_1.gstreamer" ]
+                },
+                "gtk4-sys": {
+                    "build-inputs": [ "gtk4" ]
+                },
+                "hidapi": {
+                    "build-inputs": [ "udev" ]
+                },
+                "libadwaita-sys": {
+                    "build-inputs": [ "libadwaita" ]
+                },
+                "libdbus-sys": {
+                    "build-inputs": [ "dbus" ]
+                },
+                "libgit2-sys": {
+                    "build-inputs": [ "libgit2" ]
+                },
+                "libshumate-sys": {
+                    "build-inputs": [ "libshumate" ]
+                },
+                "libsqlite3-sys": {
+                    "build-inputs": [ "sqlite" ]
+                },
+                "libudev-sys": {
+                    "build-inputs": [ "eudev" ]
+                },
+                "libusb1-sys": {
+                    "build-inputs": [ "libusb" ]
+                },
+                "libz-sys": {
+                    "build-inputs": [ "zlib", "cmake" ]
+                },
+                "pango-sys": {
+                    "build-inputs": [ "pango" ]
+                },
+                "pkg-config": {
+                    "build-inputs": [ "pkg-config" ]
+                },
+                "prost": {
+                    "build-inputs": [ "cmake" ]
+                },
+                "qt_3d_render": {
+                    "build-inputs": [ "libGL" ]
+                },
+                "qt_gui": {
+                    "build-inputs": [ "qt5.full" ]
+                },
+                "rdkafka-sys": {
+                    "build-inputs": [ "rdkafka", "cyrus_sasl" ]
+                },
+                "servo-fontconfig-sys": {
+                    "build-inputs": [ "fontconfig" ]
+                },
+                "smithay-client-toolkit": {
+                    "build-inputs": [ "libxkbcommon", "pkg-config" ]
+                },
+                "spirv-tools-sys": {
+                    "build-inputs": [ "spirv-tools" ]
+                },
+                "wayland-sys": {
+                    "build-inputs": [ "wayland" ]
+                },
+                "wgpu-hal": {
+                    "environment-variables": {
+                        "ALSA_PLUGIN_DIR": "${pkgs.symlinkJoin { name = \"merged-alsa-plugins\"; paths = with pkgs; [ alsaPlugins pipewire.lib ]; }}/lib/alsa-lib"
+                    },
+                    "ld-library-path-inputs": ["libGL", "spirv-tools", "vulkan-tools", "vulkan-loader", "vulkan-headers", "vulkan-extension-layer", "vulkan-validation-layers", "mesa", "mesa_drivers", "alsaPlugins", "pipewire"]
+                },
+                "winit": {
+                    "build-inputs": ["xorg.libX11"],
+                    "ld-library-path-inputs": [
+                        "xorg.libX11",
+                        "xorg.libXcursor",
+                        "xorg.libXrandr",
+                        "xorg.libXi",
+                        "libGL",
+                        "glxinfo"
+                    ]
+                },
+                "xcb": {
+                    "build-inputs": ["xorg.libxcb" ]
+                },
+                "xkbcommon-sys": {
+                    "build-inputs": ["libxkbcommon"]
+                },
+                "zstd-sys": {
+                    "build-inputs": ["zlib", "clang" ]
+                }
             }
         }
     }
