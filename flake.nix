@@ -56,9 +56,12 @@
 
           RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
 
+          nativeBuildInputs = with pkgs; [
+            pkg-config
+          ];
           buildInputs = with pkgs; [
             toolchain
-
+            openssl
             codespell
             nixpkgs-fmt
             findutils # for xargs
@@ -78,8 +81,11 @@
               version = "unreleased";
               src = self;
 
-              buildInputs = with pkgs; [
+              nativeBuildInputs = with pkgs; [
                 pkg-config
+              ];
+              buildInputs = with pkgs; [
+
                 openssl
               ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs.darwin.apple_sdk.frameworks; [
                 SystemConfiguration
