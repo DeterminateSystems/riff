@@ -60,6 +60,9 @@ async fn main() -> color_eyre::Result<()> {
 }
 
 async fn main_impl() -> color_eyre::Result<()> {
+
+    tracing::error!(telemetry = ?telemetry::Telemetry::new().await?, "Got telemetry");
+
     let args = Cli::parse();
 
     match args.command {

@@ -12,7 +12,7 @@ use crate::{FSM_XDG_PREFIX, Cli};
 static TELEMETRY_DISTINCT_ID_PATH: &str = "distinct_id";
 
 #[derive(Debug, Serialize)]
-struct Telemetry {
+pub(crate) struct Telemetry {
     /// Stored in `$XDG_DATA_HOME/fsm/distinct_id` as a UUIDv4
     distinct_id: Uuid,
     system_os: String,
@@ -31,7 +31,7 @@ impl Telemetry {
     /// Create a new `Telemetry` without any pre-existing information
     /// 
     /// This is not very performant and may do things like re-invoke `nix` or reparse the `$ARG`s.
-    async fn new() -> eyre::Result<Self> {
+    pub(crate) async fn new() -> eyre::Result<Self> {
         let distinct_id = distinct_id().await?;
 
         let system_os = std::env::consts::OS.to_string();
@@ -63,7 +63,7 @@ impl Telemetry {
 
 async fn distinct_id() -> eyre::Result<Uuid> {
     let xdg_dirs = xdg::BaseDirectories::with_prefix(FSM_XDG_PREFIX)?;
-    let distinct_id_path = xdg_dirs.place_cache_file(Path::new(TELEMETRY_DISTINCT_ID_PATH))?;
+    let distinct_id_path = xdg_dirs.place_config_file(Path::new(TELEMETRY_DISTINCT_ID_PATH))?;
     
     let mut distinct_id_file = OpenOptions::new()
         .read(true)
