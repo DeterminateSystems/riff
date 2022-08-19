@@ -118,7 +118,7 @@ edition = "2021"
 name = "fsm_test"
 path = "lib.rs"
 
-[package.metadata.fsm.environment-variables]
+[package.metadata.fsm.environment_variables]
 shellHook = "exit 6"
 
 [dependencies]

@@ -172,7 +172,6 @@ impl DevEnvironment {
     }
 }
 
-
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum TryApplyError {
     #[error("Duplicate environment variable `{0}`")]
@@ -232,14 +231,12 @@ edition = "2021"
 name = "fsm_test"
 path = "lib.rs"
 
-[package.metadata.fsm.build-inputs]
-hello = "*"
+[package.metadata.fsm]
+build_inputs = [ "hello" ]
+ld_library_path_inputs = [ "libGL" ]
 
-[package.metadata.fsm.environment-variables]
+[package.metadata.fsm.environment_variables]
 HI = "BYE"
-
-[package.metadata.fsm.LD_LIBRARY_PATH-inputs]
-libGL = "*"
 
 [dependencies]
         "#,
@@ -248,7 +245,7 @@ libGL = "*"
 
         let mut dev_env = DevEnvironment::default();
         let detect = tokio_test::block_on(dev_env.detect(temp_dir.path()));
-        assert!(detect.is_ok());
+        assert!(detect.is_ok(), "{detect:?}");
 
         assert!(dev_env.build_inputs.get("hello").is_some());
         assert_eq!(
