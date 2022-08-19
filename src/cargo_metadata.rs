@@ -1,4 +1,4 @@
-use crate::dependency_registry::RustDependencyConfiguration;
+use crate::dependency_registry::rust::RustDependencyConfiguration;
 
 #[derive(serde::Deserialize)]
 pub struct CargoMetadata {

@@ -1,18 +1,21 @@
-use std::{
-    collections::{HashMap, HashSet},
-    path::Path,
-    sync::Arc,
-};
-use tokio::{fs::OpenOptions, io::{AsyncReadExt, AsyncWriteExt}, sync::{RwLock, RwLockReadGuard}, task::JoinHandle};
 use serde::Deserialize;
+use std::{path::Path, sync::Arc};
+use tokio::{
+    fs::OpenOptions,
+    io::{AsyncReadExt, AsyncWriteExt},
+    sync::{RwLock, RwLockReadGuard},
+    task::JoinHandle,
+};
 use xdg::{BaseDirectories, BaseDirectoriesError};
 
-use crate::dev_env::DevEnvironment;
+use self::rust::RustDependencyRegistryData;
+
+pub(crate) mod rust;
 
 const DEPENDENCY_REGISTRY_REMOTE_URL: &str = "https://fsm-server.fly.dev/fsm-registry.json";
 const DEPENDENCY_REGISTRY_CACHE_PATH: &str = "registry.json";
 const DEPENDENCY_REGISTRY_XDG_PREFIX: &str = "fsm";
-const DEPENDENCY_REGISTRY_FALLBACK: &str = include_str!("../registry.json");
+const DEPENDENCY_REGISTRY_FALLBACK: &str = include_str!("../../registry.json");
 
 #[derive(Debug, thiserror::Error)]
 pub enum DependencyRegistryError {
@@ -24,13 +27,13 @@ pub enum DependencyRegistryError {
     Json(#[from] serde_json::Error),
     #[error("Request error")]
     Reqwest(#[from] reqwest::Error),
-    #[error("Wrong registry data version: 1 (expected) != {0} (got)",)]
-    WrongVersion(usize)
+    #[error("Wrong registry data version: 1 (expected) != {0} (got)")]
+    WrongVersion(usize),
 }
 
 pub struct DependencyRegistry {
     data: Arc<RwLock<DependencyRegistryData>>,
-    refresh_handle: Option<JoinHandle<()>>
+    refresh_handle: Option<JoinHandle<()>>,
 }
 
 impl DependencyRegistry {
@@ -38,23 +41,28 @@ impl DependencyRegistry {
     pub async fn new(offline: bool) -> Result<Self, DependencyRegistryError> {
         let xdg_dirs = BaseDirectories::with_prefix(DEPENDENCY_REGISTRY_XDG_PREFIX)?;
         // Create the directory if needed
-        let cached_registry_pathbuf = xdg_dirs.place_cache_file(Path::new(DEPENDENCY_REGISTRY_CACHE_PATH))?;
+        let cached_registry_pathbuf =
+            xdg_dirs.place_cache_file(Path::new(DEPENDENCY_REGISTRY_CACHE_PATH))?;
         // Create the file if needed.
         let mut cached_registry_file = OpenOptions::new()
             .read(true)
             .write(true)
             .truncate(false)
             .create(true) // We do this proactively to avoid the user seeing a non-fatal error later when we freshen the cache.
-            .open(cached_registry_pathbuf.clone()).await?;
+            .open(cached_registry_pathbuf.clone())
+            .await?;
         let mut cached_registry_content = Default::default();
-        cached_registry_file.read_to_string(&mut cached_registry_content).await?;
+        cached_registry_file
+            .read_to_string(&mut cached_registry_content)
+            .await?;
         drop(cached_registry_file);
 
         cached_registry_content = if cached_registry_content.is_empty() {
             DEPENDENCY_REGISTRY_FALLBACK.to_string()
-        } else { cached_registry_content };
+        } else {
+            cached_registry_content
+        };
 
-        tracing::debug!("Cached content: {}", cached_registry_content);
         let data: DependencyRegistryData = serde_json::from_str(&cached_registry_content)?;
         if data.version != 1 {
             return Err(DependencyRegistryError::WrongVersion(data.version));
@@ -67,50 +75,65 @@ impl DependencyRegistry {
             let refresh_handle = tokio::spawn(async move {
                 // Refresh the cache
                 tracing::trace!("Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-                let res = match reqwest::get(DEPENDENCY_REGISTRY_REMOTE_URL).await {
+                let http_client = reqwest::Client::new();
+                let req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL).send();
+                let res = match req.await {
                     Ok(res) => res,
                     Err(err) => {
                         tracing::error!(err = %eyre::eyre!(err), "Could not fetch new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-                        return
-                    },
+                        return;
+                    }
                 };
                 let content = match res.text().await {
                     Ok(content) => content,
                     Err(err) => {
                         tracing::error!(err = %eyre::eyre!(err), "Could not fetch new registry data body from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-                        return
-                    },
+                        return;
+                    }
                 };
                 let fresh_data: DependencyRegistryData = match serde_json::from_str(&content) {
                     Ok(data) => data,
                     Err(err) => {
                         tracing::error!(err = %eyre::eyre!(err), "Could not parse new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-                        return
-                    },
+                        return;
+                    }
                 };
                 *data.write().await = fresh_data;
                 // Write out the update
-                let mut cached_registry_file = match OpenOptions::new().truncate(true).create(true).write(true).open(cached_registry_pathbuf.clone()).await {
+                let mut cached_registry_file = match OpenOptions::new()
+                    .truncate(true)
+                    .create(true)
+                    .write(true)
+                    .open(cached_registry_pathbuf.clone())
+                    .await
+                {
                     Ok(cached_registry_file) => cached_registry_file,
                     Err(err) => {
                         tracing::error!(err = %eyre::eyre!(err), path = %cached_registry_pathbuf.display(), "Could not truncate XDG cached registry file to empty");
-                        return
-                    },
+                        return;
+                    }
                 };
-                match cached_registry_file.write_all(content.trim().as_bytes()).await {
-                    Ok(_) => tracing::trace!(path = %cached_registry_pathbuf.display(), "Refreshed remote registry into XDG cache"),
+                match cached_registry_file
+                    .write_all(content.trim().as_bytes())
+                    .await
+                {
+                    Ok(_) => {
+                        tracing::trace!(path = %cached_registry_pathbuf.display(), "Refreshed remote registry into XDG cache")
+                    }
                     Err(err) => {
                         tracing::error!(err = %eyre::eyre!(err), "Could not write to {}", cached_registry_pathbuf.display());
-                        return
-                    },
+                        return;
+                    }
                 };
             });
             Some(refresh_handle)
-        } else { None };
+        } else {
+            None
+        };
 
         Ok(Self {
             data,
-            refresh_handle
+            refresh_handle,
         })
     }
 
@@ -134,62 +157,4 @@ pub struct DependencyRegistryData {
     pub(crate) version: usize, // Checked for ABI compat
     #[serde(default)]
     pub(crate) language_rust: RustDependencyRegistryData,
-}
-
-/// A language specific registry of dependencies to fsm settings
-#[derive(Deserialize, Default, Clone)]
-pub struct RustDependencyRegistryData {
-    /// Settings which are needed for every instance of this language (Eg `cargo` for Rust)
-    #[serde(default)]
-    pub(crate) default: RustDependencyConfiguration,
-    /// A mapping of dependencies (by crate name) to configuration
-    // TODO(@hoverbear): How do we handle crates with conflicting names? eg a `rocksdb-sys` crate from one repo and another from another having different requirements?
-    #[serde(default)]
-    pub(crate) dependencies: HashMap<String, RustDependencyConfiguration>,
-}
-/// Dependency specific information needed for fsm
-#[derive(Deserialize, Default, Clone)]
-pub struct RustDependencyConfiguration {
-    /// The Nix `buildInputs` needed
-    #[serde(default)]
-    pub(crate) build_inputs: HashSet<String>,
-    /// Any packaging specific environment variables that need to be set
-    #[serde(default)]
-    pub(crate) environment_variables: HashMap<String, String>,
-    /// The Nix packages which should have the result of `lib.getLib` run on them placed on the `LD_LIBRARY_PATH`
-    #[serde(default)]
-    pub(crate) ld_library_path_inputs: HashSet<String>,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub(crate) enum TryApplyError {
-    #[error("Duplicate environment variable `{0}`")]
-    DuplicateEnvironmentVariables(String),
-}
-
-impl RustDependencyConfiguration {
-    pub(crate) fn try_apply(&self, dev_env: &mut DevEnvironment) -> Result<(), TryApplyError> {
-        dev_env.build_inputs = dev_env
-            .build_inputs
-            .union(&self.build_inputs)
-            .cloned()
-            .collect();
-        for (ref env_key, ref env_val) in &self.environment_variables {
-            if dev_env
-                .environment_variables
-                .insert(env_key.to_string(), env_val.to_string())
-                .is_some()
-            {
-                return Err(TryApplyError::DuplicateEnvironmentVariables(
-                    env_key.to_string(),
-                ));
-            }
-        }
-        dev_env.ld_library_path = dev_env
-            .ld_library_path
-            .union(&self.ld_library_path_inputs)
-            .cloned()
-            .collect();
-        Ok(())
-    }
 }

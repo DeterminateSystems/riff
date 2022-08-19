@@ -171,3 +171,13 @@ impl DevEnvironment {
         Ok(())
     }
 }
+
+pub(crate) trait DevEnvironmentAppliable {
+    fn try_apply(&self, dev_env: &mut DevEnvironment) -> Result<(), TryApplyError>;
+}
+
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum TryApplyError {
+    #[error("Duplicate environment variable `{0}`")]
+    DuplicateEnvironmentVariables(String),
+}
