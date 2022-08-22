@@ -62,6 +62,7 @@ impl Telemetry {
 
         let is_tty = atty::is(atty::Stream::Stdout);
 
+        #[allow(clippy::manual_map)] // Allow this as the warning should go away the moment we add a second command.
         let subcommand = match command {
             Some(crate::cmds::Commands::Shell(_)) => Some("shell".to_string()),
             None => None,
