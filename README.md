@@ -33,6 +33,13 @@ Internally, `fsm` uses the [Nix package manager](nixos.org/nix/) to
 fetch or build native dependencies, but you do not need to know Nix or
 write any Nix files.
 
+## Requirements
+
+In order to use `fsm`, you will need the following binaries available:
+
+* [`nix`](https://nixos.org/nix/)
+* [`cargo`](https://www.rust-lang.org/tools/install)
+
 ## Installation
 
 TODO: download the statically linked binary
@@ -66,3 +73,36 @@ automatically, without installing them into your regular environment.
 # protoc
 protoc: command not found
 ```
+
+## How to describe package inputs
+
+Rather than relying on our hand-made mapping of crates to their inputs, it is also possible to specify a project's inputs in its `Cargo.toml`.
+`fsm` currently supports three kinds of inputs:
+
+* `build-inputs`, which are native dependencies that the crate may want to link against.
+* `environment-variables`, which are environment variables you may want to set in your dev shell.
+* `runtime-inputs`, which are libraries you may want to add to your `LD_LIBRARY_PATH` to ensure proper execution in your dev shell.
+
+They can be used as follows:
+
+```toml
+[package]
+name = "fsm-example"
+version = "0.1.0"
+edition = "2021"
+
+[package.metadata.fsm]
+build-inputs = [ "openssl" ]
+runtime-inputs = [ "libGL" ]
+
+[package.metadata.fsm.environment-variables]
+HI = "BYE"
+
+[dependencies]
+```
+
+The above example will do the following when you run `fsm shell` for that project:
+
+* it will add `openssl` to your build environment
+* it will set the `LD_LIBRARY_PATH` environment variable to contain `libGL`'s library path
+* it will set the environment variable `HI` to have a value of `BYE`

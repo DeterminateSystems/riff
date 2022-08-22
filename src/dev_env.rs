@@ -109,7 +109,7 @@ impl DevEnvironment {
                     package_name = %name,
                     "build-inputs" = %dep_config.build_inputs.iter().join(", "),
                     "environment-variables" = %dep_config.environment_variables.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
-                    "ld-library-path-inputs" = %dep_config.ld_library_path_inputs.iter().join(", "),
+                    "runtime-inputs" = %dep_config.runtime_inputs.iter().join(", "),
                     "Detected known crate information"
                 );
                 dep_config.clone().try_apply(self)?;
@@ -129,7 +129,7 @@ impl DevEnvironment {
                 package = %name,
                 "build-inputs" = %dep_config.build_inputs.iter().join(", "),
                 "environment-variables" = %dep_config.environment_variables.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
-                "ld_library-path-inputs" = %dep_config.ld_library_path_inputs.iter().join(", "),
+                "runtime-inputs" = %dep_config.runtime_inputs.iter().join(", "),
                 "Detected `package.fsm` in `Crate.toml`"
             );
             dep_config.try_apply(self)?;
@@ -239,7 +239,7 @@ path = "lib.rs"
 
 [package.metadata.fsm]
 build-inputs = [ "hello" ]
-ld-library-path-inputs = [ "libGL" ]
+runtime-inputs = [ "libGL" ]
 
 [package.metadata.fsm.environment-variables]
 HI = "BYE"
