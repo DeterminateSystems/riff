@@ -104,6 +104,8 @@ mod tests {
     #[test]
     #[ignore]
     fn shell_succeeds() {
+        let cache_dir = TempDir::new().unwrap();
+        std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
         let temp_dir = TempDir::new().unwrap();
         std::fs::write(temp_dir.path().join("lib.rs"), "fn main () {}").unwrap();
         std::fs::write(

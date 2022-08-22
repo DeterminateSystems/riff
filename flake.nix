@@ -56,9 +56,12 @@
 
           RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
 
+          nativeBuildInputs = with pkgs; [
+            pkg-config
+          ];
           buildInputs = with pkgs; [
             toolchain
-
+            openssl
             codespell
             nixpkgs-fmt
             findutils # for xargs
@@ -78,7 +81,12 @@
               version = "unreleased";
               src = self;
 
-              buildInputs = [
+              nativeBuildInputs = with pkgs; [
+                pkg-config
+              ];
+              buildInputs = with pkgs; [
+
+                openssl
               ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs.darwin.apple_sdk.frameworks; [
                 SystemConfiguration
               ]);
@@ -99,6 +107,8 @@
             fsmStatic = naerskLib.buildPackage
               (sharedAttrs // {
                 CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
+                OPENSSL_LIB_DIR = "${pkgs.pkgsStatic.openssl.out}/lib";
+                OPENSSL_INCLUDE_DIR = "${pkgs.pkgsStatic.openssl.dev}";
               });
           } // lib.optionalAttrs (system == "aarch64-linux") {
             # fsmStatic = naerskLib.buildPackage

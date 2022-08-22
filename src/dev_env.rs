@@ -9,13 +9,13 @@ use owo_colors::OwoColorize;
 use tokio::process::Command;
 
 use crate::cargo_metadata::CargoMetadata;
-use crate::registry::{KnownCrateRegistryValue, KNOWN_CRATE_REGISTRY};
+use crate::dependency_registry::DependencyRegistry;
 
 #[derive(Default)]
 pub struct DevEnvironment {
-    build_inputs: HashSet<String>,
-    environment_variables: HashMap<String, String>,
-    ld_library_path: HashSet<String>,
+    pub(crate) build_inputs: HashSet<String>,
+    pub(crate) environment_variables: HashMap<String, String>,
+    pub(crate) ld_library_path: HashSet<String>,
 }
 
 // TODO(@cole-h): should this become a trait that the various languages we may support have to implement?
@@ -66,6 +66,9 @@ impl DevEnvironment {
         cargo_metadata_command.arg(project_dir.join("Cargo.toml"));
 
         tracing::trace!(command = ?cargo_metadata_command, "Running");
+
+        let registry_handle = tokio::task::spawn(DependencyRegistry::new(false));
+
         let cargo_metadata_output = cargo_metadata_command
             .output()
             .await
@@ -89,48 +92,27 @@ impl DevEnvironment {
             "Unable to parse output produced by `cargo metadata` into our desired structure",
         )?;
 
-        let mut found_build_inputs = HashSet::new();
-        let mut found_envs = HashMap::new();
-        let mut found_ld_inputs = HashSet::new();
+        let registry = registry_handle
+            .await
+            .wrap_err("Joining dependency registry builder task")?
+            .wrap_err("Parsing `registry.json`")?;
 
-        found_build_inputs.insert("rustc".to_string());
-        found_build_inputs.insert("cargo".to_string());
-        found_build_inputs.insert("rustfmt".to_string());
+        tracing::debug!(fresh = %registry.fresh(), "Cache freshness");
+        let language_registry = registry.language().await;
+        (*language_registry).rust.default.try_apply(self)?;
 
         for package in metadata.packages {
             let name = package.name;
 
-            if let Some(KnownCrateRegistryValue {
-                build_inputs: known_build_inputs,
-                environment_variables: known_envs,
-                ld_library_path_inputs: known_ld_inputs,
-            }) = KNOWN_CRATE_REGISTRY.get(name.as_str())
-            {
-                let known_build_inputs = known_build_inputs
-                    .iter()
-                    .map(ToString::to_string)
-                    .collect::<HashSet<_>>();
-                let known_ld_inputs = known_ld_inputs
-                    .iter()
-                    .map(ToString::to_string)
-                    .collect::<HashSet<_>>();
-
+            if let Some(dep_config) = (*language_registry).rust.dependencies.get(name.as_str()) {
                 tracing::debug!(
                     package_name = %name,
-                    buildInputs = %known_build_inputs.iter().join(", "),
-                    environment_variables = %known_envs.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                    "build-inputs" = %dep_config.build_inputs.iter().join(", "),
+                    "environment-variables" = %dep_config.environment_variables.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                    "ld-library-path-inputs" = %dep_config.ld_library_path_inputs.iter().join(", "),
                     "Detected known crate information"
                 );
-                found_build_inputs = found_build_inputs
-                    .union(&known_build_inputs)
-                    .cloned()
-                    .collect();
-
-                for (known_key, known_value) in known_envs {
-                    found_envs.insert(known_key.to_string(), known_value.to_string());
-                }
-
-                found_ld_inputs = found_ld_inputs.union(&known_ld_inputs).cloned().collect();
+                dep_config.clone().try_apply(self)?;
             }
 
             let metadata_object = match package.metadata {
@@ -138,63 +120,19 @@ impl DevEnvironment {
                 None => continue,
             };
 
-            let fsm_object = match metadata_object.fsm {
+            let dep_config = match metadata_object.fsm {
                 Some(fsm_object) => fsm_object,
                 None => continue,
             };
 
-            let package_build_inputs = match &fsm_object.build_inputs {
-                Some(build_inputs_table) => {
-                    let mut package_build_inputs = HashSet::new();
-                    for (key, _value) in build_inputs_table.iter() {
-                        // TODO(@hoverbear): Add version checking
-                        package_build_inputs.insert(key.to_string());
-                    }
-                    package_build_inputs
-                }
-                None => Default::default(),
-            };
-
-            let package_envs = match &fsm_object.environment_variables {
-                Some(envs_table) => {
-                    let mut package_envs = HashMap::new();
-                    for (key, value) in envs_table.iter() {
-                        package_envs.insert(key.to_string(), value.to_string());
-                    }
-                    package_envs
-                }
-                None => Default::default(),
-            };
-
-            let package_ld_inputs = match &fsm_object.ld_library_path_inputs {
-                Some(ld_table) => {
-                    let mut package_ld_inputs = HashSet::new();
-                    for (key, _value) in ld_table.iter() {
-                        // TODO(@hoverbear): Add version checking
-                        package_ld_inputs.insert(key.to_string());
-                    }
-                    package_ld_inputs
-                }
-                None => Default::default(),
-            };
-
             tracing::debug!(
                 package = %name,
-                "build-inputs" = %package_build_inputs.iter().join(", "),
-                "environment-variables" = %package_envs.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
-                "LD_LIBRARY_PATH-inputs" = %package_ld_inputs.iter().join(", "),
+                "build-inputs" = %dep_config.build_inputs.iter().join(", "),
+                "environment-variables" = %dep_config.environment_variables.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                "ld_library-path-inputs" = %dep_config.ld_library_path_inputs.iter().join(", "),
                 "Detected `package.fsm` in `Crate.toml`"
             );
-            found_build_inputs = found_build_inputs
-                .union(&package_build_inputs)
-                .cloned()
-                .collect();
-
-            for (package_env_key, package_env_value) in package_envs {
-                found_envs.insert(package_env_key, package_env_value);
-            }
-
-            found_ld_inputs = found_ld_inputs.union(&package_ld_inputs).cloned().collect();
+            dep_config.try_apply(self)?;
         }
 
         eprintln!(
@@ -202,20 +140,27 @@ impl DevEnvironment {
             check = "✓".green(),
             lang = "🦀 rust".bold().red(),
             colored_inputs = {
-                let mut sorted_build_inputs = found_build_inputs
-                    .union(&found_ld_inputs)
+                let mut sorted_build_inputs = self
+                    .build_inputs
+                    .union(&self.ld_library_path)
                     .collect::<Vec<_>>();
                 sorted_build_inputs.sort();
                 sorted_build_inputs.iter().map(|v| v.cyan()).join(", ")
             },
             maybe_colored_envs = {
-                if !found_envs.is_empty() {
-                    let mut sorted_build_inputs =
-                        found_envs.iter().map(|(k, _)| k).collect::<Vec<_>>();
-                    sorted_build_inputs.sort();
+                if !self.environment_variables.is_empty() {
+                    let mut sorted_environment_variables = self
+                        .environment_variables
+                        .iter()
+                        .map(|(k, _)| k)
+                        .collect::<Vec<_>>();
+                    sorted_environment_variables.sort();
                     format!(
                         " ({})",
-                        sorted_build_inputs.iter().map(|v| v.green()).join(", ")
+                        sorted_environment_variables
+                            .iter()
+                            .map(|v| v.green())
+                            .join(", ")
                     )
                 } else {
                     "".to_string()
@@ -223,12 +168,18 @@ impl DevEnvironment {
             }
         );
 
-        self.build_inputs = found_build_inputs;
-        self.environment_variables = found_envs;
-        self.ld_library_path = found_ld_inputs;
-
         Ok(())
     }
+}
+
+pub(crate) trait DevEnvironmentAppliable {
+    fn try_apply(&self, dev_env: &mut DevEnvironment) -> Result<(), TryApplyError>;
+}
+
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum TryApplyError {
+    #[error("Duplicate environment variable `{0}`")]
+    DuplicateEnvironmentVariables(String),
 }
 
 #[cfg(test)]
@@ -270,6 +221,8 @@ mod tests {
 
     #[test]
     fn dev_env_detect_supported_project() {
+        let cache_dir = TempDir::new().unwrap();
+        std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
         let temp_dir = TempDir::new().unwrap();
         std::fs::write(temp_dir.path().join("lib.rs"), "fn main () {}").unwrap();
         std::fs::write(
@@ -284,14 +237,12 @@ edition = "2021"
 name = "fsm_test"
 path = "lib.rs"
 
-[package.metadata.fsm.build-inputs]
-hello = "*"
+[package.metadata.fsm]
+build-inputs = [ "hello" ]
+ld-library-path-inputs = [ "libGL" ]
 
 [package.metadata.fsm.environment-variables]
 HI = "BYE"
-
-[package.metadata.fsm.LD_LIBRARY_PATH-inputs]
-libGL = "*"
 
 [dependencies]
         "#,
@@ -300,7 +251,7 @@ libGL = "*"
 
         let mut dev_env = DevEnvironment::default();
         let detect = tokio_test::block_on(dev_env.detect(temp_dir.path()));
-        assert!(detect.is_ok());
+        assert!(detect.is_ok(), "{detect:?}");
 
         assert!(dev_env.build_inputs.get("hello").is_some());
         assert_eq!(
