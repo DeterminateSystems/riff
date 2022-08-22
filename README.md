@@ -79,9 +79,9 @@ protoc: command not found
 Rather than relying on our hand-made mapping of crates to their inputs, it is also possible to specify a project's inputs in its `Cargo.toml`.
 `fsm` currently supports three kinds of inputs:
 
-* `build_inputs`, which are native dependencies that the crate may want to link against.
-* `environment_variables`, which are environment variables you may want to set in your dev shell.
-* `ld_library_path_inputs`, which are libraries you may need to add to your `LD_LIBRARY_PATH` to ensure proper linking.
+* `build-inputs`, which are native dependencies that the crate may want to link against.
+* `environment-variables`, which are environment variables you may want to set in your dev shell.
+* `runtime-inputs`, which are libraries you may want to add to your `LD_LIBRARY_PATH` to ensure proper execution in your dev shell.
 
 They can be used as follows:
 
@@ -92,10 +92,10 @@ version = "0.1.0"
 edition = "2021"
 
 [package.metadata.fsm]
-build_inputs = [ "openssl" ]
-ld_library_path_inputs = [ "libGL" ]
+build-inputs = [ "openssl" ]
+runtime-inputs = [ "libGL" ]
 
-[package.metadata.fsm.environment_variables]
+[package.metadata.fsm.environment-variables]
 HI = "BYE"
 
 [dependencies]

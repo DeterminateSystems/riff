@@ -23,8 +23,8 @@ pub struct RustDependencyConfiguration {
     #[serde(default, rename = "environment-variables")]
     pub(crate) environment_variables: HashMap<String, String>,
     /// The Nix packages which should have the result of `lib.getLib` run on them placed on the `LD_LIBRARY_PATH`
-    #[serde(default, rename = "ld-library-path-inputs")]
-    pub(crate) ld_library_path_inputs: HashSet<String>,
+    #[serde(default, rename = "runtime-inputs")]
+    pub(crate) runtime_inputs: HashSet<String>,
 }
 
 impl DevEnvironmentAppliable for RustDependencyConfiguration {
@@ -47,7 +47,7 @@ impl DevEnvironmentAppliable for RustDependencyConfiguration {
         }
         dev_env.ld_library_path = dev_env
             .ld_library_path
-            .union(&self.ld_library_path_inputs)
+            .union(&self.runtime_inputs)
             .cloned()
             .collect();
         Ok(())
