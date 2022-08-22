@@ -92,7 +92,9 @@ impl DependencyRegistry {
                     req = req.header(TELEMETRY_HEADER_NAME, &telemetry);
                     tracing::trace!(%telemetry, "Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
                 } else {
-                    tracing::trace!("Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
+                    tracing::trace!(
+                        "Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}"
+                    );
                 }
                 let res = match req.send().await {
                     Ok(res) => res,
