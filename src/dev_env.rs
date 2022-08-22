@@ -11,11 +11,12 @@ use tokio::process::Command;
 use crate::cargo_metadata::CargoMetadata;
 use crate::dependency_registry::DependencyRegistry;
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct DevEnvironment {
     pub(crate) build_inputs: HashSet<String>,
     pub(crate) environment_variables: HashMap<String, String>,
     pub(crate) ld_library_path: HashSet<String>,
+    pub(crate) detected_languages: HashSet<String>,
 }
 
 // TODO(@cole-h): should this become a trait that the various languages we may support have to implement?
@@ -46,6 +47,7 @@ impl DevEnvironment {
 
     pub async fn detect(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
         if project_dir.join("Cargo.toml").exists() {
+            self.detected_languages.insert("Rust".to_string());
             self.add_deps_from_cargo(project_dir).await?;
             Ok(())
         } else {

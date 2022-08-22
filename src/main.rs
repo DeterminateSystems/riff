@@ -9,6 +9,7 @@ use std::error::Error;
 use atty::Stream;
 use clap::Parser;
 use eyre::WrapErr;
+use telemetry::Telemetry;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -60,13 +61,17 @@ async fn main() -> color_eyre::Result<()> {
 }
 
 async fn main_impl() -> color_eyre::Result<()> {
+    let maybe_args = Cli::try_parse();
 
-    tracing::error!(telemetry = ?telemetry::Telemetry::new().await?, "Got telemetry");
-
-    let args = Cli::parse();
-
+    let args = match maybe_args {
+        Ok(args) => args,
+        Err(e) => {
+            Telemetry::new().await.send().await?;
+            e.exit() // Dead!
+        }
+    };
     match args.command {
-        Commands::Shell(shell) => {
+        Commands::Shell(mut shell) => {
             let code = shell.cmd().await?;
             if let Some(code) = code {
                 std::process::exit(code);

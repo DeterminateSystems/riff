@@ -8,7 +8,7 @@ use tokio::{
 };
 use xdg::{BaseDirectories, BaseDirectoriesError};
 
-use crate::FSM_XDG_PREFIX;
+use crate::{FSM_XDG_PREFIX, telemetry::{Telemetry, TELEMETRY_HEADER_NAME}};
 
 use self::rust::RustDependencyRegistryData;
 
@@ -76,8 +76,17 @@ impl DependencyRegistry {
             let refresh_handle = tokio::spawn(async move {
                 // Refresh the cache
                 tracing::trace!("Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
+                // We don't want to fail if we can't build telemetry data...
+                let telemetry = match Telemetry::new().await.as_header_data() {
+                    Ok(telemetry) => telemetry, // But we do want to fail if we can build it but can't parse it
+                    Err(err) => {
+                        tracing::debug!(%err, "Telemetry build error");
+                        return;
+                    },
+                };
                 let http_client = reqwest::Client::new();
-                let req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL).send();
+                let req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL)
+                    .header(TELEMETRY_HEADER_NAME, telemetry).send();
                 let res = match req.await {
                     Ok(res) => res,
                     Err(err) => {
@@ -119,7 +128,7 @@ impl DependencyRegistry {
                     .await
                 {
                     Ok(_) => {
-                        tracing::trace!(path = %cached_registry_pathbuf.display(), "Refreshed remote registry into XDG cache")
+                        tracing::debug!(path = %cached_registry_pathbuf.display(), "Refreshed remote registry into XDG cache")
                     }
                     Err(err) => {
                         tracing::error!(err = %eyre::eyre!(err), "Could not write to {}", cached_registry_pathbuf.display());

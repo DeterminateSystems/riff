@@ -8,10 +8,10 @@ use eyre::{eyre, WrapErr};
 use tempfile::TempDir;
 use tokio::process::Command;
 
-use crate::dev_env::DevEnvironment;
+use crate::{dev_env::DevEnvironment, telemetry::Telemetry};
 
 /// Start a development shell
-#[derive(Debug, Args)]
+#[derive(Debug, Args, Clone)]
 pub struct Shell {
     /// The root directory of the project
     #[clap(long, value_parser)]
@@ -20,15 +20,16 @@ pub struct Shell {
 
 impl Shell {
     // TODO(@cole-h): should this be a trait method? we'll see once we add another subcommand
-    pub async fn cmd(self) -> color_eyre::Result<Option<i32>> {
-        let project_dir = match self.project_dir {
-            Some(dir) => dir,
+    pub async fn cmd(&mut self) -> color_eyre::Result<Option<i32>> {
+        let project_dir = match &self.project_dir {
+            Some(dir) => dir.clone(),
             None => std::env::current_dir().wrap_err("Current working directory was invalid")?,
         };
         tracing::debug!("Project directory is '{}'.", project_dir.display());
 
         let mut dev_env = DevEnvironment::default();
         dev_env.detect(&project_dir).await?;
+        Telemetry::new().await.with_detected_languages(&dev_env.detected_languages).send().await?;
 
         let flake_nix = dev_env.to_flake();
         tracing::trace!("Generated 'flake.nix':\n{}", flake_nix);
