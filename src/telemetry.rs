@@ -125,7 +125,7 @@ async fn distinct_id() -> eyre::Result<Uuid> {
     // The first 36 bytes will be the uuid, the rest will be newlines or `TELEMETRY_IDENTIFIER_DESCRIPTION`
     let mut distinct_id = Default::default();
     distinct_id_file.read_to_string(&mut distinct_id).await?;
-    if let Some(len) = distinct_id.find("\n") {
+    if let Some(len) = distinct_id.find('\n') {
         distinct_id.truncate(len);
         distinct_id = distinct_id.trim().to_string();
     }

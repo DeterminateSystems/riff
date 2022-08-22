@@ -210,6 +210,7 @@ mod tests {
                 .into_iter()
                 .map(ToString::to_string)
                 .collect(),
+            ..Default::default()
         };
 
         let flake = dev_env.to_flake();

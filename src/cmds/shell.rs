@@ -139,7 +139,7 @@ shellHook = "exit 6"
         )
         .unwrap();
 
-        let shell = Shell {
+        let mut shell = Shell {
             project_dir: Some(temp_dir.path().to_owned()),
         };
 
