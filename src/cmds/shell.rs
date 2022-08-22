@@ -2,15 +2,14 @@
 
 use std::path::PathBuf;
 use std::process::Stdio;
-use std::time::Duration;
 
 use clap::Args;
 use eyre::{eyre, WrapErr};
-use indicatif::{ProgressBar, ProgressStyle};
 use tempfile::TempDir;
 use tokio::process::Command;
 
 use crate::dev_env::DevEnvironment;
+use crate::spinner::SimpleSpinner;
 
 /// Start a development shell
 #[derive(Debug, Args)]
@@ -51,13 +50,8 @@ impl Shell {
             .arg(format!("path://{}", flake_dir.path().to_str().unwrap()));
 
         tracing::trace!(command = ?nix_lock_command, "Running");
-        let spinner = ProgressBar::new_spinner();
-        spinner.enable_steady_tick(Duration::from_millis(400));
-        spinner.set_style(
-            ProgressStyle::with_template("{msg}{spinner}")?
-                .tick_strings(&["   ", ".  ", ".. ", "...", "   "]),
-        );
-        spinner.set_message("Running `nix flake lock`");
+        let spinner = SimpleSpinner::new_with_message(Some("Running `nix flake lock`"))
+            .context("Failed to construct progress spinner")?;
 
         let nix_lock_exit = nix_lock_command
             .output()

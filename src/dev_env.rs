@@ -2,16 +2,15 @@
 
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
-use std::time::Duration;
 
 use eyre::{eyre, WrapErr};
-use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use owo_colors::OwoColorize;
 use tokio::process::Command;
 
 use crate::cargo_metadata::CargoMetadata;
 use crate::dependency_registry::DependencyRegistry;
+use crate::spinner::SimpleSpinner;
 
 #[derive(Default)]
 pub struct DevEnvironment {
@@ -70,13 +69,8 @@ impl DevEnvironment {
         let registry_handle = tokio::task::spawn(DependencyRegistry::new(false));
 
         tracing::trace!(command = ?cargo_metadata_command, "Running");
-        let spinner = ProgressBar::new_spinner();
-        spinner.enable_steady_tick(Duration::from_millis(400));
-        spinner.set_style(
-            ProgressStyle::with_template("{msg}{spinner}")?
-                .tick_strings(&["   ", ".  ", ".. ", "...", "   "]),
-        );
-        spinner.set_message("Running `cargo metadata`");
+        let spinner = SimpleSpinner::new_with_message(Some("Running `cargo metadata`"))
+            .context("Failed to construct progress spinner")?;
 
         let cargo_metadata_output = cargo_metadata_command
             .output()
