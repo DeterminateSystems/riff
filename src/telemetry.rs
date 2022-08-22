@@ -123,19 +123,23 @@ async fn distinct_id() -> eyre::Result<Uuid> {
         .open(distinct_id_path.clone())
         .await?;
     // The first 36 bytes will be the uuid, the rest will be newlines or `TELEMETRY_IDENTIFIER_DESCRIPTION`
-    let mut distinct_id_bytes = vec![0_u8; 36];
-    distinct_id_file.read_exact(&mut distinct_id_bytes).await?;
-    let distinct_id = String::from_utf8(distinct_id_bytes.clone())
-        .wrap_err("Distinct UUID was not in UTF-8 bytes")?;
+    let mut distinct_id = Default::default();
+    distinct_id_file.read_to_string(&mut distinct_id).await?;
+    if let Some(len) = distinct_id.find("\n") {
+        distinct_id.truncate(len);
+        distinct_id = distinct_id.trim().to_string();
+    }
+
     let distinct_id = if distinct_id.is_empty() {
         let distinct_id = Uuid::new_v4();
-        tracing::debug!(%distinct_id, "Writing new distinct ID");
+        tracing::trace!(%distinct_id, "Writing new distinct ID");
         distinct_id_file
             .write_all(format!("{distinct_id}\n\n{TELEMETRY_IDENTIFIER_DESCRIPTION}").as_bytes())
             .await?;
+        tracing::debug!(%distinct_id, "Wrote new distinct ID");
         distinct_id
     } else {
-        Uuid::try_parse(&distinct_id)?
+        Uuid::parse_str(&distinct_id)?
     };
 
     Ok(distinct_id)
