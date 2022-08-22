@@ -10,6 +10,7 @@ use tokio::process::Command;
 
 use crate::cargo_metadata::CargoMetadata;
 use crate::dependency_registry::DependencyRegistry;
+use crate::spinner::SimpleSpinner;
 
 #[derive(Default, Debug, Clone)]
 pub struct DevEnvironment {
@@ -67,14 +68,18 @@ impl DevEnvironment {
         cargo_metadata_command.arg("--manifest-path");
         cargo_metadata_command.arg(project_dir.join("Cargo.toml"));
 
-        tracing::trace!(command = ?cargo_metadata_command, "Running");
-
         let registry_handle = tokio::task::spawn(DependencyRegistry::new(false));
+
+        tracing::trace!(command = ?cargo_metadata_command, "Running");
+        let spinner = SimpleSpinner::new_with_message(Some("Running `cargo metadata`"))
+            .context("Failed to construct progress spinner")?;
 
         let cargo_metadata_output = cargo_metadata_command
             .output()
             .await
             .wrap_err("Could not execute `cargo metadata`")?;
+
+        spinner.finish_and_clear();
 
         if !cargo_metadata_output.status.success() {
             return Err(eyre!(
@@ -111,7 +116,7 @@ impl DevEnvironment {
                     package_name = %name,
                     "build-inputs" = %dep_config.build_inputs.iter().join(", "),
                     "environment-variables" = %dep_config.environment_variables.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
-                    "ld-library-path-inputs" = %dep_config.ld_library_path_inputs.iter().join(", "),
+                    "runtime-inputs" = %dep_config.runtime_inputs.iter().join(", "),
                     "Detected known crate information"
                 );
                 dep_config.clone().try_apply(self)?;
@@ -131,7 +136,7 @@ impl DevEnvironment {
                 package = %name,
                 "build-inputs" = %dep_config.build_inputs.iter().join(", "),
                 "environment-variables" = %dep_config.environment_variables.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
-                "ld_library-path-inputs" = %dep_config.ld_library_path_inputs.iter().join(", "),
+                "runtime-inputs" = %dep_config.runtime_inputs.iter().join(", "),
                 "Detected `package.fsm` in `Crate.toml`"
             );
             dep_config.try_apply(self)?;
@@ -241,7 +246,7 @@ path = "lib.rs"
 
 [package.metadata.fsm]
 build-inputs = [ "hello" ]
-ld-library-path-inputs = [ "libGL" ]
+runtime-inputs = [ "libGL" ]
 
 [package.metadata.fsm.environment-variables]
 HI = "BYE"

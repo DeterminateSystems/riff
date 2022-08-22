@@ -2,6 +2,7 @@ mod cargo_metadata;
 mod cmds;
 mod dependency_registry;
 mod dev_env;
+mod spinner;
 mod telemetry;
 
 use std::error::Error;
