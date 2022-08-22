@@ -171,6 +171,11 @@
             "cmake"
           ]
         },
+        "pyo3-build-config": {
+          "build-inputs": [
+            "python3"
+          ]
+        },
         "qt_3d_render": {
           "build-inputs": [
             "libGL"
