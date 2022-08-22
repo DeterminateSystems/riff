@@ -10,6 +10,7 @@ use tokio::process::Command;
 
 use crate::cargo_metadata::CargoMetadata;
 use crate::dependency_registry::DependencyRegistry;
+use crate::spinner::SimpleSpinner;
 
 #[derive(Default)]
 pub struct DevEnvironment {
@@ -65,14 +66,18 @@ impl DevEnvironment {
         cargo_metadata_command.arg("--manifest-path");
         cargo_metadata_command.arg(project_dir.join("Cargo.toml"));
 
-        tracing::trace!(command = ?cargo_metadata_command, "Running");
-
         let registry_handle = tokio::task::spawn(DependencyRegistry::new(false));
+
+        tracing::trace!(command = ?cargo_metadata_command, "Running");
+        let spinner = SimpleSpinner::new_with_message(Some("Running `cargo metadata`"))
+            .context("Failed to construct progress spinner")?;
 
         let cargo_metadata_output = cargo_metadata_command
             .output()
             .await
             .wrap_err("Could not execute `cargo metadata`")?;
+
+        spinner.finish_and_clear();
 
         if !cargo_metadata_output.status.success() {
             return Err(eyre!(

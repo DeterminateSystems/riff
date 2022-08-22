@@ -9,6 +9,7 @@ use tempfile::TempDir;
 use tokio::process::Command;
 
 use crate::dev_env::DevEnvironment;
+use crate::spinner::SimpleSpinner;
 
 /// Start a development shell
 #[derive(Debug, Args)]
@@ -49,10 +50,15 @@ impl Shell {
             .arg(format!("path://{}", flake_dir.path().to_str().unwrap()));
 
         tracing::trace!(command = ?nix_lock_command, "Running");
+        let spinner = SimpleSpinner::new_with_message(Some("Running `nix flake lock`"))
+            .context("Failed to construct progress spinner")?;
+
         let nix_lock_exit = nix_lock_command
             .output()
             .await
             .wrap_err("Could not execute `nix flake lock`")?;
+
+        spinner.finish_and_clear();
 
         if !nix_lock_exit.status.success() {
             return Err(eyre!(
