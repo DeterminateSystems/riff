@@ -2,8 +2,10 @@
 
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
+use std::time::Duration;
 
 use eyre::{eyre, WrapErr};
+use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use owo_colors::OwoColorize;
 use tokio::process::Command;
@@ -65,14 +67,23 @@ impl DevEnvironment {
         cargo_metadata_command.arg("--manifest-path");
         cargo_metadata_command.arg(project_dir.join("Cargo.toml"));
 
-        tracing::trace!(command = ?cargo_metadata_command, "Running");
-
         let registry_handle = tokio::task::spawn(DependencyRegistry::new(false));
+
+        tracing::trace!(command = ?cargo_metadata_command, "Running");
+        let spinner = ProgressBar::new_spinner();
+        spinner.enable_steady_tick(Duration::from_millis(400));
+        spinner.set_style(
+            ProgressStyle::with_template("{msg}{spinner}")?
+                .tick_strings(&["   ", ".  ", ".. ", "...", "   "]),
+        );
+        spinner.set_message("Running `cargo metadata`");
 
         let cargo_metadata_output = cargo_metadata_command
             .output()
             .await
             .wrap_err("Could not execute `cargo metadata`")?;
+
+        spinner.finish_and_clear();
 
         if !cargo_metadata_output.status.success() {
             return Err(eyre!(

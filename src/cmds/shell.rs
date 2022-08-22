@@ -2,9 +2,11 @@
 
 use std::path::PathBuf;
 use std::process::Stdio;
+use std::time::Duration;
 
 use clap::Args;
 use eyre::{eyre, WrapErr};
+use indicatif::{ProgressBar, ProgressStyle};
 use tempfile::TempDir;
 use tokio::process::Command;
 
@@ -49,10 +51,20 @@ impl Shell {
             .arg(format!("path://{}", flake_dir.path().to_str().unwrap()));
 
         tracing::trace!(command = ?nix_lock_command, "Running");
+        let spinner = ProgressBar::new_spinner();
+        spinner.enable_steady_tick(Duration::from_millis(400));
+        spinner.set_style(
+            ProgressStyle::with_template("{msg}{spinner}")?
+                .tick_strings(&["   ", ".  ", ".. ", "...", "   "]),
+        );
+        spinner.set_message("Running `nix flake lock`");
+
         let nix_lock_exit = nix_lock_command
             .output()
             .await
             .wrap_err("Could not execute `nix flake lock`")?;
+
+        spinner.finish_and_clear();
 
         if !nix_lock_exit.status.success() {
             return Err(eyre!(
