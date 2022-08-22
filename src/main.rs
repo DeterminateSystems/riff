@@ -24,7 +24,7 @@ struct Cli {
 
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
-    color_eyre::config::HookBuilder::default().install()?;
+    color_eyre::config::HookBuilder::default().issue_url(concat!(env!("CARGO_PKG_REPOSITORY"), "/issues/new")).install()?;
 
     let filter_layer = match EnvFilter::try_from_default_env() {
         Ok(layer) => layer,

@@ -2,11 +2,12 @@
 name = "fsm"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/DeterminateSystems/fsm"
 
 [dependencies]
 atty = "0.2"
 clap = { version = "3.2.17", features = ["derive"] }
-color-eyre = "0.6.2"
+color-eyre = { version = "0.6.2", features = [ "issue-url" ] }
 eyre = "0.6.8"
 indicatif = "0.17.0"
 itertools = "0.10"
