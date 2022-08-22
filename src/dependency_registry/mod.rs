@@ -8,7 +8,10 @@ use tokio::{
 };
 use xdg::{BaseDirectories, BaseDirectoriesError};
 
-use crate::{FSM_XDG_PREFIX, telemetry::{Telemetry, TELEMETRY_HEADER_NAME}};
+use crate::{
+    telemetry::{Telemetry, TELEMETRY_HEADER_NAME},
+    FSM_XDG_PREFIX,
+};
 
 use self::rust::RustDependencyRegistryData;
 
@@ -82,11 +85,13 @@ impl DependencyRegistry {
                     Err(err) => {
                         tracing::debug!(%err, "Telemetry build error");
                         return;
-                    },
+                    }
                 };
                 let http_client = reqwest::Client::new();
-                let req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL)
-                    .header(TELEMETRY_HEADER_NAME, telemetry).send();
+                let req = http_client
+                    .get(DEPENDENCY_REGISTRY_REMOTE_URL)
+                    .header(TELEMETRY_HEADER_NAME, telemetry)
+                    .send();
                 let res = match req.await {
                     Ok(res) => res,
                     Err(err) => {

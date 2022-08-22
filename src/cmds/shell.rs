@@ -29,7 +29,11 @@ impl Shell {
 
         let mut dev_env = DevEnvironment::default();
         dev_env.detect(&project_dir).await?;
-        Telemetry::new().await.with_detected_languages(&dev_env.detected_languages).send().await?;
+        Telemetry::new()
+            .await
+            .with_detected_languages(&dev_env.detected_languages)
+            .send()
+            .await?;
 
         let flake_nix = dev_env.to_flake();
         tracing::trace!("Generated 'flake.nix':\n{}", flake_nix);
