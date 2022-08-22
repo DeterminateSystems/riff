@@ -122,7 +122,7 @@ async fn distinct_id() -> eyre::Result<Uuid> {
         .create(true) // We do this proactively to avoid the user seeing a non-fatal error later when we freshen the cache.
         .open(distinct_id_path.clone())
         .await?;
-    // The first 36 bytes will be the uuid, the rest will be newlines or `TELEMETRY_IDENTIFIER_DESCRIPTION`
+    // The first line will be the uuid, the rest will be newlines or `TELEMETRY_IDENTIFIER_DESCRIPTION`
     let mut distinct_id = Default::default();
     distinct_id_file.read_to_string(&mut distinct_id).await?;
     if let Some(len) = distinct_id.find('\n') {

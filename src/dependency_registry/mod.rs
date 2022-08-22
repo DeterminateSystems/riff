@@ -7,7 +7,7 @@ use tokio::{
     task::JoinHandle,
 };
 use xdg::{BaseDirectories, BaseDirectoriesError};
-
+use eyre::WrapErr;
 use crate::{
     telemetry::{Telemetry, TELEMETRY_HEADER_NAME},
     FSM_XDG_PREFIX,
@@ -79,13 +79,7 @@ impl DependencyRegistry {
             let refresh_handle = tokio::spawn(async move {
                 // Refresh the cache
                 // We don't want to fail if we can't build telemetry data...
-                let telemetry = match Telemetry::new().await.as_header_data() {
-                    Ok(telemetry) => Some(telemetry), // But we do want to fail if we can build it but can't parse it
-                    Err(err) => {
-                        tracing::debug!(%err, "Telemetry build error");
-                        None
-                    }
-                };
+                let telemetry = Telemetry::new().await.as_header_data().wrap_err("Serializing header data")?;
                 let http_client = reqwest::Client::new();
                 let mut req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL);
                 if let Some(telemetry) = telemetry {
