@@ -1,7 +1,7 @@
 use std::{collections::HashSet, path::Path};
 
 use clap::Parser;
-use eyre::{eyre, WrapErr};
+use eyre::eyre;
 use reqwest::Response;
 use serde::Serialize;
 use tokio::{
@@ -102,7 +102,7 @@ impl Telemetry {
             .post(TELEMETRY_REMOTE_URL)
             .header(TELEMETRY_HEADER_NAME, &header_data);
         let res = req.send().await?;
-        tracing::debug!(data = %header_data, "Sent telemetry data to {TELEMETRY_REMOTE_URL}");
+        tracing::debug!(telemetry = %header_data, "Sent telemetry data to {TELEMETRY_REMOTE_URL}");
         Ok(res)
     }
 

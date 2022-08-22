@@ -8,8 +8,8 @@ use eyre::{eyre, WrapErr};
 use tempfile::TempDir;
 use tokio::process::Command;
 
-use crate::{dev_env::DevEnvironment, telemetry::Telemetry};
 use crate::spinner::SimpleSpinner;
+use crate::{dev_env::DevEnvironment, telemetry::Telemetry};
 
 /// Start a development shell
 #[derive(Debug, Args, Clone)]
