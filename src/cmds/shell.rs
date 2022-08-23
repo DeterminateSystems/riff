@@ -35,7 +35,8 @@ impl Shell {
             err @ Err(_) => {
                 let wrapped_err = err
                     .wrap_err_with(|| {
-                        format!("\
+                        format!(
+                            "\
                             `{colored_project_dir}` doesn't contain a project recognized by FSM.\n\
                             Try running `{fsm_shell}` in a Rust project directory.\
                     ",
