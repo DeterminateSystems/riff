@@ -1,6 +1,6 @@
 //! The `run` subcommand.
 
-use std::{ffi::OsString, path::PathBuf, process::Stdio};
+use std::{path::PathBuf, process::Stdio};
 
 use clap::Args;
 use eyre::WrapErr;
@@ -22,13 +22,13 @@ pub struct Run {
     project_dir: Option<PathBuf>,
     /// The command to run with your project's dependencies
     #[clap(required = true)]
-    command: Vec<OsString>,
+    pub(crate) command: Vec<String>,
     // TODO(@cole-h): support additional nix develop args?
 }
 
 impl Run {
-    pub async fn cmd(self) -> color_eyre::Result<Option<i32>> {
-        let flake_dir = super::generate_flake_from_project_dir(self.project_dir).await?;
+    pub async fn cmd(&self) -> color_eyre::Result<Option<i32>> {
+        let flake_dir = super::generate_flake_from_project_dir(self.project_dir.clone()).await?;
 
         let mut nix_develop_command = Command::new("nix");
         nix_develop_command
@@ -37,7 +37,7 @@ impl Run {
             .arg("-L")
             .arg(format!("path://{}", flake_dir.path().to_str().unwrap()))
             .arg("-c")
-            .args(self.command)
+            .args(self.command.clone())
             .stdin(Stdio::inherit())
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit());
@@ -56,8 +56,6 @@ impl Run {
 
 #[cfg(test)]
 mod tests {
-    use std::ffi::OsString;
-
     use tempfile::TempDir;
 
     use super::Run;
@@ -92,7 +90,7 @@ path = "lib.rs"
             project_dir: Some(temp_dir.path().to_owned()),
             command: ["sh", "-c", "exit 6"]
                 .into_iter()
-                .map(OsString::from)
+                .map(String::from)
                 .collect(),
         };
 
