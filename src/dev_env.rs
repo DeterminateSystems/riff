@@ -70,8 +70,8 @@ impl DevEnvironment {
 
         tracing::trace!(command = ?cargo_metadata_command, "Running");
         let spinner = SimpleSpinner::new_with_message(Some(&format!(
-            "Running {cargo_metadata}",
-            cargo_metadata = "`cargo metadata`".cyan()
+            "Running `{cargo_metadata}`",
+            cargo_metadata = "cargo metadata".cyan()
         )))
         .context("Failed to construct progress spinner")?;
 
@@ -82,12 +82,12 @@ impl DevEnvironment {
                     .wrap_err_with(|| {
                         format!(
                             "\
-                        Could not execute {cargo_metadata}. Is {cargo} installed?\n\n\
+                        Could not execute `{cargo_metadata}`. Is `{cargo}` installed?\n\n\
                         Get instructions for installing Cargo: {rust_install_url}\n\
                         Underlying error\
                     ",
-                            cargo_metadata = "`cargo metadata`".cyan(),
-                            cargo = "`cargo`".cyan(),
+                            cargo_metadata = "cargo metadata".cyan(),
+                            cargo = "cargo".cyan(),
                             rust_install_url =
                                 "https://www.rust-lang.org/tools/install".blue().underline()
                         )
