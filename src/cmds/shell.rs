@@ -30,11 +30,14 @@ impl Shell {
 
         let mut dev_env = DevEnvironment::default();
         dev_env.detect(&project_dir).await?;
-        Telemetry::new()
+        match Telemetry::new()
             .await
             .with_detected_languages(&dev_env.detected_languages)
             .send()
-            .await?;
+            .await {
+                Ok(_) => (),
+                Err(err) => tracing::debug!(%err, "Could not send telemetry"),
+            };
 
         let flake_nix = dev_env.to_flake();
         tracing::trace!("Generated 'flake.nix':\n{}", flake_nix);
