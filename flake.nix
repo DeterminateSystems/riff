@@ -65,7 +65,7 @@
             codespell
             nixpkgs-fmt
             findutils # for xargs
-          ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv ]);
+          ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]);
         });
 
       packages = forAllSystems
