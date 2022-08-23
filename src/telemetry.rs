@@ -11,7 +11,7 @@ use tokio::{
 };
 use uuid::Uuid;
 
-use crate::{Cli, FSM_XDG_PREFIX};
+use crate::{cmds::Commands, Cli, FSM_XDG_PREFIX};
 
 static TELEMETRY_DISTINCT_ID_PATH: &str = "distinct_id";
 static TELEMETRY_IDENTIFIER_DESCRIPTION: &str =  "This is a randomly generated version 4 UUID.
@@ -62,10 +62,9 @@ impl Telemetry {
 
         let is_tty = atty::is(atty::Stream::Stdout);
 
-        #[allow(clippy::manual_map)]
-        // Allow this as the warning should go away the moment we add a second command.
         let subcommand = match command {
-            Some(crate::cmds::Commands::Shell(_)) => Some("shell".to_string()),
+            Some(Commands::Shell(_)) => Some("shell".to_string()),
+            Some(Commands::Run(_)) => Some("run".to_string()),
             None => None,
         };
 
