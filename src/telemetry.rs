@@ -28,7 +28,7 @@ pub(crate) struct Telemetry {
     distinct_id: Option<Uuid>,
     system_os: String,
     system_arch: String,
-    /// The `CARGO_PGX_VERSION` from an `fsm` build
+    /// The `CARGO_PKG_VERSION` from an `fsm` build
     fsm_version: String,
     /// The version output of `nix --version`
     nix_version: Option<String>,

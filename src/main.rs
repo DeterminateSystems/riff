@@ -67,7 +67,7 @@ async fn main_impl() -> color_eyre::Result<()> {
     let args = match maybe_args {
         Ok(args) => args,
         Err(e) => {
-            Telemetry::new().await.send().await?;
+            Telemetry::new().await.send().await.ok();
             e.exit() // Dead!
         }
     };
