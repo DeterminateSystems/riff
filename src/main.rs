@@ -6,6 +6,7 @@ mod spinner;
 mod telemetry;
 
 use std::error::Error;
+use std::io::Write;
 
 use atty::Stream;
 use clap::Parser;
@@ -83,6 +84,16 @@ async fn main_impl() -> color_eyre::Result<()> {
         Commands::Run(run) => {
             let code = run.cmd().await?;
             if let Some(code) = code {
+                if code == 127 {
+                    writeln!(
+                        std::io::stderr(),
+                        "The command you attempted to run was not found.
+Try running it in a shell; for example:
+\tfsm run -- sh -c '{}'\n",
+                        run.command.join(" ")
+                    )?;
+                }
+
                 std::process::exit(code);
             }
         }
