@@ -15,7 +15,7 @@ pub(crate) mod rust;
 const DEPENDENCY_REGISTRY_REMOTE_URL: &str = "https://fsm-server.fly.dev/fsm-registry.json";
 const DEPENDENCY_REGISTRY_CACHE_PATH: &str = "registry.json";
 const DEPENDENCY_REGISTRY_XDG_PREFIX: &str = "fsm";
-const DEPENDENCY_REGISTRY_FALLBACK: &str = include_str!("../../registry.json");
+const DEPENDENCY_REGISTRY_FALLBACK: &str = include_str!("../../registry/registry.json");
 
 #[derive(Debug, thiserror::Error)]
 pub enum DependencyRegistryError {
