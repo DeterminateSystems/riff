@@ -6,13 +6,13 @@ use clap::Args;
 use eyre::WrapErr;
 use tokio::process::Command;
 
-/// Run a command in a development shell
+/// Run a command with your project's dependencies
 #[derive(Debug, Args)]
 pub struct Run {
     /// The root directory of the project
     #[clap(long, value_parser)]
     project_dir: Option<PathBuf>,
-    /// The command to run in the project's development shell
+    /// The command to run with your project's dependencies
     #[clap(required = true)]
     command: Vec<OsString>,
     // TODO(@cole-h): support additional nix develop args?
