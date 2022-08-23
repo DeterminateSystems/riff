@@ -1,3 +1,4 @@
+mod run;
 mod shell;
 
 use clap::Subcommand;
@@ -5,4 +6,5 @@ use clap::Subcommand;
 #[derive(Debug, Subcommand, Clone)]
 pub enum Commands {
     Shell(shell::Shell),
+    Run(run::Run),
 }

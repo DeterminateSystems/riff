@@ -80,6 +80,12 @@ async fn main_impl() -> color_eyre::Result<()> {
                 std::process::exit(code);
             }
         }
+        Commands::Run(run) => {
+            let code = run.cmd().await?;
+            if let Some(code) = code {
+                std::process::exit(code);
+            }
+        }
     };
 
     Ok(())
