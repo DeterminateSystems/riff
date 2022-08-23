@@ -86,6 +86,17 @@ jobs:
     - name: Check nixpkgs-fmt formatting
       run: nix develop --command sh -c "git ls-files '*.nix' | xargs nixpkgs-fmt --check"
 
+  RegistryFormatting:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: cachix/install-nix-action@v17
+      with:
+        extra_nix_config: |
+          access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+    - name: Check registry.json formatting
+      run: nix develop --command sh -c "./registry/format.sh && git diff --exit-code"
+
   EditorConfig:
     runs-on: ubuntu-latest
     steps:
