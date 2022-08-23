@@ -72,7 +72,7 @@ async fn main_impl() -> color_eyre::Result<()> {
         }
     };
     match args.command {
-        Commands::Shell(mut shell) => {
+        Commands::Shell(shell) => {
             let code = shell.cmd().await?;
             if let Some(code) = code {
                 std::process::exit(code);
