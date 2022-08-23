@@ -69,13 +69,24 @@ impl DevEnvironment {
         let registry_handle = tokio::task::spawn(DependencyRegistry::new(false));
 
         tracing::trace!(command = ?cargo_metadata_command, "Running");
-        let spinner = SimpleSpinner::new_with_message(Some("Running `cargo metadata`"))
+        let spinner = SimpleSpinner::new_with_message(Some(&format!("Running {cargo_metadata}", cargo_metadata = "`cargo metadata`".cyan())))
             .context("Failed to construct progress spinner")?;
 
-        let cargo_metadata_output = cargo_metadata_command
+        let cargo_metadata_output = match cargo_metadata_command
             .output()
-            .await
-            .wrap_err("Could not execute `cargo metadata`")?;
+            .await {
+                Ok(output) => output,
+                err @ Err(_) => {
+                    let wrapped_err = err.wrap_err_with(|| format!("\
+                        Could not execute {cargo_metadata}. Is {cargo} installed?\n\n\
+                        Get instructions for installing Cargo: {rust_install_url}\n\
+                        Underlying error\
+                    ", cargo_metadata = "`cargo metadata`".cyan(), cargo = "`cargo`".cyan(), rust_install_url = "https://www.rust-lang.org/tools/install".blue().underline()))
+                        .unwrap_err();
+                    eprintln!("{wrapped_err:#}");
+                    std::process::exit(1);
+                }
+            };
 
         spinner.finish_and_clear();
 
