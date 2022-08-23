@@ -21,7 +21,7 @@ pub struct Shell {
 
 impl Shell {
     // TODO(@cole-h): should this be a trait method? we'll see once we add another subcommand
-    pub async fn cmd(&mut self) -> color_eyre::Result<Option<i32>> {
+    pub async fn cmd(&self) -> color_eyre::Result<Option<i32>> {
         let project_dir = match &self.project_dir {
             Some(dir) => dir.clone(),
             None => std::env::current_dir().wrap_err("Current working directory was invalid")?,
@@ -143,7 +143,7 @@ shellHook = "exit 6"
         )
         .unwrap();
 
-        let mut shell = Shell {
+        let shell = Shell {
             project_dir: Some(temp_dir.path().to_owned()),
         };
 
