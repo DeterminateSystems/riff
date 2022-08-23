@@ -45,3 +45,51 @@ impl Run {
         Ok(nix_develop_exit.status.code())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::ffi::OsString;
+
+    use tempfile::TempDir;
+
+    use super::Run;
+
+    // We can't run this test by default because it calls Nix. Calling Nix inside Nix doesn't appear
+    // to work very well (at least, for this use case).
+    #[test]
+    #[ignore]
+    fn run_succeeds() {
+        let cache_dir = TempDir::new().unwrap();
+        std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
+        let temp_dir = TempDir::new().unwrap();
+        std::fs::write(temp_dir.path().join("lib.rs"), "fn main () {}").unwrap();
+        std::fs::write(
+            temp_dir.path().join("Cargo.toml"),
+            r#"
+[package]
+name = "fsm-test"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "fsm_test"
+path = "lib.rs"
+
+[dependencies]
+        "#,
+        )
+        .unwrap();
+
+        let run = Run {
+            project_dir: Some(temp_dir.path().to_owned()),
+            command: ["sh", "-c", "exit 6"]
+                .into_iter()
+                .map(OsString::from)
+                .collect(),
+        };
+
+        let run_cmd = tokio_test::task::spawn(run.cmd());
+        let run_cmd = tokio_test::block_on(run_cmd);
+        assert_eq!(run_cmd.unwrap(), Some(6));
+    }
+}
