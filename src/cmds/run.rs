@@ -4,6 +4,7 @@ use std::{path::PathBuf, process::Stdio};
 
 use clap::Args;
 use eyre::WrapErr;
+use owo_colors::OwoColorize;
 use tokio::process::Command;
 
 use crate::flake_generator;
@@ -51,12 +52,27 @@ impl Run {
             .stderr(Stdio::inherit());
 
         tracing::trace!(command = ?nix_develop_command, "Running");
-        let nix_develop_exit = nix_develop_command
+        let nix_develop_exit = match nix_develop_command
             .spawn()
             .wrap_err("Failed to spawn `nix develop`")?
             .wait_with_output()
-            .await
-            .wrap_err("Could not execute `nix develop`")?;
+            .await {
+                Ok(nix_develop_exit) => nix_develop_exit,
+                err @ Err(_) => {
+                    let wrapped_err = err.wrap_err_with(|| format!(
+                        "\
+                        Could not execute `{nix_develop}`. Is `{nix}` installed?\n\n\
+                        Get instructions for installing Nix: {nix_install_url}\n\
+                        Underlying error\
+                        ",
+                            nix_develop = "nix develop".cyan(),
+                            nix = "nix".cyan(),
+                            nix_install_url = "https://nixos.org/download.html".blue().underline(),
+                    )).unwrap_err();
+                    eprintln!("{wrapped_err:#}");
+                    std::process::exit(1);
+                }
+            };
 
         Ok(nix_develop_exit.status.code())
     }
