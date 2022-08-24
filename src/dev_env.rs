@@ -215,9 +215,9 @@ pub(crate) enum TryApplyError {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use tempfile::TempDir;
     use tokio::fs::write;
-    use super::*;
 
     #[tokio::test]
     async fn dev_env_to_flake() -> eyre::Result<()> {
@@ -281,7 +281,8 @@ HI = "BYE"
 
 [dependencies]
         "#,
-        ).await?;
+        )
+        .await?;
 
         let registry = DependencyRegistry::new(true).await?;
         let mut dev_env = DevEnvironment::new(registry);

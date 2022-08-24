@@ -138,9 +138,9 @@ impl Shell {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use tempfile::TempDir;
     use tokio::fs::write;
-    use super::*;
 
     // We can't run this test by default because it calls Nix. Calling Nix inside Nix doesn't appear
     // to work very well (at least, for this use case). We also don't want to run this in CI because
@@ -171,7 +171,8 @@ shellHook = "exit 6"
 
 [dependencies]
         "#,
-        ).await?;
+        )
+        .await?;
 
         let shell = Shell {
             project_dir: Some(temp_dir.path().to_owned()),
