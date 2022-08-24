@@ -216,11 +216,12 @@ pub(crate) enum TryApplyError {
 #[cfg(test)]
 mod tests {
     use tempfile::TempDir;
+    use tokio::fs::write;
+    use super::*;
 
-    use super::DevEnvironment;
-
-    #[test]
-    fn dev_env_to_flake() {
+    #[tokio::test]
+    async fn dev_env_to_flake() -> eyre::Result<()> {
+        let registry = DependencyRegistry::new(true).await?;
         let dev_env = DevEnvironment {
             build_inputs: ["cargo", "hello"]
                 .into_iter()
@@ -234,7 +235,8 @@ mod tests {
                 .into_iter()
                 .map(ToString::to_string)
                 .collect(),
-            ..Default::default()
+            detected_languages: vec!["Rust".to_string()].into_iter().collect(),
+            registry,
         };
 
         let flake = dev_env.to_flake();
@@ -249,15 +251,16 @@ mod tests {
                 && flake.contains("${lib.getLib nix}/lib")
                 && flake.contains("${lib.getLib libGL}/lib")
         );
+        Ok(())
     }
 
-    #[test]
-    fn dev_env_detect_supported_project() {
-        let cache_dir = TempDir::new().unwrap();
+    #[tokio::test]
+    async fn dev_env_detect_supported_project() -> eyre::Result<()> {
+        let cache_dir = TempDir::new()?;
         std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
         let temp_dir = TempDir::new().unwrap();
-        std::fs::write(temp_dir.path().join("lib.rs"), "fn main () {}").unwrap();
-        std::fs::write(
+        write(temp_dir.path().join("lib.rs"), "fn main () {}").await?;
+        write(
             temp_dir.path().join("Cargo.toml"),
             r#"
 [package]
@@ -278,11 +281,11 @@ HI = "BYE"
 
 [dependencies]
         "#,
-        )
-        .unwrap();
+        ).await?;
 
-        let mut dev_env = DevEnvironment::default();
-        let detect = tokio_test::block_on(dev_env.detect(temp_dir.path()));
+        let registry = DependencyRegistry::new(true).await?;
+        let mut dev_env = DevEnvironment::new(registry);
+        let detect = dev_env.detect(temp_dir.path()).await;
         assert!(detect.is_ok(), "{detect:?}");
 
         assert!(dev_env.build_inputs.get("hello").is_some());
@@ -291,13 +294,16 @@ HI = "BYE"
             Some(&String::from("BYE"))
         );
         assert!(dev_env.ld_library_path.get("libGL").is_some());
+        Ok(())
     }
 
-    #[test]
-    fn dev_env_detect_unsupported_project() {
-        let temp_dir = TempDir::new().unwrap();
-        let mut dev_env = DevEnvironment::default();
-        let detect = tokio_test::block_on(dev_env.detect(temp_dir.path()));
+    #[tokio::test]
+    async fn dev_env_detect_unsupported_project() -> eyre::Result<()> {
+        let temp_dir = TempDir::new()?;
+        let registry = DependencyRegistry::new(true).await?;
+        let mut dev_env = DevEnvironment::new(registry);
+        let detect = dev_env.detect(temp_dir.path()).await;
         assert!(detect.is_err());
+        Ok(())
     }
 }
