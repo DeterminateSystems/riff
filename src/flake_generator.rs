@@ -101,9 +101,9 @@ pub async fn generate_flake_from_project_dir(
 
 #[cfg(test)]
 mod tests {
-    use tempfile::TempDir;
-    use tokio::fs::{write, read_to_string};
     use super::generate_flake_from_project_dir;
+    use tempfile::TempDir;
+    use tokio::fs::{read_to_string, write};
 
     // We can't run this test by default because it calls Nix. Calling Nix inside Nix doesn't appear
     // to work very well (at least, for this use case).
@@ -128,10 +128,11 @@ path = "lib.rs"
 
 [dependencies]
         "#,
-        ).await?;
+        )
+        .await?;
 
-        let flake_dir = generate_flake_from_project_dir(Some(temp_dir.path().to_owned()), true)
-            .await?;
+        let flake_dir =
+            generate_flake_from_project_dir(Some(temp_dir.path().to_owned()), true).await?;
         let flake = read_to_string(flake_dir.path().join("flake.nix")).await?;
 
         assert!(

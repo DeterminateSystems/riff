@@ -32,8 +32,11 @@ pub struct Run {
 
 impl Run {
     pub async fn cmd(&self) -> color_eyre::Result<Option<i32>> {
-        let flake_dir =
-            flake_generator::generate_flake_from_project_dir(self.project_dir.clone(), self.disable_telemetry).await?;
+        let flake_dir = flake_generator::generate_flake_from_project_dir(
+            self.project_dir.clone(),
+            self.disable_telemetry,
+        )
+        .await?;
 
         let mut nix_develop_command = Command::new("nix");
         nix_develop_command
