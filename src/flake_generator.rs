@@ -94,3 +94,48 @@ pub async fn generate_flake_from_project_dir(
 
     Ok(flake_dir)
 }
+
+#[cfg(test)]
+mod tests {
+    use tempfile::TempDir;
+
+    use super::generate_flake_from_project_dir;
+
+    #[tokio::test]
+    async fn generate_flake_success() {
+        let cache_dir = TempDir::new().unwrap();
+        std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
+        let temp_dir = TempDir::new().unwrap();
+        std::fs::write(temp_dir.path().join("lib.rs"), "fn main () {}").unwrap();
+        std::fs::write(
+            temp_dir.path().join("Cargo.toml"),
+            r#"
+[package]
+name = "fsm-test"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "fsm_test"
+path = "lib.rs"
+
+[dependencies]
+        "#,
+        )
+        .unwrap();
+
+        let flake_dir = generate_flake_from_project_dir(Some(temp_dir.path().to_owned()))
+            .await
+            .unwrap();
+        let flake = std::fs::read_to_string(flake_dir.path().join("flake.nix")).unwrap();
+
+        assert!(
+            flake.contains("buildInputs = [")
+                && flake.contains("cargo")
+                && flake.contains("rustfmt")
+                && flake.contains("rustc")
+        );
+    }
+
+    // NOTE: we can't test the failure case since it will `std::process::exit`
+}
