@@ -27,7 +27,7 @@ fsm offers a way out of this. It uses your project's language-specific configura
 
 To use fsm, you need to install these binaries on your system:
 
-* [`nix`][nix-install]. You also need to [enable flakes][flake].
+* [`nix`][nix-install]
 * [`cargo`][rust-install]
 
 ## Installation
@@ -113,7 +113,7 @@ When you run `fsm shell` in this project, fsm
 
 When you run `fsm shell` in a Rust project, fsm
 
-- **reads** your project's [`Cargo.toml`][cargo-toml] configuration manifest to determine which Rust dependencies it requires and then
+- **reads** your [`Cargo.toml`][cargo-toml] configuration manifest to determine which native dependencies your project requires and then
 - **uses** the [Nix] package manager&mdash;in the background and without requiring any intervention on your part&mdash;to install any native dependencies, such as [OpenSSL] or [Protobuf], and also sets any environment variables necessary to discover those tools. Once it knows which external tools are required, it
 - **builds** a custom shell environment that enables you to use commands like `cargo build` and `cargo run` without encountering the missing dependency errors that so often dog Rust development.
 
@@ -127,7 +127,6 @@ Because fsm uses Nix, all of the dependencies that it installs are stored in you
 
 [cargo]: https://doc.rust-lang.org/cargo
 [cargo-toml]: https://doc.rust-lang.org/cargo/reference/manifest.html
-[flakes]: https://nixos.wiki/wiki/Flakes#Enable_flakes
 [libgl]: https://dri.freedesktop.org/wiki/libGL
 [nix]: https://nixos.org/nix
 [nix-install]: https://nix.dev/tutorials/install-nix
