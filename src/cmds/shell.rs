@@ -92,8 +92,8 @@ shellHook = "exit 6"
             disable_telemetry: true,
         };
 
-        let shell_cmd = shell.cmd().await;
-        assert_eq!(shell_cmd?, Some(6));
+        let shell_cmd = shell.cmd().await?;
+        assert_eq!(shell_cmd, Some(6));
         Ok(())
     }
 }

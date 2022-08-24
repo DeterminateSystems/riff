@@ -132,7 +132,7 @@ async fn distinct_id() -> eyre::Result<Uuid> {
     match Uuid::parse_str(&distinct_id) {
         Ok(uuid) => Ok(uuid),
         Err(e) => {
-            tracing::error!("Failed to parse out the distinct_id: {}", e);
+            tracing::debug!("Failed to parse out the distinct_id: {}", e);
             let uuid = Uuid::new_v4();
             tracing::trace!(%uuid, "Writing new distinct ID");
             distinct_id_file.set_len(0).await?;
