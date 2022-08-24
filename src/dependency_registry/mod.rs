@@ -44,7 +44,11 @@ pub struct DependencyRegistry {
 impl DependencyRegistry {
     #[tracing::instrument(skip_all, fields(%disable_telemetry))]
     pub async fn new(disable_telemetry: bool) -> Result<Self, DependencyRegistryError> {
-        let telemetry_handle = tokio::spawn(Telemetry::new());
+        let telemetry_handle = if disable_telemetry {
+            None
+        } else {
+            Some(tokio::spawn(Telemetry::new()))
+        };
         let xdg_dirs = BaseDirectories::with_prefix(FSM_XDG_PREFIX)?;
         // Create the directory if needed
         let cached_registry_pathbuf =
@@ -80,8 +84,8 @@ impl DependencyRegistry {
         let refresh_handle = tokio::spawn(async move {
             // Refresh the cache
             // We don't want to fail if we can't build telemetry data...
-            let telemetry = if !disable_telemetry {
-                match telemetry_handle
+            let maybe_telemetry = if let Some(telemetry) = telemetry_handle {
+                match telemetry
                     .await
                     .map_err(|v| eyre!(v))
                     .and_then(|v| v.as_header_data().map_err(|e| eyre!(e)))
@@ -97,7 +101,7 @@ impl DependencyRegistry {
             };
             let http_client = reqwest::Client::new();
             let mut req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL);
-            if let Some(telemetry) = telemetry {
+            if let Some(telemetry) = maybe_telemetry {
                 req = req.header(TELEMETRY_HEADER_NAME, &telemetry);
                 tracing::trace!(%telemetry, "Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
             } else {
