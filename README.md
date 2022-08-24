@@ -1,8 +1,8 @@
 # fsm
 
-fsm (Flying Spaghetti Monster) is a tool that automatically provides native
+fsm (Flying Spaghetti Monster) is a tool that automatically provides external
 dependencies[^1] for software projects. To enter a shell environment with all
-your project's native dependencies installed, run this at the project root:
+your project's external dependencies installed, run this at the project root:
 
 ```shell
 fsm shell
@@ -68,7 +68,7 @@ system. When you exit the fsm shell, the dependencies are gone.
 ## Example usage
 
 In this example, we'll build the [Tremor project][tremor] from source. Tremor
-has some native dependencies, such as [OpenSSL] and the [Protobuf] compiler,
+has some external dependencies, such as [OpenSSL] and the [Protobuf] compiler,
 without which commands like `cargo build` and `cargo run` are doomed to fail.
 fsm provides those dependencies automatically, without you needing to install
 them in your regular environment:
@@ -98,12 +98,12 @@ protoc
 
 ## How to declare package inputs
 
-While fsm does its best to infer native dependencies from your project's crate
-dependencies, you can explicitly declare native dependencies if necessary by
+While fsm does its best to infer external dependencies from your project's crate
+dependencies, you can explicitly declare external dependencies if necessary by
 adding an `fsm` block to the `package.metadata` block in your `Cargo.toml`. fsm
 currently supports three types of inputs:
 
-* `build-inputs` are native dependencies that some crate may need to link
+* `build-inputs` are external dependencies that some crate may need to link
   against.
 * `environment-variables` are environment variables you want to set in your dev
   shell.
@@ -143,9 +143,9 @@ When you run `fsm shell` in this project, fsm
 When you run `fsm shell` in a Rust project, fsm
 
 - **reads** your [`Cargo.toml`][cargo-toml] configuration manifest to determine
-  which native dependencies your project requires and then
+  which external dependencies your project requires and then
 - **uses** the [Nix] package manager&mdash;in the background and without
-  requiring any intervention on your part&mdash;to install any native
+  requiring any intervention on your part&mdash;to install any external
   dependencies, such as [OpenSSL] or [Protobuf], and also sets any environment
   variables necessary to discover those tools. Once it knows which external
   tools are required, it
@@ -175,6 +175,6 @@ your local [Nix store], by default under `/nix/store`.
 [rust-install]: https://www.rust-lang.org/tools/install
 [tremor]: https://github.com/tremor-rs/tremor-runtime
 
-[^1]: **Native** dependencies are dependencies that are written in another
+[^1]: We define **external** dependencies as those that are written in another
   language and thus can't be installed using the same language-specific package
   manager that you use to build your code.
