@@ -28,6 +28,10 @@ pub(crate) struct Telemetry {
     distinct_id: Option<Uuid>,
     system_os: String,
     system_arch: String,
+    /// `NAME` from `/etc/os-release`
+    os_release_name: Option<String>,
+    /// `VERSION_ID` from `/etc/os-release`
+    os_release_version_id: Option<String>,
     /// The `CARGO_PKG_VERSION` from an `fsm` build
     fsm_version: String,
     /// The version output of `nix --version`
@@ -59,6 +63,10 @@ impl Telemetry {
                 None
             }
         };
+        let os_release: Option<os_release::OsRelease> =
+            tokio::task::spawn_blocking(|| os_release::OsRelease::new().ok())
+                .await
+                .unwrap_or(None);
 
         let is_tty = atty::is(atty::Stream::Stdout);
 
@@ -73,6 +81,8 @@ impl Telemetry {
             distinct_id,
             system_os,
             system_arch,
+            os_release_name: os_release.as_ref().map(|x| x.name.clone()),
+            os_release_version_id: os_release.as_ref().map(|x| x.version_id.clone()),
             fsm_version,
             nix_version,
             is_tty,
@@ -80,6 +90,7 @@ impl Telemetry {
             detected_languages: Default::default(),
         }
     }
+
     /// Create a new `Telemetry` without any pre-existing information
     ///
     /// This is not very performant and may do things like re-invoke `nix` or reparse the `$ARG`s.
