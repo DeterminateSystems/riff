@@ -3,16 +3,20 @@ mod cmds;
 mod dependency_registry;
 mod dev_env;
 mod spinner;
+mod telemetry;
 
 use std::error::Error;
 
 use atty::Stream;
 use clap::Parser;
 use eyre::WrapErr;
+use telemetry::Telemetry;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 use cmds::Commands;
+
+const FSM_XDG_PREFIX: &str = "fsm";
 
 #[derive(Debug, Parser)]
 #[clap(name = "fsm")]
@@ -60,8 +64,15 @@ async fn main() -> color_eyre::Result<()> {
 }
 
 async fn main_impl() -> color_eyre::Result<()> {
-    let args = Cli::parse();
+    let maybe_args = Cli::try_parse();
 
+    let args = match maybe_args {
+        Ok(args) => args,
+        Err(e) => {
+            Telemetry::new().await.send().await.ok();
+            e.exit() // Dead!
+        }
+    };
     match args.command {
         Commands::Shell(shell) => {
             let code = shell.cmd().await?;
