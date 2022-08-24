@@ -1,3 +1,8 @@
+use crate::{
+    telemetry::{Telemetry, TELEMETRY_HEADER_NAME},
+    FSM_XDG_PREFIX,
+};
+use eyre::eyre;
 use serde::Deserialize;
 use std::{path::Path, sync::Arc};
 use tokio::{
@@ -7,11 +12,6 @@ use tokio::{
     task::JoinHandle,
 };
 use xdg::{BaseDirectories, BaseDirectoriesError};
-
-use crate::{
-    telemetry::{Telemetry, TELEMETRY_HEADER_NAME, self},
-    FSM_XDG_PREFIX,
-};
 
 use self::rust::RustDependencyRegistryData;
 
@@ -81,7 +81,11 @@ impl DependencyRegistry {
             // Refresh the cache
             // We don't want to fail if we can't build telemetry data...
             let telemetry = if !disable_telemetry {
-                match telemetry_handle.join().await.as_header_data() {
+                match telemetry_handle
+                    .await
+                    .map_err(|v| eyre!(v))
+                    .and_then(|v| v.as_header_data().map_err(|e| eyre!(e)))
+                {
                     Ok(telemetry) => Some(telemetry), // But we do want to fail if we can build it but can't parse it
                     Err(err) => {
                         tracing::debug!(%err, "Telemetry build error");
