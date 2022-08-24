@@ -88,7 +88,6 @@ impl DependencyRegistry {
                 match telemetry
                     .await
                     .map_err(|v| eyre!(v))
-                    .and_then(|v| v.as_header_data().map_err(|e| eyre!(e)))
                 {
                     Ok(telemetry) => Some(telemetry), // But we do want to fail if we can build it but can't parse it
                     Err(err) => {
@@ -102,8 +101,13 @@ impl DependencyRegistry {
             let http_client = reqwest::Client::new();
             let mut req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL);
             if let Some(telemetry) = maybe_telemetry {
-                req = req.header(TELEMETRY_HEADER_NAME, &telemetry);
-                tracing::trace!(%telemetry, "Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
+                match telemetry.as_header_data() {
+                    Ok(header_data) => {
+                        req = req.header(TELEMETRY_HEADER_NAME, &header_data);
+                        tracing::trace!(telemetry = %telemetry.redact_header_data(header_data), "Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
+                    },
+                    Err(err) => tracing::debug!(err = %eyre!(err), "Failed to serialize header data, skipping it"),
+                };
             } else {
                 tracing::trace!("Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
             }
