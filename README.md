@@ -155,6 +155,7 @@ When you run `fsm shell` in a Rust project, fsm
 
 This diagram provides a basic visual description of that process:
 
+<!-- Image editable at: https://miro.com/app/board/uXjVPdUOswQ=/ -->
 <p align="center">
   <img src="./img/fsm.jpg" alt="How fsm works" style="width:70%;" />
 </p>
