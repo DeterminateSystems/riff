@@ -9,34 +9,8 @@ fsm shell
 ```
 
 fsm currently supports [Rust] with support for other languages coming soon. It
-uses the [Nix] package manager to handle dependencies but requires no knowledge
-or direct usage of Nix.
-
-## What fsm provides
-
-Languages typically use language-specific package managers to handle
-dependencies, such as [Cargo] for [Rust]. But these language-specific tools
-typically don't handle dependencies written in other languages very well. They
-expect you to install them using some other package manager and fail in
-mysterious ways when they're missing, like this:
-
-```rust
-   Compiling openssl-sys v0.9.75
-error: failed to run custom build command for `openssl-sys v0.9.75`
-  run pkg_config fail: "`\"pkg-config\" \"--libs\" \"--cflags\"
-    \"openssl\"` did not exit successfully: \n... No package 'openssl' found\n"
-```
-
-It's then up to you to install the missing dependencies, which can be laborious,
-error prone, and hard to reproduce.
-
-fsm offers a way out of this. It uses your project's language-specific
-configuration to infer which dependencies are required and creates a shell
-environment with all of those dependencies both installed and properly linked.
-These environments are *transient* in the sense that they don't affect anything
-outside the shell; they install dependencies neither globally nor in your
-current project, so you don't have to worry about fsm breaking anything on your
-system. When you exit the fsm shell, the dependencies are gone.
+uses the [Nix] package manager to handle dependencies but doesn't require you to
+know or use Nix.
 
 ## Requirements
 
@@ -62,6 +36,34 @@ nix-channel --add https://github.com/DeterminateSystems/fsm/archive/main.tar.gz
 nix-channel --update
 nix-env -i fsm
 ```
+
+## What fsm provides
+
+Languages typically use language-specific package managers to handle
+dependencies, such as [Cargo] for the [Rust] language. But these
+language-specific tools typically don't handle dependencies written in other
+languages very well. They expect you to install those dependencies using some
+other tool and fail in mysterious ways when they're missing, like this:
+
+```rust
+   Compiling openssl-sys v0.9.75
+error: failed to run custom build command for `openssl-sys v0.9.75`
+  run pkg_config fail: "`\"pkg-config\" \"--libs\" \"--cflags\"
+    \"openssl\"` did not exit successfully: \n... No package 'openssl' found\n"
+```
+
+It's then up to you to install the missing dependencies, which can be laborious,
+error prone, and hard to reproduce.
+
+fsm offers a way out of this. It uses your project's language-specific
+configuration to infer which dependencies are required&mdash;or you can [declare
+them](#how-to-declare-package-inputs) if necessary&mdash;and creates a shell
+environment with all of those dependencies both installed and properly linked.
+
+These environments are *transient* in the sense that they don't affect anything
+outside the shell; they install dependencies neither globally nor in your
+current project, so you don't have to worry about fsm breaking anything on your
+system. When you exit the fsm shell, the dependencies are gone.
 
 ## Example usage
 
