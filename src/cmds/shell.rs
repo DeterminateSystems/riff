@@ -5,6 +5,7 @@ use std::process::Stdio;
 
 use clap::Args;
 use eyre::{eyre, WrapErr};
+use owo_colors::OwoColorize;
 use tempfile::TempDir;
 use tokio::process::Command;
 
@@ -29,7 +30,27 @@ impl Shell {
         tracing::debug!("Project directory is '{}'.", project_dir.display());
 
         let mut dev_env = DevEnvironment::default();
-        dev_env.detect(&project_dir).await?;
+
+        match dev_env.detect(&project_dir).await {
+            Ok(output) => output,
+            err @ Err(_) => {
+                let wrapped_err = err
+                    .wrap_err_with(|| {
+                        format!(
+                            "\
+                            `{colored_project_dir}` doesn't contain a project recognized by FSM.\n\
+                            Try running `{fsm_shell}` in a Rust project directory.\
+                    ",
+                            colored_project_dir = &project_dir.display().to_string().green(),
+                            fsm_shell = "fsm shell".cyan(),
+                        )
+                    })
+                    .unwrap_err();
+                eprintln!("{wrapped_err}");
+                std::process::exit(1);
+            }
+        };
+
         match Telemetry::new()
             .await
             .with_detected_languages(&dev_env.detected_languages)
