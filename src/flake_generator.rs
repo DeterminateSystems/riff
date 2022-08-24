@@ -79,13 +79,13 @@ pub async fn generate_flake_from_project_dir(
     let spinner = SimpleSpinner::new_with_message(Some("Running `nix flake lock`"))
         .context("Failed to construct progress spinner")?;
 
-    let nix_lock_exit = match nix_lock_command
-        .output()
-        .await {
-            Ok(nix_lock_exit) => nix_lock_exit,
-            err @ Err(_) => {
-                let wrapped_err = err.wrap_err_with(|| format!(
-                    "\
+    let nix_lock_exit = match nix_lock_command.output().await {
+        Ok(nix_lock_exit) => nix_lock_exit,
+        err @ Err(_) => {
+            let wrapped_err = err
+                .wrap_err_with(|| {
+                    format!(
+                        "\
                     Could not execute `{nix_lock}`. Is `{nix}` installed?\n\n\
                     Get instructions for installing Nix: {nix_install_url}\n\
                     Underlying error\
@@ -93,11 +93,13 @@ pub async fn generate_flake_from_project_dir(
                         nix_lock = "nix flake lock".cyan(),
                         nix = "nix".cyan(),
                         nix_install_url = "https://nixos.org/download.html".blue().underline(),
-                )).unwrap_err();
-                eprintln!("{wrapped_err:#}");
-                std::process::exit(1);
-            }
-        };
+                    )
+                })
+                .unwrap_err();
+            eprintln!("{wrapped_err:#}");
+            std::process::exit(1);
+        }
+    };
 
     spinner.finish_and_clear();
 
