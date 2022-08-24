@@ -13,7 +13,7 @@ use tokio::process::Command;
 ///     $ fsm run cargo build
 ///
 /// Run cargo check and cargo build at the same time:
-/// 
+///
 ///     $ fsm run -- sh -c 'cargo check && cargo build'
 #[derive(Debug, Args)]
 pub struct Run {
