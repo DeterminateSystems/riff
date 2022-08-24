@@ -6,6 +6,8 @@ use clap::Args;
 use eyre::WrapErr;
 use tokio::process::Command;
 
+use crate::flake_generator;
+
 /// Run a command with your project's dependencies
 ///
 /// For example, run `cargo build` inside fsm:
@@ -28,7 +30,8 @@ pub struct Run {
 
 impl Run {
     pub async fn cmd(&self) -> color_eyre::Result<Option<i32>> {
-        let flake_dir = super::generate_flake_from_project_dir(self.project_dir.clone()).await?;
+        let flake_dir =
+            flake_generator::generate_flake_from_project_dir(self.project_dir.clone()).await?;
 
         let mut nix_develop_command = Command::new("nix");
         nix_develop_command

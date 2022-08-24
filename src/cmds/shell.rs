@@ -7,6 +7,8 @@ use clap::Args;
 use eyre::WrapErr;
 use tokio::process::Command;
 
+use crate::flake_generator;
+
 /// Start a development shell
 #[derive(Debug, Args, Clone)]
 pub struct Shell {
@@ -18,7 +20,7 @@ pub struct Shell {
 impl Shell {
     // TODO(@cole-h): should this be a trait method? we'll see once we add another subcommand
     pub async fn cmd(self) -> color_eyre::Result<Option<i32>> {
-        let flake_dir = super::generate_flake_from_project_dir(self.project_dir).await?;
+        let flake_dir = flake_generator::generate_flake_from_project_dir(self.project_dir).await?;
 
         let mut nix_develop_command = Command::new("nix");
         nix_develop_command
