@@ -7,6 +7,14 @@ use eyre::WrapErr;
 use tokio::process::Command;
 
 /// Run a command with your project's dependencies
+///
+/// For example, run `cargo build` inside fsm:
+///
+///     $ fsm run cargo build
+///
+/// Run cargo check and cargo build at the same time:
+/// 
+///     $ fsm run -- sh -c 'cargo check && cargo build'
 #[derive(Debug, Args)]
 pub struct Run {
     /// The root directory of the project
