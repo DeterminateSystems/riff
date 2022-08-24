@@ -12,8 +12,9 @@ use crate::cargo_metadata::CargoMetadata;
 use crate::dependency_registry::DependencyRegistry;
 use crate::spinner::SimpleSpinner;
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct DevEnvironment {
+    pub(crate) registry: DependencyRegistry,
     pub(crate) build_inputs: HashSet<String>,
     pub(crate) environment_variables: HashMap<String, String>,
     pub(crate) ld_library_path: HashSet<String>,
@@ -22,6 +23,15 @@ pub struct DevEnvironment {
 
 // TODO(@cole-h): should this become a trait that the various languages we may support have to implement?
 impl DevEnvironment {
+    pub fn new(registry: DependencyRegistry) -> Self {
+        Self {
+            registry,
+            build_inputs: Default::default(),
+            environment_variables: Default::default(),
+            ld_library_path: Default::default(),
+            detected_languages: Default::default(),
+        }
+    }
     pub fn to_flake(&self) -> String {
         // TODO: use rnix for generating Nix?
         format!(
@@ -67,8 +77,6 @@ impl DevEnvironment {
         cargo_metadata_command.args(&["metadata", "--format-version", "1"]);
         cargo_metadata_command.arg("--manifest-path");
         cargo_metadata_command.arg(project_dir.join("Cargo.toml"));
-
-        let registry_handle = tokio::task::spawn(DependencyRegistry::new(false));
 
         tracing::trace!(command = ?cargo_metadata_command, "Running");
         let spinner = SimpleSpinner::new_with_message(Some(&format!(
@@ -120,19 +128,14 @@ impl DevEnvironment {
             "Unable to parse output produced by `cargo metadata` into our desired structure",
         )?;
 
-        let registry = registry_handle
-            .await
-            .wrap_err("Joining dependency registry builder task")?
-            .wrap_err("Parsing `registry.json`")?;
-
-        tracing::debug!(fresh = %registry.fresh(), "Cache freshness");
-        let language_registry = registry.language().await;
-        (*language_registry).rust.default.try_apply(self)?;
+        tracing::debug!(fresh = %self.registry.fresh(), "Cache freshness");
+        let language_registry = self.registry.language().await.clone();
+        language_registry.rust.default.try_apply(self)?;
 
         for package in metadata.packages {
             let name = package.name;
 
-            if let Some(dep_config) = (*language_registry).rust.dependencies.get(name.as_str()) {
+            if let Some(dep_config) = language_registry.rust.dependencies.get(name.as_str()) {
                 tracing::debug!(
                     package_name = %name,
                     "build-inputs" = %dep_config.build_inputs.iter().join(", "),

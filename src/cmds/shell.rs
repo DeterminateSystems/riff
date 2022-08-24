@@ -9,6 +9,7 @@ use owo_colors::OwoColorize;
 use tempfile::TempDir;
 use tokio::process::Command;
 
+use crate::dependency_registry::DependencyRegistry;
 use crate::spinner::SimpleSpinner;
 use crate::{dev_env::DevEnvironment, telemetry::Telemetry};
 
@@ -18,6 +19,8 @@ pub struct Shell {
     /// The root directory of the project
     #[clap(long, value_parser)]
     project_dir: Option<PathBuf>,
+    #[clap(from_global)]
+    disable_telemetry: bool,
 }
 
 impl Shell {
@@ -29,7 +32,14 @@ impl Shell {
         };
         tracing::debug!("Project directory is '{}'.", project_dir.display());
 
-        let mut dev_env = DevEnvironment::default();
+        let registry_handle = tokio::task::spawn(
+            DependencyRegistry::new(self.disable_telemetry)
+        );
+        let registry = registry_handle
+            .await
+            .wrap_err("Joining dependency registry builder task")?
+            .wrap_err("Parsing `registry.json`")?;
+        let mut dev_env = DevEnvironment::new(registry);
 
         match dev_env.detect(&project_dir).await {
             Ok(output) => output,
@@ -51,15 +61,17 @@ impl Shell {
             }
         };
 
-        match Telemetry::new()
-            .await
-            .with_detected_languages(&dev_env.detected_languages)
-            .send()
-            .await
-        {
-            Ok(_) => (),
-            Err(err) => tracing::debug!(%err, "Could not send telemetry"),
-        };
+        if !self.disable_telemetry {
+            match Telemetry::new()
+                .await
+                .with_detected_languages(&dev_env.detected_languages)
+                .send()
+                .await
+            {
+                Ok(_) => (),
+                Err(err) => tracing::debug!(%err, "Could not send telemetry"),
+            };
+        }
 
         let flake_nix = dev_env.to_flake();
         tracing::trace!("Generated 'flake.nix':\n{}", flake_nix);

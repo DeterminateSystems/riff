@@ -24,6 +24,9 @@ const FSM_XDG_PREFIX: &str = "fsm";
 struct Cli {
     #[clap(subcommand)]
     command: Commands,
+    /// Turn off user telemetry ping
+    #[clap(long, global = true, env = "FSM_DISABLE_TELEMETRY")]
+    disable_telemetry: bool,
 }
 
 #[tokio::main]
@@ -31,7 +34,36 @@ async fn main() -> color_eyre::Result<()> {
     color_eyre::config::HookBuilder::default()
         .issue_url(concat!(env!("CARGO_PKG_REPOSITORY"), "/issues/new"))
         .install()?;
+    
+    setup_tracing().await?;
 
+    let maybe_args = Cli::try_parse();
+
+    let args = match maybe_args {
+        Ok(args) => args,
+        Err(e) => {
+            // Best effort detect the env var
+            match std::env::var("FSM_DISABLE_TELEMETRY") {
+                Ok(val) if val == "false" || val == "0" => { Telemetry::new().await.send().await.ok(); },
+                Err(_) => { Telemetry::new().await.send().await.ok(); },
+                _ => (),
+            }
+            e.exit() // Dead!
+        }
+    };
+    match args.command {
+        Commands::Shell(shell) => {
+            let code = shell.cmd().await?;
+            if let Some(code) = code {
+                std::process::exit(code);
+            }
+        }
+    };
+    Ok(())
+}
+
+#[tracing::instrument]
+async fn setup_tracing() -> eyre::Result<()> {
     let filter_layer = match EnvFilter::try_from_default_env() {
         Ok(layer) => layer,
         Err(e) => {
@@ -57,30 +89,6 @@ async fn main() -> color_eyre::Result<()> {
         .with(fmt_layer)
         .with(ErrorLayer::default())
         .try_init()?;
-
-    main_impl().await?;
-
-    Ok(())
-}
-
-async fn main_impl() -> color_eyre::Result<()> {
-    let maybe_args = Cli::try_parse();
-
-    let args = match maybe_args {
-        Ok(args) => args,
-        Err(e) => {
-            Telemetry::new().await.send().await.ok();
-            e.exit() // Dead!
-        }
-    };
-    match args.command {
-        Commands::Shell(shell) => {
-            let code = shell.cmd().await?;
-            if let Some(code) = code {
-                std::process::exit(code);
-            }
-        }
-    };
 
     Ok(())
 }
