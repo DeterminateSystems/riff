@@ -9,93 +9,92 @@ jobs:
   Format:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: cachix/install-nix-action@v17
-      with:
-        extra_nix_config: |
-          access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-    - name: Check rustfmt
-      run: nix develop --command cargo fmt -- --check
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v17
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Check rustfmt
+        run: nix develop --command ci-check-rustfmt
 
   Test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: cachix/install-nix-action@v17
-      with:
-        extra_nix_config: |
-          access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-    - name: Run tests
-      run: nix develop -c -- cargo test
-      # run: nix develop -c -- cargo test -- --include-ignored
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v17
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Run tests
+        run: nix develop --command ci-test-rust
+        # run: nix develop -c -- cargo test -- --include-ignored
 
   Build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: cachix/install-nix-action@v17
-      with:
-        extra_nix_config: |
-          access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-    # Runs clippy as part of the preBuild.
-    - name: Build fsm
-      run: nix build .#packages.x86_64-linux.fsm -L
-    - name: Build fsmStatic
-      run: nix build .#packages.x86_64-linux.fsmStatic -L
-    - name: Create artifact for fsmStatic
-      uses: actions/upload-artifact@v3
-      with:
-        name: fsm-x86_64-linux
-        path: |
-          result/bin/fsm
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v17
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      # Runs clippy as part of the preBuild.
+      - name: Build fsm
+        run: nix build .#packages.x86_64-linux.fsm -L
+      - name: Build fsmStatic
+        run: nix build .#packages.x86_64-linux.fsmStatic -L
+      - name: Create artifact for fsmStatic
+        uses: actions/upload-artifact@v3
+        with:
+          name: fsm-x86_64-linux
+          path: |
+            result/bin/fsm
 
   FsmShell:
     needs: Build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Download prebuilt fsm
-      uses: actions/download-artifact@v3
-      with:
-        name: fsm-x86_64-linux
-    - name: Run `fsm --help`
-      run: |
-        chmod +x fsm
-        ./fsm --help
+      - uses: actions/checkout@v3
+      - name: Download prebuilt fsm
+        uses: actions/download-artifact@v3
+        with:
+          name: fsm-x86_64-linux
+      - name: Run `fsm --help`
+        run: |
+          chmod +x fsm
+          ./fsm --help
 
   Spelling:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: cachix/install-nix-action@v17
-      with:
-        extra_nix_config: |
-          access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-    - uses: codespell-project/codespell-problem-matcher@v1
-    - name: Check Spelling
-      run: nix develop --command codespell --ignore-words-list crate,pullrequest,pullrequests,ser .
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v17
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Check Spelling
+        run: nix develop --command ci-check-spelling
 
   NixFormatting:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: cachix/install-nix-action@v17
-      with:
-        extra_nix_config: |
-          access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-    - name: Check nixpkgs-fmt formatting
-      run: nix develop --command sh -c "git ls-files '*.nix' | xargs nixpkgs-fmt --check"
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v17
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Check nixpkgs-fmt formatting
+        run: nix develop --command ci-check-nixpkgs-fmt
 
   RegistryFormatting:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: cachix/install-nix-action@v17
-      with:
-        extra_nix_config: |
-          access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-    - name: Check registry.json formatting
-      run: nix develop --command sh -c "./registry/format.sh && git diff --exit-code"
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v17
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - name: Check registry.json formatting
+        run: nix develop --command ci-check-registry-format
 
   EditorConfig:
     runs-on: ubuntu-latest

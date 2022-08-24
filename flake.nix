@@ -50,6 +50,8 @@
       devShell = forAllSystems ({ system, pkgs, ... }:
         let
           toolchain = fenixToolchain system;
+
+          ci = import ./ci.nix { inherit pkgs; };
         in
         pkgs.mkShell {
           name = "fsm-shell";
@@ -61,11 +63,14 @@
           ];
           buildInputs = with pkgs; [
             toolchain
-            openssl
+            git
             codespell
+            openssl
             nixpkgs-fmt
             findutils # for xargs
-          ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]);
+          ]
+          ++ ci
+          ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]);
         });
 
       packages = forAllSystems
