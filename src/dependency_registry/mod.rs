@@ -8,13 +8,17 @@ use tokio::{
 };
 use xdg::{BaseDirectories, BaseDirectoriesError};
 
+use crate::{
+    telemetry::{Telemetry, TELEMETRY_HEADER_NAME},
+    FSM_XDG_PREFIX,
+};
+
 use self::rust::RustDependencyRegistryData;
 
 pub(crate) mod rust;
 
 const DEPENDENCY_REGISTRY_REMOTE_URL: &str = "https://fsm-server.fly.dev/fsm-registry.json";
 const DEPENDENCY_REGISTRY_CACHE_PATH: &str = "registry.json";
-const DEPENDENCY_REGISTRY_XDG_PREFIX: &str = "fsm";
 const DEPENDENCY_REGISTRY_FALLBACK: &str = include_str!("../../registry/registry.json");
 
 #[derive(Debug, thiserror::Error)]
@@ -39,7 +43,7 @@ pub struct DependencyRegistry {
 impl DependencyRegistry {
     #[tracing::instrument(skip_all, fields(%offline))]
     pub async fn new(offline: bool) -> Result<Self, DependencyRegistryError> {
-        let xdg_dirs = BaseDirectories::with_prefix(DEPENDENCY_REGISTRY_XDG_PREFIX)?;
+        let xdg_dirs = BaseDirectories::with_prefix(FSM_XDG_PREFIX)?;
         // Create the directory if needed
         let cached_registry_pathbuf =
             xdg_dirs.place_cache_file(Path::new(DEPENDENCY_REGISTRY_CACHE_PATH))?;
@@ -74,10 +78,25 @@ impl DependencyRegistry {
             let data = Arc::clone(&data);
             let refresh_handle = tokio::spawn(async move {
                 // Refresh the cache
-                tracing::trace!("Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
+                // We don't want to fail if we can't build telemetry data...
+                let telemetry = match Telemetry::new().await.as_header_data() {
+                    Ok(telemetry) => Some(telemetry), // But we do want to fail if we can build it but can't parse it
+                    Err(err) => {
+                        tracing::debug!(%err, "Telemetry build error");
+                        None
+                    }
+                };
                 let http_client = reqwest::Client::new();
-                let req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL).send();
-                let res = match req.await {
+                let mut req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL);
+                if let Some(telemetry) = telemetry {
+                    req = req.header(TELEMETRY_HEADER_NAME, &telemetry);
+                    tracing::trace!(%telemetry, "Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
+                } else {
+                    tracing::trace!(
+                        "Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}"
+                    );
+                }
+                let res = match req.send().await {
                     Ok(res) => res,
                     Err(err) => {
                         tracing::error!(err = %eyre::eyre!(err), "Could not fetch new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
@@ -118,7 +137,7 @@ impl DependencyRegistry {
                     .await
                 {
                     Ok(_) => {
-                        tracing::trace!(path = %cached_registry_pathbuf.display(), "Refreshed remote registry into XDG cache")
+                        tracing::debug!(path = %cached_registry_pathbuf.display(), "Refreshed remote registry into XDG cache")
                     }
                     Err(err) => {
                         tracing::error!(err = %eyre::eyre!(err), "Could not write to {}", cached_registry_pathbuf.display());
