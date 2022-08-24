@@ -101,7 +101,10 @@ mod tests {
 
     use super::generate_flake_from_project_dir;
 
+    // We can't run this test by default because it calls Nix. Calling Nix inside Nix doesn't appear
+    // to work very well (at least, for this use case).
     #[tokio::test]
+    #[ignore]
     async fn generate_flake_success() {
         let cache_dir = TempDir::new().unwrap();
         std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
