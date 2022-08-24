@@ -221,6 +221,8 @@ mod tests {
 
     #[tokio::test]
     async fn dev_env_to_flake() -> eyre::Result<()> {
+        let cache_dir = TempDir::new()?;
+        std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
         let registry = DependencyRegistry::new(true).await?;
         let dev_env = DevEnvironment {
             build_inputs: ["cargo", "hello"]
@@ -300,6 +302,8 @@ HI = "BYE"
 
     #[tokio::test]
     async fn dev_env_detect_unsupported_project() -> eyre::Result<()> {
+        let cache_dir = TempDir::new()?;
+        std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
         let temp_dir = TempDir::new()?;
         let registry = DependencyRegistry::new(true).await?;
         let mut dev_env = DevEnvironment::new(registry);
