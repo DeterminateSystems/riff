@@ -33,7 +33,9 @@ impl Shell {
 
         tracing::trace!(command = ?nix_develop_command, "Running");
         let nix_develop_exit = nix_develop_command
-            .output()
+            .spawn()
+            .wrap_err("Failed to spawn `nix develop`")?
+            .wait_with_output()
             .await
             .wrap_err("Could not execute `nix develop`")?;
 
