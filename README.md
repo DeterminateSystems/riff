@@ -28,7 +28,6 @@ To install fsm using Nix:
 
 ```shell
 # With flakes enabled
-nix run github:DeterminateSystems/fsm
 nix profile install github:DeterminateSystems/fsm
 
 # Using channels
@@ -74,7 +73,8 @@ fsm provides those dependencies automatically, without you needing to install
 them in your regular environment:
 
 ```shell
-git clone https://github.com/tremor-rs/tremor-runtime.git && cd tremor-runtime
+git clone https://github.com/tremor-rs/tremor-runtime.git
+cd tremor-runtime
 
 # Enter the fsm shell environment
 fsm shell
