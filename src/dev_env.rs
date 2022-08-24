@@ -148,9 +148,9 @@ impl DevEnvironment {
             if let Some(dep_config) = language_registry.rust.dependencies.get(name.as_str()) {
                 tracing::debug!(
                     package_name = %name,
-                    "build-inputs" = %dep_config.build_inputs.iter().join(", "),
-                    "environment-variables" = %dep_config.environment_variables.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
-                    "runtime-inputs" = %dep_config.runtime_inputs.iter().join(", "),
+                    "build-inputs" = %dep_config.build_inputs().iter().join(", "),
+                    "environment-variables" = %dep_config.environment_variables().iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                    "runtime-inputs" = %dep_config.runtime_inputs().iter().join(", "),
                     "Detected known crate information"
                 );
                 dep_config.clone().try_apply(self)?;

@@ -195,7 +195,12 @@
         "servo-fontconfig-sys": {
           "build-inputs": [
             "fontconfig"
-          ]
+          ],
+	  "targets": {
+	    "aarch64-unknown-linux-gnu": {
+	      "build-inputs": [ "porkchops" ]
+	    }
+	  }
         },
         "smithay-client-toolkit": {
           "build-inputs": [
