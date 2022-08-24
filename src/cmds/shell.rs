@@ -32,9 +32,7 @@ impl Shell {
         };
         tracing::debug!("Project directory is '{}'.", project_dir.display());
 
-        let registry_handle = tokio::task::spawn(
-            DependencyRegistry::new(self.disable_telemetry)
-        );
+        let registry_handle = tokio::task::spawn(DependencyRegistry::new(self.disable_telemetry));
         let registry = registry_handle
             .await
             .wrap_err("Joining dependency registry builder task")?

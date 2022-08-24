@@ -34,7 +34,7 @@ async fn main() -> color_eyre::Result<()> {
     color_eyre::config::HookBuilder::default()
         .issue_url(concat!(env!("CARGO_PKG_REPOSITORY"), "/issues/new"))
         .install()?;
-    
+
     setup_tracing().await?;
 
     let maybe_args = Cli::try_parse();
@@ -44,8 +44,12 @@ async fn main() -> color_eyre::Result<()> {
         Err(e) => {
             // Best effort detect the env var
             match std::env::var("FSM_DISABLE_TELEMETRY") {
-                Ok(val) if val == "false" || val == "0" => { Telemetry::new().await.send().await.ok(); },
-                Err(_) => { Telemetry::new().await.send().await.ok(); },
+                Ok(val) if val == "false" || val == "0" => {
+                    Telemetry::new().await.send().await.ok();
+                }
+                Err(_) => {
+                    Telemetry::new().await.send().await.ok();
+                }
                 _ => (),
             }
             e.exit() // Dead!
