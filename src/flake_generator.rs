@@ -5,13 +5,16 @@ use owo_colors::OwoColorize;
 use tempfile::TempDir;
 use tokio::process::Command;
 
+use crate::dependency_registry::DependencyRegistry;
 use crate::dev_env::DevEnvironment;
 use crate::spinner::SimpleSpinner;
 use crate::telemetry::Telemetry;
 
 /// Generates a `flake.nix` by inspecting the specified `project_dir` for supported project types.
+#[tracing::instrument(skip(disable_telemetry))]
 pub async fn generate_flake_from_project_dir(
     project_dir: Option<PathBuf>,
+    disable_telemetry: bool,
 ) -> color_eyre::Result<TempDir> {
     let project_dir = match project_dir {
         Some(dir) => dir,
@@ -19,7 +22,8 @@ pub async fn generate_flake_from_project_dir(
     };
     tracing::debug!("Project directory is '{}'.", project_dir.display());
 
-    let mut dev_env = DevEnvironment::default();
+    let registry = DependencyRegistry::new(disable_telemetry).await?;
+    let mut dev_env = DevEnvironment::new(registry);
 
     match dev_env.detect(&project_dir).await {
         Ok(_) => {}
@@ -41,15 +45,17 @@ pub async fn generate_flake_from_project_dir(
         }
     };
 
-    match Telemetry::new()
-        .await
-        .with_detected_languages(&dev_env.detected_languages)
-        .send()
-        .await
-    {
-        Ok(_) => (),
-        Err(err) => tracing::debug!(%err, "Could not send telemetry"),
-    };
+    if !disable_telemetry {
+        match Telemetry::new()
+            .await
+            .with_detected_languages(&dev_env.detected_languages)
+            .send()
+            .await
+        {
+            Ok(_) => (),
+            Err(err) => tracing::debug!(%err, "Could not send telemetry"),
+        };
+    }
 
     let flake_nix = dev_env.to_flake();
     tracing::trace!("Generated 'flake.nix':\n{}", flake_nix);
@@ -97,20 +103,20 @@ pub async fn generate_flake_from_project_dir(
 
 #[cfg(test)]
 mod tests {
-    use tempfile::TempDir;
-
     use super::generate_flake_from_project_dir;
+    use tempfile::TempDir;
+    use tokio::fs::{read_to_string, write};
 
     // We can't run this test by default because it calls Nix. Calling Nix inside Nix doesn't appear
     // to work very well (at least, for this use case).
     #[tokio::test]
     #[ignore]
-    async fn generate_flake_success() {
-        let cache_dir = TempDir::new().unwrap();
+    async fn generate_flake_success() -> eyre::Result<()> {
+        let cache_dir = TempDir::new()?;
         std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
-        let temp_dir = TempDir::new().unwrap();
-        std::fs::write(temp_dir.path().join("lib.rs"), "fn main () {}").unwrap();
-        std::fs::write(
+        let temp_dir = TempDir::new()?;
+        write(temp_dir.path().join("lib.rs"), "fn main () {}").await?;
+        write(
             temp_dir.path().join("Cargo.toml"),
             r#"
 [package]
@@ -125,12 +131,11 @@ path = "lib.rs"
 [dependencies]
         "#,
         )
-        .unwrap();
+        .await?;
 
-        let flake_dir = generate_flake_from_project_dir(Some(temp_dir.path().to_owned()))
-            .await
-            .unwrap();
-        let flake = std::fs::read_to_string(flake_dir.path().join("flake.nix")).unwrap();
+        let flake_dir =
+            generate_flake_from_project_dir(Some(temp_dir.path().to_owned()), true).await?;
+        let flake = read_to_string(flake_dir.path().join("flake.nix")).await?;
 
         assert!(
             flake.contains("buildInputs = [")
@@ -138,6 +143,7 @@ path = "lib.rs"
                 && flake.contains("rustfmt")
                 && flake.contains("rustc")
         );
+        Ok(())
     }
 
     // NOTE: we can't test the failure case since it will `std::process::exit`

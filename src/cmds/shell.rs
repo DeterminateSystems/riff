@@ -15,11 +15,17 @@ pub struct Shell {
     /// The root directory of the project
     #[clap(long, value_parser)]
     project_dir: Option<PathBuf>,
+    #[clap(from_global)]
+    disable_telemetry: bool,
 }
 
 impl Shell {
     pub async fn cmd(self) -> color_eyre::Result<Option<i32>> {
-        let flake_dir = flake_generator::generate_flake_from_project_dir(self.project_dir).await?;
+        let flake_dir = flake_generator::generate_flake_from_project_dir(
+            self.project_dir,
+            self.disable_telemetry,
+        )
+        .await?;
 
         let mut nix_develop_command = Command::new("nix");
         nix_develop_command
@@ -47,23 +53,23 @@ impl Shell {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use tempfile::TempDir;
-
-    use super::Shell;
+    use tokio::fs::write;
 
     // We can't run this test by default because it calls Nix. Calling Nix inside Nix doesn't appear
     // to work very well (at least, for this use case). We also don't want to run this in CI because
     // the shell is not interactive, leading `nix develop` to exit without evaluating the
     // `shellHook` (and thus thwarting our attempt to check if the shell actually worked by
     // inspecting the exit code).
-    #[test]
+    #[tokio::test]
     #[ignore]
-    fn shell_succeeds() {
-        let cache_dir = TempDir::new().unwrap();
+    async fn shell_succeeds() -> eyre::Result<()> {
+        let cache_dir = TempDir::new()?;
         std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
-        let temp_dir = TempDir::new().unwrap();
-        std::fs::write(temp_dir.path().join("lib.rs"), "fn main () {}").unwrap();
-        std::fs::write(
+        let temp_dir = TempDir::new()?;
+        write(temp_dir.path().join("lib.rs"), "fn main () {}").await?;
+        write(
             temp_dir.path().join("Cargo.toml"),
             r#"
 [package]
@@ -81,14 +87,15 @@ shellHook = "exit 6"
 [dependencies]
         "#,
         )
-        .unwrap();
+        .await?;
 
         let shell = Shell {
             project_dir: Some(temp_dir.path().to_owned()),
+            disable_telemetry: true,
         };
 
-        let shell_cmd = tokio_test::task::spawn(shell.cmd());
-        let shell_cmd = tokio_test::block_on(shell_cmd);
-        assert_eq!(shell_cmd.unwrap(), Some(6));
+        let shell_cmd = shell.cmd().await?;
+        assert_eq!(shell_cmd, Some(6));
+        Ok(())
     }
 }

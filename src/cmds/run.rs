@@ -25,13 +25,18 @@ pub struct Run {
     /// The command to run with your project's dependencies
     #[clap(required = true)]
     pub(crate) command: Vec<String>,
+    #[clap(from_global)]
+    disable_telemetry: bool,
     // TODO(@cole-h): support additional nix develop args?
 }
 
 impl Run {
     pub async fn cmd(&self) -> color_eyre::Result<Option<i32>> {
-        let flake_dir =
-            flake_generator::generate_flake_from_project_dir(self.project_dir.clone()).await?;
+        let flake_dir = flake_generator::generate_flake_from_project_dir(
+            self.project_dir.clone(),
+            self.disable_telemetry,
+        )
+        .await?;
 
         let mut nix_develop_command = Command::new("nix");
         nix_develop_command
@@ -95,6 +100,7 @@ path = "lib.rs"
                 .into_iter()
                 .map(String::from)
                 .collect(),
+            disable_telemetry: true,
         };
 
         let run_cmd = tokio_test::task::spawn(run.cmd());

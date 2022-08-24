@@ -35,14 +35,15 @@ pub enum DependencyRegistryError {
     WrongVersion(usize),
 }
 
+#[derive(Debug)]
 pub struct DependencyRegistry {
     data: Arc<RwLock<DependencyRegistryData>>,
     refresh_handle: Option<JoinHandle<()>>,
 }
 
 impl DependencyRegistry {
-    #[tracing::instrument(skip_all, fields(%offline))]
-    pub async fn new(offline: bool) -> Result<Self, DependencyRegistryError> {
+    #[tracing::instrument(skip_all, fields(%disable_telemetry))]
+    pub async fn new(disable_telemetry: bool) -> Result<Self, DependencyRegistryError> {
         let xdg_dirs = BaseDirectories::with_prefix(FSM_XDG_PREFIX)?;
         // Create the directory if needed
         let cached_registry_pathbuf =
@@ -73,85 +74,82 @@ impl DependencyRegistry {
         }
 
         let data = Arc::new(RwLock::new(data));
-        let refresh_handle = if !offline {
-            // We detach the join handle as we don't actually care when/if this finishes
-            let data = Arc::clone(&data);
-            let refresh_handle = tokio::spawn(async move {
-                // Refresh the cache
-                // We don't want to fail if we can't build telemetry data...
-                let telemetry = match Telemetry::new().await.as_header_data() {
+        // We detach the join handle as we don't actually care when/if this finishes
+        let data_clone = Arc::clone(&data);
+        let refresh_handle = tokio::spawn(async move {
+            // Refresh the cache
+            // We don't want to fail if we can't build telemetry data...
+            let telemetry = if !disable_telemetry {
+                match Telemetry::new().await.as_header_data() {
                     Ok(telemetry) => Some(telemetry), // But we do want to fail if we can build it but can't parse it
                     Err(err) => {
                         tracing::debug!(%err, "Telemetry build error");
                         None
                     }
-                };
-                let http_client = reqwest::Client::new();
-                let mut req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL);
-                if let Some(telemetry) = telemetry {
-                    req = req.header(TELEMETRY_HEADER_NAME, &telemetry);
-                    tracing::trace!(%telemetry, "Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-                } else {
-                    tracing::trace!(
-                        "Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}"
-                    );
                 }
-                let res = match req.send().await {
-                    Ok(res) => res,
-                    Err(err) => {
-                        tracing::error!(err = %eyre::eyre!(err), "Could not fetch new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-                        return;
-                    }
-                };
-                let content = match res.text().await {
-                    Ok(content) => content,
-                    Err(err) => {
-                        tracing::error!(err = %eyre::eyre!(err), "Could not fetch new registry data body from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-                        return;
-                    }
-                };
-                let fresh_data: DependencyRegistryData = match serde_json::from_str(&content) {
-                    Ok(data) => data,
-                    Err(err) => {
-                        tracing::error!(err = %eyre::eyre!(err), "Could not parse new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-                        return;
-                    }
-                };
-                *data.write().await = fresh_data;
-                // Write out the update
-                let mut cached_registry_file = match OpenOptions::new()
-                    .truncate(true)
-                    .create(true)
-                    .write(true)
-                    .open(cached_registry_pathbuf.clone())
-                    .await
-                {
-                    Ok(cached_registry_file) => cached_registry_file,
-                    Err(err) => {
-                        tracing::error!(err = %eyre::eyre!(err), path = %cached_registry_pathbuf.display(), "Could not truncate XDG cached registry file to empty");
-                        return;
-                    }
-                };
-                match cached_registry_file
-                    .write_all(content.trim().as_bytes())
-                    .await
-                {
-                    Ok(_) => {
-                        tracing::debug!(path = %cached_registry_pathbuf.display(), "Refreshed remote registry into XDG cache")
-                    }
-                    Err(err) => {
-                        tracing::error!(err = %eyre::eyre!(err), "Could not write to {}", cached_registry_pathbuf.display());
-                    }
-                };
-            });
-            Some(refresh_handle)
-        } else {
-            None
-        };
+            } else {
+                None
+            };
+            let http_client = reqwest::Client::new();
+            let mut req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL);
+            if let Some(telemetry) = telemetry {
+                req = req.header(TELEMETRY_HEADER_NAME, &telemetry);
+                tracing::trace!(%telemetry, "Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
+            } else {
+                tracing::trace!("Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
+            }
+            let res = match req.send().await {
+                Ok(res) => res,
+                Err(err) => {
+                    tracing::error!(err = %eyre::eyre!(err), "Could not fetch new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
+                    return;
+                }
+            };
+            let content = match res.text().await {
+                Ok(content) => content,
+                Err(err) => {
+                    tracing::error!(err = %eyre::eyre!(err), "Could not fetch new registry data body from {DEPENDENCY_REGISTRY_REMOTE_URL}");
+                    return;
+                }
+            };
+            let fresh_data: DependencyRegistryData = match serde_json::from_str(&content) {
+                Ok(data) => data,
+                Err(err) => {
+                    tracing::error!(err = %eyre::eyre!(err), "Could not parse new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
+                    return;
+                }
+            };
+            *data_clone.write().await = fresh_data;
+            // Write out the update
+            let mut cached_registry_file = match OpenOptions::new()
+                .truncate(true)
+                .create(true)
+                .write(true)
+                .open(cached_registry_pathbuf.clone())
+                .await
+            {
+                Ok(cached_registry_file) => cached_registry_file,
+                Err(err) => {
+                    tracing::error!(err = %eyre::eyre!(err), path = %cached_registry_pathbuf.display(), "Could not truncate XDG cached registry file to empty");
+                    return;
+                }
+            };
+            match cached_registry_file
+                .write_all(content.trim().as_bytes())
+                .await
+            {
+                Ok(_) => {
+                    tracing::debug!(path = %cached_registry_pathbuf.display(), "Refreshed remote registry into XDG cache")
+                }
+                Err(err) => {
+                    tracing::error!(err = %eyre::eyre!(err), "Could not write to {}", cached_registry_pathbuf.display());
+                }
+            };
+        });
 
         Ok(Self {
             data,
-            refresh_handle,
+            refresh_handle: Some(refresh_handle),
         })
     }
 
@@ -166,6 +164,15 @@ impl DependencyRegistry {
 
     pub async fn language(&self) -> RwLockReadGuard<DependencyRegistryLanguageData> {
         RwLockReadGuard::map(self.data.read().await, |v| &v.language)
+    }
+}
+
+impl Clone for DependencyRegistry {
+    fn clone(&self) -> Self {
+        Self {
+            data: self.data.clone(),
+            refresh_handle: None,
+        }
     }
 }
 

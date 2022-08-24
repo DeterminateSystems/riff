@@ -27,6 +27,9 @@ const FSM_XDG_PREFIX: &str = "fsm";
 struct Cli {
     #[clap(subcommand)]
     command: Commands,
+    /// Turn off user telemetry ping
+    #[clap(long, global = true, env = "FSM_DISABLE_TELEMETRY")]
+    disable_telemetry: bool,
 }
 
 #[tokio::main]
@@ -35,44 +38,23 @@ async fn main() -> color_eyre::Result<()> {
         .issue_url(concat!(env!("CARGO_PKG_REPOSITORY"), "/issues/new"))
         .install()?;
 
-    let filter_layer = match EnvFilter::try_from_default_env() {
-        Ok(layer) => layer,
-        Err(e) => {
-            // Catch a parse error and report it, ignore a missing env.
-            if let Some(source) = e.source() {
-                match source.downcast_ref::<std::env::VarError>() {
-                    Some(std::env::VarError::NotPresent) => (),
-                    _ => return Err(e).wrap_err_with(|| "parsing RUST_LOG directives"),
-                }
-            }
-            EnvFilter::try_new(&format!("{}={}", env!("CARGO_PKG_NAME"), "info"))?
-        }
-    };
+    setup_tracing().await?;
 
-    // Initialize tracing with tracing-error, and eyre
-    let fmt_layer = tracing_subscriber::fmt::Layer::new()
-        .with_ansi(atty::is(Stream::Stderr))
-        .with_writer(std::io::stderr)
-        .pretty();
-
-    tracing_subscriber::registry()
-        .with(filter_layer)
-        .with(fmt_layer)
-        .with(ErrorLayer::default())
-        .try_init()?;
-
-    main_impl().await?;
-
-    Ok(())
-}
-
-async fn main_impl() -> color_eyre::Result<()> {
     let maybe_args = Cli::try_parse();
 
     let args = match maybe_args {
         Ok(args) => args,
         Err(e) => {
-            Telemetry::new().await.send().await.ok();
+            // Best effort detect the env var
+            match std::env::var("FSM_DISABLE_TELEMETRY") {
+                Ok(val) if val == "false" || val == "0" || val.is_empty() => {
+                    Telemetry::new().await.send().await.ok();
+                }
+                Err(_) => {
+                    Telemetry::new().await.send().await.ok();
+                }
+                _ => (),
+            }
             e.exit() // Dead!
         }
     };
@@ -101,6 +83,36 @@ Try running it in a shell; for example:
             }
         }
     };
+    Ok(())
+}
+
+#[tracing::instrument]
+async fn setup_tracing() -> eyre::Result<()> {
+    let filter_layer = match EnvFilter::try_from_default_env() {
+        Ok(layer) => layer,
+        Err(e) => {
+            // Catch a parse error and report it, ignore a missing env.
+            if let Some(source) = e.source() {
+                match source.downcast_ref::<std::env::VarError>() {
+                    Some(std::env::VarError::NotPresent) => (),
+                    _ => return Err(e).wrap_err_with(|| "parsing RUST_LOG directives"),
+                }
+            }
+            EnvFilter::try_new(&format!("{}={}", env!("CARGO_PKG_NAME"), "info"))?
+        }
+    };
+
+    // Initialize tracing with tracing-error, and eyre
+    let fmt_layer = tracing_subscriber::fmt::Layer::new()
+        .with_ansi(atty::is(Stream::Stderr))
+        .with_writer(std::io::stderr)
+        .pretty();
+
+    tracing_subscriber::registry()
+        .with(filter_layer)
+        .with(fmt_layer)
+        .with(ErrorLayer::default())
+        .try_init()?;
 
     Ok(())
 }
