@@ -18,7 +18,6 @@ pub struct Shell {
 }
 
 impl Shell {
-    // TODO(@cole-h): should this be a trait method? we'll see once we add another subcommand
     pub async fn cmd(self) -> color_eyre::Result<Option<i32>> {
         let flake_dir = flake_generator::generate_flake_from_project_dir(self.project_dir).await?;
 
