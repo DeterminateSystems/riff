@@ -6,7 +6,7 @@ use reqwest::Response;
 use serde::Serialize;
 use tokio::{
     fs::OpenOptions,
-    io::{AsyncReadExt, AsyncWriteExt},
+    io::{AsyncReadExt, AsyncWriteExt, AsyncSeekExt},
     process::Command,
 };
 use uuid::Uuid;
@@ -130,19 +130,22 @@ async fn distinct_id() -> eyre::Result<Uuid> {
         distinct_id = distinct_id.trim().to_string();
     }
 
-    let distinct_id = if distinct_id.is_empty() {
-        let distinct_id = Uuid::new_v4();
-        tracing::trace!(%distinct_id, "Writing new distinct ID");
-        distinct_id_file
-            .write_all(format!("{distinct_id}\n\n{TELEMETRY_IDENTIFIER_DESCRIPTION}").as_bytes())
-            .await?;
-        tracing::debug!(%distinct_id, "Wrote new distinct ID");
-        distinct_id
-    } else {
-        Uuid::parse_str(&distinct_id)?
-    };
 
-    Ok(distinct_id)
+    match Uuid::parse_str(&distinct_id) {
+        Ok(uuid) => Ok(uuid),
+        Err(e) => {
+            tracing::error!("arg: {}", e);
+            let uuid = Uuid::new_v4();
+            tracing::trace!(%uuid, "Writing new distinct ID");
+            distinct_id_file.set_len(0).await?;
+            distinct_id_file.seek(std::io::SeekFrom::Start(0)).await?;
+            distinct_id_file
+                .write_all(format!("{uuid}\n\n{TELEMETRY_IDENTIFIER_DESCRIPTION}").as_bytes())
+                .await?;
+            tracing::debug!(%uuid, "Wrote new distinct ID");
+            Ok(uuid)
+        }
+    }
 }
 
 async fn nix_version() -> eyre::Result<Option<String>> {
