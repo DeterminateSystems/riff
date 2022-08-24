@@ -47,7 +47,7 @@ async fn main() -> color_eyre::Result<()> {
         Err(e) => {
             // Best effort detect the env var
             match std::env::var("FSM_DISABLE_TELEMETRY") {
-                Ok(val) if val == "false" || val == "0"  || val == "" => {
+                Ok(val) if val == "false" || val == "0" || val == "" => {
                     Telemetry::new().await.send().await.ok();
                 }
                 Err(_) => {
