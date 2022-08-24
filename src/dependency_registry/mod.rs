@@ -9,7 +9,7 @@ use tokio::{
 use xdg::{BaseDirectories, BaseDirectoriesError};
 
 use crate::{
-    telemetry::{Telemetry, TELEMETRY_HEADER_NAME},
+    telemetry::{Telemetry, TELEMETRY_HEADER_NAME, self},
     FSM_XDG_PREFIX,
 };
 
@@ -44,6 +44,7 @@ pub struct DependencyRegistry {
 impl DependencyRegistry {
     #[tracing::instrument(skip_all, fields(%disable_telemetry))]
     pub async fn new(disable_telemetry: bool) -> Result<Self, DependencyRegistryError> {
+        let telemetry_handle = tokio::spawn(Telemetry::new());
         let xdg_dirs = BaseDirectories::with_prefix(FSM_XDG_PREFIX)?;
         // Create the directory if needed
         let cached_registry_pathbuf =
@@ -80,7 +81,7 @@ impl DependencyRegistry {
             // Refresh the cache
             // We don't want to fail if we can't build telemetry data...
             let telemetry = if !disable_telemetry {
-                match Telemetry::new().await.as_header_data() {
+                match telemetry_handle.join().await.as_header_data() {
                     Ok(telemetry) => Some(telemetry), // But we do want to fail if we can build it but can't parse it
                     Err(err) => {
                         tracing::debug!(%err, "Telemetry build error");
