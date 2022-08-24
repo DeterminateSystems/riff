@@ -65,6 +65,7 @@
             codespell
             nixpkgs-fmt
             findutils # for xargs
+            rust-analyzer
           ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]);
         });
 
