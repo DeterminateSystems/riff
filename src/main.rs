@@ -2,19 +2,22 @@ mod cargo_metadata;
 mod cmds;
 mod dependency_registry;
 mod dev_env;
+mod flake_generator;
 mod spinner;
 mod telemetry;
 
 use std::error::Error;
+use std::io::Write;
 
 use atty::Stream;
 use clap::Parser;
 use eyre::WrapErr;
-use telemetry::Telemetry;
+use owo_colors::OwoColorize;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 use cmds::Commands;
+use telemetry::Telemetry;
 
 const FSM_XDG_PREFIX: &str = "fsm";
 
@@ -59,6 +62,23 @@ async fn main() -> color_eyre::Result<()> {
         Commands::Shell(shell) => {
             let code = shell.cmd().await?;
             if let Some(code) = code {
+                std::process::exit(code);
+            }
+        }
+        Commands::Run(run) => {
+            let code = run.cmd().await?;
+            if let Some(code) = code {
+                if code == 127 {
+                    writeln!(
+                        std::io::stderr(),
+                        "The command you attempted to run was not found.
+Try running it in a shell; for example:
+\t{fsm_run_example}\n",
+                        fsm_run_example =
+                            format!("fsm run -- sh -c '{}'", run.command.join(" ")).cyan(),
+                    )?;
+                }
+
                 std::process::exit(code);
             }
         }
