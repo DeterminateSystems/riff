@@ -1,16 +1,24 @@
 # fsm
 
-fsm (Flying Spaghetti Monster) is a tool that automatically provides native dependencies[^1] for software projects. To enter a shell environment with all your project's native dependencies installed, run this at the project root:
+fsm (Flying Spaghetti Monster) is a tool that automatically provides native
+dependencies[^1] for software projects. To enter a shell environment with all
+your project's native dependencies installed, run this at the project root:
 
 ```shell
 fsm shell
 ```
 
-fsm currently supports [Rust] with support for other languages coming soon. It uses the [Nix] package manager to handle dependencies but requires no knowledge or direct usage of Nix.
+fsm currently supports [Rust] with support for other languages coming soon. It
+uses the [Nix] package manager to handle dependencies but requires no knowledge
+or direct usage of Nix.
 
 ## What fsm provides
 
-Languages typically use language-specific package managers to handle dependencies, such as [Cargo] for [Rust]. But these language-specific tools typically don't handle dependencies written in other languages very well. They expect you to install them using some other package manager and fail in mysterious ways when they're missing, like this:
+Languages typically use language-specific package managers to handle
+dependencies, such as [Cargo] for [Rust]. But these language-specific tools
+typically don't handle dependencies written in other languages very well. They
+expect you to install them using some other package manager and fail in
+mysterious ways when they're missing, like this:
 
 ```rust
    Compiling openssl-sys v0.9.75
@@ -19,9 +27,16 @@ error: failed to run custom build command for `openssl-sys v0.9.75`
     \"openssl\"` did not exit successfully: \n... No package 'openssl' found\n"
 ```
 
-It's then up to you to install the missing dependencies, which can be laborious, error prone, and hard to reproduce.
+It's then up to you to install the missing dependencies, which can be laborious,
+error prone, and hard to reproduce.
 
-fsm offers a way out of this. It uses your project's language-specific configuration to infer which dependencies are required and creates a shell environment with all of those dependencies both installed and properly linked. These environments are *transient* in the sense that they don't affect anything outside the shell; they install dependencies neither globally nor in your current project, so you don't have to worry about fsm breaking anything on your system. When you exit the fsm shell, the dependencies are gone.
+fsm offers a way out of this. It uses your project's language-specific
+configuration to infer which dependencies are required and creates a shell
+environment with all of those dependencies both installed and properly linked.
+These environments are *transient* in the sense that they don't affect anything
+outside the shell; they install dependencies neither globally nor in your
+current project, so you don't have to worry about fsm breaking anything on your
+system. When you exit the fsm shell, the dependencies are gone.
 
 ## Requirements
 
@@ -50,7 +65,11 @@ nix-env -i fsm
 
 ## Example usage
 
-In this example, we'll build the [Tremor project][tremor] from source. Tremor has some native dependencies, such as [OpenSSL] and the [Protobuf] compiler, without which commands like `cargo build` and `cargo run` are doomed to fail. fsm provides those dependencies automatically, without you needing to install them in your regular environment:
+In this example, we'll build the [Tremor project][tremor] from source. Tremor
+has some native dependencies, such as [OpenSSL] and the [Protobuf] compiler,
+without which commands like `cargo build` and `cargo run` are doomed to fail.
+fsm provides those dependencies automatically, without you needing to install
+them in your regular environment:
 
 ```shell
 git clone https://github.com/tremor-rs/tremor-runtime.git && cd tremor-runtime
@@ -77,13 +96,20 @@ protoc
 
 ## How to declare package inputs
 
-While fsm does its best to infer native dependencies from your project's crate dependencies, you can explicitly declare native dependencies if necessary by adding an `fsm` block to the `package.metadata` block in your `Cargo.toml`. fsm currently supports three types of inputs:
+While fsm does its best to infer native dependencies from your project's crate
+dependencies, you can explicitly declare native dependencies if necessary by
+adding an `fsm` block to the `package.metadata` block in your `Cargo.toml`. fsm
+currently supports three types of inputs:
 
-* `build-inputs` are native dependencies that some crate may need to link against.
-* `environment-variables` are environment variables you want to set in your dev shell.
-* `runtime-inputs` are libraries you want to add to your `LD_LIBRARY_PATH` to ensure that your dev shell works as expected.
+* `build-inputs` are native dependencies that some crate may need to link
+  against.
+* `environment-variables` are environment variables you want to set in your dev
+  shell.
+* `runtime-inputs` are libraries you want to add to your `LD_LIBRARY_PATH` to
+  ensure that your dev shell works as expected.
 
-Both `build-inputs` and `runtime-inputs` can be any executable available in [Nixpkgs].
+Both `build-inputs` and `runtime-inputs` can be any executable available in
+[Nixpkgs].
 
 Here's an example `Cargo.toml` with explicitly supplied fsm configuration:
 
@@ -106,16 +132,24 @@ HI = "BYE"
 When you run `fsm shell` in this project, fsm
 
 * adds [OpenSSL] to your build environment
-* sets the `LD_LIBRARY_PATH` environment variable to include [LibGL]'s library path
+* sets the `LD_LIBRARY_PATH` environment variable to include [LibGL]'s library
+  path
 * sets the `HI` environment variable to have a value of `BYE`
 
 ## How it works
 
 When you run `fsm shell` in a Rust project, fsm
 
-- **reads** your [`Cargo.toml`][cargo-toml] configuration manifest to determine which native dependencies your project requires and then
-- **uses** the [Nix] package manager&mdash;in the background and without requiring any intervention on your part&mdash;to install any native dependencies, such as [OpenSSL] or [Protobuf], and also sets any environment variables necessary to discover those tools. Once it knows which external tools are required, it
-- **builds** a custom shell environment that enables you to use commands like `cargo build` and `cargo run` without encountering the missing dependency errors that so often dog Rust development.
+- **reads** your [`Cargo.toml`][cargo-toml] configuration manifest to determine
+  which native dependencies your project requires and then
+- **uses** the [Nix] package manager&mdash;in the background and without
+  requiring any intervention on your part&mdash;to install any native
+  dependencies, such as [OpenSSL] or [Protobuf], and also sets any environment
+  variables necessary to discover those tools. Once it knows which external
+  tools are required, it
+- **builds** a custom shell environment that enables you to use commands like
+  `cargo build` and `cargo run` without encountering the missing dependency
+  errors that so often dog Rust development.
 
 This diagram provides a basic visual description of that process:
 
@@ -123,7 +157,8 @@ This diagram provides a basic visual description of that process:
   <img src="./img/fsm.jpg" alt="How fsm works" style="width:70%;" />
 </p>
 
-Because fsm uses Nix, all of the dependencies that it installs are stored in your local [Nix store], by default under `/nix/store`. If you
+Because fsm uses Nix, all of the dependencies that it installs are stored in
+your local [Nix store], by default under `/nix/store`.
 
 [cargo]: https://doc.rust-lang.org/cargo
 [cargo-toml]: https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -138,4 +173,6 @@ Because fsm uses Nix, all of the dependencies that it installs are stored in you
 [rust-install]: https://www.rust-lang.org/tools/install
 [tremor]: https://github.com/tremor-rs/tremor-runtime
 
-[^1]: **Native** dependencies are dependencies that are written in another language and thus can't be installed using the same language-specific package manager that you use to build your code.
+[^1]: **Native** dependencies are dependencies that are written in another
+  language and thus can't be installed using the same language-specific package
+  manager that you use to build your code.
