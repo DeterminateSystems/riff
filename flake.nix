@@ -43,7 +43,7 @@
         ] ++ nixpkgs.lib.optionals (system == "x86_64-linux") [
           targets.x86_64-unknown-linux-musl.stable.rust-std
         ] ++ nixpkgs.lib.optionals (system == "aarch64-linux") [
-          # targets.aarch64-unknown-linux-musl.stable.rust-std
+          targets.aarch64-unknown-linux-musl.stable.rust-std
         ]);
     in
     {
@@ -65,7 +65,7 @@
             codespell
             nixpkgs-fmt
             findutils # for xargs
-          ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv ]);
+          ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]);
         });
 
       packages = forAllSystems
@@ -111,10 +111,12 @@
                 OPENSSL_INCLUDE_DIR = "${pkgs.pkgsStatic.openssl.dev}";
               });
           } // lib.optionalAttrs (system == "aarch64-linux") {
-            # fsmStatic = naerskLib.buildPackage
-            #   (sharedAttrs // {
-            #     CARGO_BUILD_TARGET = "aarch64-unknown-linux-musl";
-            #   });
+            fsmStatic = naerskLib.buildPackage
+              (sharedAttrs // {
+                CARGO_BUILD_TARGET = "aarch64-unknown-linux-musl";
+                OPENSSL_LIB_DIR = "${pkgs.pkgsStatic.openssl.out}/lib";
+                OPENSSL_INCLUDE_DIR = "${pkgs.pkgsStatic.openssl.dev}";
+              });
           });
 
       defaultPackage = forAllSystems ({ system, ... }: self.packages.${system}.fsm);
