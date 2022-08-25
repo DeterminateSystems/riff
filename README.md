@@ -66,23 +66,25 @@ system. When you exit the fsm shell, the dependencies are gone.
 
 ## Example usage
 
-In this example, we'll build the [Tremor project][tremor] from source. Tremor
-has some external dependencies, such as [OpenSSL] and the [Protobuf] compiler,
-without which commands like `cargo build` and `cargo run` are doomed to fail.
-fsm provides those dependencies automatically, without you needing to install
-them in your regular environment:
+In this example, we'll build the [Prost] project from source. Prost has an
+external dependency on [OpenSSL], without which commands like `cargo build` and
+`cargo run` are doomed to fail. fsm provides those dependencies automatically,
+without you needing to install them in your regular environment. Follow these
+steps to see dependency inference in action:
 
 ```shell
-git clone https://github.com/tremor-rs/tremor-runtime.git
-cd tremor-runtime
+git clone https://github.com/tokio-rs/prost.git
+cd prost
 
 # Enter the fsm shell environment
 fsm shell
+# ✓ 🦀 rust: cargo, cmake, curl, openssl, pkg-config, rustc, rustfmt, zlib
 
-# Check for the presence of protoc
-type -p protoc
+# Check for the presence of openssl
+which openssl
 # The path should look like this:
-# /nix/store/2qg94y58v1jr4dw360bmpxlrs30m31ca-protobuf-3.19.4/bin/protoc
+# /nix/store/f3xbf94zykbh6drw6wfg9hdrfgwrkck7-openssl-1.1.1q-bin/bin/openssl
+# This means that fsm is using the Nix-provided openssl
 
 # Build the project
 cargo build
@@ -90,10 +92,9 @@ cargo build
 # Leave the shell environment
 exit
 
-# Now try to use protoc again
-protoc
-# This should fail with:
-# protoc: command not found
+# Check for openssl again
+which openssl
+# This should either point to an openssl executable on your PATH or fail
 ```
 
 ## How to declare package inputs
@@ -103,7 +104,7 @@ dependencies, you can explicitly declare external dependencies if necessary by
 adding an `fsm` block to the `package.metadata` block in your `Cargo.toml`. fsm
 currently supports three types of inputs:
 
-* `build-inputs` are external dependencies that some crate may need to link
+* `build-inputs` are external dependencies that some crates may need to link
   against.
 * `environment-variables` are environment variables you want to set in your dev
   shell.
@@ -138,6 +139,30 @@ When you run `fsm shell` in this project, fsm
   path
 * sets the `HI` environment variable to have a value of `BYE`
 
+### macOS framework dependencies
+
+macOS users working with Rust often struggle with so-called framework
+dependencies, such as [`Foundation`][foundation],
+[`CoreServices`][coreservices], and [`Security`][security]. You may have
+encountered error messages like this when using Rust:
+
+```
+= note: ld: framework not found CoreFoundation
+```
+
+You can overcome this problem by adding framework dependencies to your
+`build-inputs` as `darwin.apple_sdk.frameworks.${framework}`, for example
+`darwin.apple_sdk.frameworks.Security`. Here's an example `Cargo.toml`
+configuration that adds multiple framework dependencies:
+
+```toml
+[package.metadata.fsm]
+build-inputs = [
+  "darwin.apple_sdk.frameworks.CoreServices"
+  "darwin.apple_sdk.frameworks.Security",
+]
+```
+
 ## How it works
 
 When you run `fsm shell` in a Rust project, fsm
@@ -165,6 +190,8 @@ your local [Nix store], by default under `/nix/store`.
 
 [cargo]: https://doc.rust-lang.org/cargo
 [cargo-toml]: https://doc.rust-lang.org/cargo/reference/manifest.html
+[coreservices]: https://developer.apple.com/documentation/coreservices
+[foundation]: https://developer.apple.com/documentation/foundation
 [libgl]: https://dri.freedesktop.org/wiki/libGL
 [nix]: https://nixos.org/nix
 [nix-install]: https://nixos.org/download.html
@@ -174,7 +201,7 @@ your local [Nix store], by default under `/nix/store`.
 [protobuf]: https://developers.google.com/protocol-buffers
 [rust]: https://rust-lang.org
 [rust-install]: https://www.rust-lang.org/tools/install
-[tremor]: https://github.com/tremor-rs/tremor-runtime
+[security]: https://developer.apple.com/documentation/security
 
 [^1]: We define **external** dependencies as those that are written in another
   language and thus can't be installed using the same language-specific package
