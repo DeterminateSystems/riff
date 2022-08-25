@@ -12,16 +12,31 @@ use crate::cargo_metadata::CargoMetadata;
 use crate::dependency_registry::DependencyRegistry;
 use crate::spinner::SimpleSpinner;
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize)]
+pub enum DetectedLanguage {
+    Rust,
+}
+
+#[derive(Debug, Clone)]
 pub struct DevEnvironment {
+    pub(crate) registry: DependencyRegistry,
     pub(crate) build_inputs: HashSet<String>,
     pub(crate) environment_variables: HashMap<String, String>,
     pub(crate) ld_library_path: HashSet<String>,
-    pub(crate) detected_languages: HashSet<String>,
+    pub(crate) detected_languages: HashSet<DetectedLanguage>,
 }
 
 // TODO(@cole-h): should this become a trait that the various languages we may support have to implement?
 impl DevEnvironment {
+    pub fn new(registry: DependencyRegistry) -> Self {
+        Self {
+            registry,
+            build_inputs: Default::default(),
+            environment_variables: Default::default(),
+            ld_library_path: Default::default(),
+            detected_languages: Default::default(),
+        }
+    }
     pub fn to_flake(&self) -> String {
         // TODO: use rnix for generating Nix?
         format!(
@@ -48,7 +63,7 @@ impl DevEnvironment {
 
     pub async fn detect(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
         if project_dir.join("Cargo.toml").exists() {
-            self.detected_languages.insert("Rust".to_string());
+            self.detected_languages.insert(DetectedLanguage::Rust);
             self.add_deps_from_cargo(project_dir).await?;
             Ok(())
         } else {
@@ -67,8 +82,6 @@ impl DevEnvironment {
         cargo_metadata_command.args(&["metadata", "--format-version", "1"]);
         cargo_metadata_command.arg("--manifest-path");
         cargo_metadata_command.arg(project_dir.join("Cargo.toml"));
-
-        let registry_handle = tokio::task::spawn(DependencyRegistry::new(false));
 
         tracing::trace!(command = ?cargo_metadata_command, "Running");
         let spinner = SimpleSpinner::new_with_message(Some(&format!(
@@ -120,19 +133,14 @@ impl DevEnvironment {
             "Unable to parse output produced by `cargo metadata` into our desired structure",
         )?;
 
-        let registry = registry_handle
-            .await
-            .wrap_err("Joining dependency registry builder task")?
-            .wrap_err("Parsing `registry.json`")?;
-
-        tracing::debug!(fresh = %registry.fresh(), "Cache freshness");
-        let language_registry = registry.language().await;
-        (*language_registry).rust.default.try_apply(self)?;
+        tracing::debug!(fresh = %self.registry.fresh(), "Cache freshness");
+        let language_registry = self.registry.language().await.clone();
+        language_registry.rust.default.try_apply(self)?;
 
         for package in metadata.packages {
             let name = package.name;
 
-            if let Some(dep_config) = (*language_registry).rust.dependencies.get(name.as_str()) {
+            if let Some(dep_config) = language_registry.rust.dependencies.get(name.as_str()) {
                 tracing::debug!(
                     package_name = %name,
                     "build-inputs" = %dep_config.build_inputs.iter().join(", "),
@@ -212,12 +220,15 @@ pub(crate) enum TryApplyError {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use tempfile::TempDir;
+    use tokio::fs::write;
 
-    use super::DevEnvironment;
-
-    #[test]
-    fn dev_env_to_flake() {
+    #[tokio::test]
+    async fn dev_env_to_flake() -> eyre::Result<()> {
+        let cache_dir = TempDir::new()?;
+        std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
+        let registry = DependencyRegistry::new(true).await?;
         let dev_env = DevEnvironment {
             build_inputs: ["cargo", "hello"]
                 .into_iter()
@@ -231,7 +242,8 @@ mod tests {
                 .into_iter()
                 .map(ToString::to_string)
                 .collect(),
-            ..Default::default()
+            detected_languages: vec![DetectedLanguage::Rust].into_iter().collect(),
+            registry,
         };
 
         let flake = dev_env.to_flake();
@@ -246,15 +258,16 @@ mod tests {
                 && flake.contains("${lib.getLib nix}/lib")
                 && flake.contains("${lib.getLib libGL}/lib")
         );
+        Ok(())
     }
 
-    #[test]
-    fn dev_env_detect_supported_project() {
-        let cache_dir = TempDir::new().unwrap();
+    #[tokio::test]
+    async fn dev_env_detect_supported_project() -> eyre::Result<()> {
+        let cache_dir = TempDir::new()?;
         std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
         let temp_dir = TempDir::new().unwrap();
-        std::fs::write(temp_dir.path().join("lib.rs"), "fn main () {}").unwrap();
-        std::fs::write(
+        write(temp_dir.path().join("lib.rs"), "fn main () {}").await?;
+        write(
             temp_dir.path().join("Cargo.toml"),
             r#"
 [package]
@@ -276,10 +289,11 @@ HI = "BYE"
 [dependencies]
         "#,
         )
-        .unwrap();
+        .await?;
 
-        let mut dev_env = DevEnvironment::default();
-        let detect = tokio_test::block_on(dev_env.detect(temp_dir.path()));
+        let registry = DependencyRegistry::new(true).await?;
+        let mut dev_env = DevEnvironment::new(registry);
+        let detect = dev_env.detect(temp_dir.path()).await;
         assert!(detect.is_ok(), "{detect:?}");
 
         assert!(dev_env.build_inputs.get("hello").is_some());
@@ -288,13 +302,18 @@ HI = "BYE"
             Some(&String::from("BYE"))
         );
         assert!(dev_env.ld_library_path.get("libGL").is_some());
+        Ok(())
     }
 
-    #[test]
-    fn dev_env_detect_unsupported_project() {
-        let temp_dir = TempDir::new().unwrap();
-        let mut dev_env = DevEnvironment::default();
-        let detect = tokio_test::block_on(dev_env.detect(temp_dir.path()));
+    #[tokio::test]
+    async fn dev_env_detect_unsupported_project() -> eyre::Result<()> {
+        let cache_dir = TempDir::new()?;
+        std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
+        let temp_dir = TempDir::new()?;
+        let registry = DependencyRegistry::new(true).await?;
+        let mut dev_env = DevEnvironment::new(registry);
+        let detect = dev_env.detect(temp_dir.path()).await;
         assert!(detect.is_err());
+        Ok(())
     }
 }

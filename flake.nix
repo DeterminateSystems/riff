@@ -69,9 +69,9 @@
           buildInputs = with pkgs; [
             toolchain
             openssl
-            codespell
             nixpkgs-fmt
             findutils # for xargs
+            rust-analyzer
             spellcheck
           ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]);
         });
