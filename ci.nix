@@ -27,7 +27,7 @@ in
   '')
 
   (writeScriptBin "ci-check-editorconfig" ''
-    git ls-files . | xargs eclint
+    eclint
   '')
 
   (writeScriptBin "ci-all" ''
