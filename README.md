@@ -8,6 +8,12 @@ your project's external dependencies installed, run this at the project root:
 fsm shell
 ```
 
+You can also directly run commands as if the shell environment were in place:
+
+```shell
+fsm run cargo build
+```
+
 fsm currently supports [Rust] with support for other languages coming soon. It
 uses the [Nix] package manager to handle dependencies but doesn't require you to
 know or use Nix.
