@@ -19,11 +19,15 @@ in
   (writeScriptBin "ci-test-rust" "cargo test")
 
   (writeScriptBin "ci-check-nixpkgs-fmt" ''
-    sh -c "git ls-files '*.nix' | xargs | nixpkgs-fmt --check"
+    git ls-files '*.nix' | xargs | nixpkgs-fmt --check
   '')
 
   (writeScriptBin "ci-check-registry-format" ''
-    sh -c "./registry/format.sh && git diff --exit-code"
+    ./registry/format.sh && git diff --exit-code
+  '')
+
+  (writeScriptBin "ci-check-editorconfig" ''
+    git ls-files . | xargs eclint
   '')
 
   (writeScriptBin "ci-all" ''
@@ -32,5 +36,6 @@ in
     ci-test-rust
     ci-check-nixpkgs-fmt
     ci-check-registry-format
+    ci-check-editorconfig
   '')
 ]
