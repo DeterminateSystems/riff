@@ -63,12 +63,15 @@
           ];
           buildInputs = with pkgs; [
             toolchain
-            git
-            codespell
             openssl
-            nixpkgs-fmt
-            findutils # for xargs
             rust-analyzer
+
+            # CI dependencies
+            jq
+            codespell
+            findutils # for xargs
+            git
+            nixpkgs-fmt
           ]
           ++ ci
           ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]);
