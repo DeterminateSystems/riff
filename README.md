@@ -194,9 +194,28 @@ This diagram provides a basic visual description of that process:
 Because fsm uses Nix, all of the dependencies that it installs are stored in
 your local [Nix store], by default under `/nix/store`.
 
+## Privacy policy
+
+For the sake of improving the tool, fsm does collect some [telemetry] from
+users. You can read the full privacy policy for [Determinate Systems], the
+creators of fsm, [here][privacy].
+
+To disable telemetry on any fsm command invocation, you can either
+
+* Apply the `--disable-telemetry` flag or
+* Set the `FSM_DISABLE_TELEMETRY` environment variable to any value but `0`.
+
+Here are some examples:
+
+```shell
+fsm shell --disable-telemetry
+FSM_DISABLE_TELEMETRY=true fsm run cargo build
+```
+
 [cargo]: https://doc.rust-lang.org/cargo
 [cargo-toml]: https://doc.rust-lang.org/cargo/reference/manifest.html
 [coreservices]: https://developer.apple.com/documentation/coreservices
+[determinate systems]: https://determinate.systems
 [foundation]: https://developer.apple.com/documentation/foundation
 [libgl]: https://dri.freedesktop.org/wiki/libGL
 [nix]: https://nixos.org/nix
@@ -204,10 +223,12 @@ your local [Nix store], by default under `/nix/store`.
 [nixpkgs]: https://search.nixos.org/packages
 [nix store]: https://nixos.wiki/wiki/Nix_package_manager
 [openssl]: https://openssl.org
+[privacy]: https://determinate.systems/privacy
 [protobuf]: https://developers.google.com/protocol-buffers
 [rust]: https://rust-lang.org
 [rust-install]: https://www.rust-lang.org/tools/install
 [security]: https://developer.apple.com/documentation/security
+[telemetry]: ./src/telemetry.rs
 
 [^1]: We define **external** dependencies as those that are written in another
   language and thus can't be installed using the same language-specific package

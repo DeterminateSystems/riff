@@ -15,10 +15,10 @@ use crate::{cmds::Commands, dev_env::DetectedLanguage, Cli, FSM_XDG_PREFIX};
 
 static TELEMETRY_DISTINCT_ID_PATH: &str = "distinct_id";
 static TELEMETRY_IDENTIFIER_DESCRIPTION: &str =  "This is a randomly generated version 4 UUID.
-Determinate Systems uses this ID to know how many people use the tool, and to focus our limited research and development.
-This ID is completely random, and contains no personally identifiable information about you.
+Determinate Systems uses this ID to know how many people use the tool and to focus our limited research and development.
+This ID is completely random and contains no personally identifiable information about you.
 You can delete this file at any time to create a new ID.
-You can also disable ID generation, see the documentation on telemetry.";
+You can also disable ID generation; see the documentation on telemetry to see how to do so.";
 static TELEMETRY_REMOTE_URL: &str = "https://fsm-server.fly.dev/telemetry";
 pub static TELEMETRY_HEADER_NAME: &str = "X-FSM-Client-Info";
 
