@@ -7,12 +7,13 @@ repository = "https://github.com/DeterminateSystems/fsm"
 [dependencies]
 atty = "0.2"
 cfg-if = "1"
-clap = { version = "3.2.17", features = ["derive"] }
+clap = { version = "3.2.17", features = ["derive", "env"] }
 color-eyre = { version = "0.6.2", features = [ "issue-url" ] }
 eyre = "0.6.8"
 indicatif = "0.17.0"
 itertools = "0.10"
 once_cell = "1"
+os-release = "0.1"
 owo-colors = "3"
 reqwest = "0.11"
 serde = { version = "1.0.143", features = ["derive"] }

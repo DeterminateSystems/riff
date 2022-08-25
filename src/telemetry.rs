@@ -11,7 +11,7 @@ use tokio::{
 };
 use uuid::Uuid;
 
-use crate::{Cli, FSM_XDG_PREFIX};
+use crate::{cmds::Commands, Cli, FSM_XDG_PREFIX};
 
 static TELEMETRY_DISTINCT_ID_PATH: &str = "distinct_id";
 static TELEMETRY_IDENTIFIER_DESCRIPTION: &str =  "This is a randomly generated version 4 UUID.
@@ -28,6 +28,10 @@ pub(crate) struct Telemetry {
     distinct_id: Option<Uuid>,
     system_os: String,
     system_arch: String,
+    /// `NAME` from `/etc/os-release`
+    os_release_name: Option<String>,
+    /// `VERSION_ID` from `/etc/os-release`
+    os_release_version_id: Option<String>,
     /// The `CARGO_PKG_VERSION` from an `fsm` build
     fsm_version: String,
     /// The version output of `nix --version`
@@ -59,13 +63,16 @@ impl Telemetry {
                 None
             }
         };
+        let os_release: Option<os_release::OsRelease> =
+            tokio::task::spawn_blocking(|| os_release::OsRelease::new().ok())
+                .await
+                .unwrap_or(None);
 
         let is_tty = atty::is(atty::Stream::Stdout);
 
-        #[allow(clippy::manual_map)]
-        // Allow this as the warning should go away the moment we add a second command.
         let subcommand = match command {
-            Some(crate::cmds::Commands::Shell(_)) => Some("shell".to_string()),
+            Some(Commands::Shell(_)) => Some("shell".to_string()),
+            Some(Commands::Run(_)) => Some("run".to_string()),
             None => None,
         };
 
@@ -73,6 +80,8 @@ impl Telemetry {
             distinct_id,
             system_os,
             system_arch,
+            os_release_name: os_release.as_ref().map(|x| x.name.clone()),
+            os_release_version_id: os_release.as_ref().map(|x| x.version_id.clone()),
             fsm_version,
             nix_version,
             is_tty,
@@ -80,6 +89,7 @@ impl Telemetry {
             detected_languages: Default::default(),
         }
     }
+
     /// Create a new `Telemetry` without any pre-existing information
     ///
     /// This is not very performant and may do things like re-invoke `nix` or reparse the `$ARG`s.
@@ -133,7 +143,7 @@ async fn distinct_id() -> eyre::Result<Uuid> {
     match Uuid::parse_str(&distinct_id) {
         Ok(uuid) => Ok(uuid),
         Err(e) => {
-            tracing::error!("arg: {}", e);
+            tracing::debug!("Failed to parse out the distinct_id: {}", e);
             let uuid = Uuid::new_v4();
             tracing::trace!(%uuid, "Writing new distinct ID");
             distinct_id_file.set_len(0).await?;

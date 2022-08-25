@@ -68,6 +68,7 @@
             openssl
             nixpkgs-fmt
             findutils # for xargs
+            rust-analyzer
           ]
           ++ ci
           ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]);
