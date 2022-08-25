@@ -1,8 +1,4 @@
-use crate::{
-    telemetry::{Telemetry, TELEMETRY_HEADER_NAME},
-    FSM_XDG_PREFIX,
-};
-use eyre::eyre;
+use crate::FSM_XDG_PREFIX;
 use serde::Deserialize;
 use std::{path::Path, sync::Arc};
 use tokio::{
@@ -44,11 +40,6 @@ pub struct DependencyRegistry {
 impl DependencyRegistry {
     #[tracing::instrument(skip_all, fields(%disable_telemetry))]
     pub async fn new(disable_telemetry: bool) -> Result<Self, DependencyRegistryError> {
-        let telemetry_handle = if disable_telemetry {
-            None
-        } else {
-            Some(tokio::spawn(Telemetry::new()))
-        };
         let xdg_dirs = BaseDirectories::with_prefix(FSM_XDG_PREFIX)?;
         // Create the directory if needed
         let cached_registry_pathbuf =
