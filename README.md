@@ -30,16 +30,10 @@ To use fsm, you need to install these binaries on your system:
 TODO: download the statically linked binary
 ### Via Nix
 
-To install fsm using Nix:
+To install fsm using Nix (make sure to have [flakes] enabled):
 
 ```shell
-# With flakes enabled
 nix profile install github:DeterminateSystems/fsm
-
-# Using channels
-nix-channel --add https://github.com/DeterminateSystems/fsm/archive/main.tar.gz
-nix-channel --update
-nix-env -i fsm
 ```
 
 ## What fsm provides
@@ -141,7 +135,7 @@ HI = "BYE"
 When you run `fsm shell` in this project, fsm
 
 * adds [OpenSSL] to your build environment
-* sets the `LD_LIBRARY_PATH` environment variable to include [LibGL]'s library
+* sets the `LD_LIBRARY_PATH` environment variable to include [libGL]'s library
   path
 * sets the `HI` environment variable to have a value of `BYE`
 
@@ -157,7 +151,7 @@ encountered error messages like this when using Rust:
 ```
 
 You can solve this by adding framework dependencies to your `build-inputs` as
-`darwin.apple_sdk.frameworks.${framework}`, for example
+`darwin.apple_sdk.frameworks.<framework>`, for example
 `darwin.apple_sdk.frameworks.Security`. Here's an example `Cargo.toml`
 configuration that adds multiple framework dependencies:
 
@@ -202,8 +196,9 @@ creators of fsm, [here][privacy].
 
 To disable telemetry on any fsm command invocation, you can either
 
-* Apply the `--disable-telemetry` flag or
-* Set the `FSM_DISABLE_TELEMETRY` environment variable to any value but `0`.
+* Use the `--disable-telemetry` flag or
+* Set the `FSM_DISABLE_TELEMETRY` environment variable to any value but `false`,
+  `0`, or an empty string (`""`).
 
 Here are some examples:
 
@@ -216,6 +211,7 @@ FSM_DISABLE_TELEMETRY=true fsm run cargo build
 [cargo-toml]: https://doc.rust-lang.org/cargo/reference/manifest.html
 [coreservices]: https://developer.apple.com/documentation/coreservices
 [determinate systems]: https://determinate.systems
+[flakes]: https://nixos.wiki/wiki/Flakes
 [foundation]: https://developer.apple.com/documentation/foundation
 [libgl]: https://dri.freedesktop.org/wiki/libGL
 [nix]: https://nixos.org/nix
