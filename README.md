@@ -156,8 +156,8 @@ encountered error messages like this when using Rust:
 = note: ld: framework not found CoreFoundation
 ```
 
-You can overcome this problem by adding framework dependencies to your
-`build-inputs` as `darwin.apple_sdk.frameworks.${framework}`, for example
+You can solve this by adding framework dependencies to your `build-inputs` as
+`darwin.apple_sdk.frameworks.${framework}`, for example
 `darwin.apple_sdk.frameworks.Security`. Here's an example `Cargo.toml`
 configuration that adds multiple framework dependencies:
 
