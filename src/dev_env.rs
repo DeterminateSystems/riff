@@ -12,13 +12,18 @@ use crate::cargo_metadata::CargoMetadata;
 use crate::dependency_registry::DependencyRegistry;
 use crate::spinner::SimpleSpinner;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize)]
+pub enum DetectedLanguage {
+    Rust,
+}
+
 #[derive(Debug, Clone)]
 pub struct DevEnvironment {
     pub(crate) registry: DependencyRegistry,
     pub(crate) build_inputs: HashSet<String>,
     pub(crate) environment_variables: HashMap<String, String>,
     pub(crate) ld_library_path: HashSet<String>,
-    pub(crate) detected_languages: HashSet<String>,
+    pub(crate) detected_languages: HashSet<DetectedLanguage>,
 }
 
 // TODO(@cole-h): should this become a trait that the various languages we may support have to implement?
@@ -58,7 +63,7 @@ impl DevEnvironment {
 
     pub async fn detect(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
         if project_dir.join("Cargo.toml").exists() {
-            self.detected_languages.insert("Rust".to_string());
+            self.detected_languages.insert(DetectedLanguage::Rust);
             self.add_deps_from_cargo(project_dir).await?;
             Ok(())
         } else {
@@ -237,7 +242,7 @@ mod tests {
                 .into_iter()
                 .map(ToString::to_string)
                 .collect(),
-            detected_languages: vec!["Rust".to_string()].into_iter().collect(),
+            detected_languages: vec![DetectedLanguage::Rust].into_iter().collect(),
             registry,
         };
 
