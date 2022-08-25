@@ -167,7 +167,7 @@ your local [Nix store], by default under `/nix/store`.
 [cargo-toml]: https://doc.rust-lang.org/cargo/reference/manifest.html
 [libgl]: https://dri.freedesktop.org/wiki/libGL
 [nix]: https://nixos.org/nix
-[nix-install]: https://nix.dev/tutorials/install-nix
+[nix-install]: https://nixos.org/download.html
 [nixpkgs]: https://search.nixos.org/packages
 [nix store]: https://nixos.wiki/wiki/Nix_package_manager
 [openssl]: https://openssl.org
