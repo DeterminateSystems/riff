@@ -42,17 +42,25 @@ Languages typically use language-specific package managers to handle
 dependencies, such as [Cargo] for the [Rust] language. But these
 language-specific tools typically don't handle dependencies written in other
 languages very well. They expect you to install those dependencies using some
-other tool and fail in mysterious ways when they're missing, like this:
+other tool and fail in mysterious ways when they're missing. Here's an example
+error from trying to build the [`octocrab`][octocrab] crate with [OpenSSL]
+installed:
 
 ```rust
-   Compiling openssl-sys v0.9.75
-error: failed to run custom build command for `openssl-sys v0.9.75`
-  run pkg_config fail: "`\"pkg-config\" \"--libs\" \"--cflags\"
-    \"openssl\"` did not exit successfully: \n... No package 'openssl' found\n"
+  --- stderr
+  thread 'main' panicked at '
+
+  Could not find directory of OpenSSL installation, and this `-sys` crate cannot
+  proceed without this knowledge. If OpenSSL is installed and this crate had
+  trouble finding it,  you can set the `OPENSSL_DIR` environment variable for the
+  compilation process.
+
+  Make sure you also have the development packages of openssl installed.
+  For example, `libssl-dev` on Ubuntu or `openssl-devel` on Fedora.
 ```
 
-It's then up to you to install the missing dependencies, which can be laborious,
-error prone, and hard to reproduce.
+In cases like this, it's up to you to install missing external dependencies,
+which can be laborious, error prone, and hard to reproduce.
 
 fsm offers a way out of this. It uses your project's language-specific
 configuration to infer which dependencies are required&mdash;or you can [declare
@@ -111,7 +119,7 @@ currently supports three types of inputs:
 * `runtime-inputs` are libraries you want to add to your `LD_LIBRARY_PATH` to
   ensure that your dev shell works as expected.
 
-Both `build-inputs` and `runtime-inputs` can be any executable available in
+Both `build-inputs` and `runtime-inputs` can be any packages available in
 [Nixpkgs].
 
 Here's an example `Cargo.toml` with explicitly supplied fsm configuration:
@@ -197,8 +205,8 @@ creators of fsm, [here][privacy].
 To disable telemetry on any fsm command invocation, you can either
 
 * Use the `--disable-telemetry` flag or
-* Set the `FSM_DISABLE_TELEMETRY` environment variable to any value but `false`,
-  `0`, or an empty string (`""`).
+* Set the `FSM_DISABLE_TELEMETRY` environment variable to any value except
+  `false`,`0`, or an empty string (`""`).
 
 Here are some examples:
 
@@ -218,8 +226,10 @@ FSM_DISABLE_TELEMETRY=true fsm run cargo build
 [nix-install]: https://nixos.org/download.html
 [nixpkgs]: https://search.nixos.org/packages
 [nix store]: https://nixos.wiki/wiki/Nix_package_manager
+[octocrab]: https://github.com/XAMPPRocky/octocrab
 [openssl]: https://openssl.org
 [privacy]: https://determinate.systems/privacy
+[prost]: https://github.com/tokio-rs/prost
 [protobuf]: https://developers.google.com/protocol-buffers
 [rust]: https://rust-lang.org
 [rust-install]: https://www.rust-lang.org/tools/install
