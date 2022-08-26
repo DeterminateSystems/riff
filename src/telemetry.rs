@@ -104,21 +104,30 @@ impl Telemetry {
         self
     }
 
+    #[tracing::instrument(skip_all)]
     pub(crate) async fn send(&self) -> eyre::Result<Response> {
         let header_data = self.as_header_data()?;
-        tracing::trace!(data = %header_data, "Sending telemetry data to {TELEMETRY_REMOTE_URL}");
+        tracing::trace!(data = %self.redact_header_data(header_data.clone()), "Sending telemetry data to {TELEMETRY_REMOTE_URL}");
         let http_client = reqwest::Client::new();
         let req = http_client
             .post(TELEMETRY_REMOTE_URL)
             .header(TELEMETRY_HEADER_NAME, &header_data)
             .timeout(Duration::from_millis(250));
         let res = req.send().await?;
-        tracing::debug!(telemetry = %header_data, "Sent telemetry data to {TELEMETRY_REMOTE_URL}");
+        tracing::debug!(telemetry = %self.redact_header_data(header_data.clone()), "Sent telemetry data to {TELEMETRY_REMOTE_URL}");
         Ok(res)
     }
 
     pub(crate) fn as_header_data(&self) -> Result<String, serde_json::Error> {
         serde_json::to_string(&self)
+    }
+
+    pub(crate) fn redact_header_data(&self, mut val: String) -> String {
+        if let Some(distinct_id) = self.distinct_id {
+            let distinct_id_string = distinct_id.to_string();
+            val = val.replace(&distinct_id_string, "<redacted>");
+        }
+        val
     }
 }
 
