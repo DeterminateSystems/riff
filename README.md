@@ -43,7 +43,7 @@ dependencies, such as [Cargo] for the [Rust] language. But these
 language-specific tools typically don't handle dependencies written in other
 languages very well. They expect you to install those dependencies using some
 other tool and fail in mysterious ways when they're missing. Here's an example
-error from trying to build the [`octocrab`][octocrab] crate with [OpenSSL]
+error from trying to build the [`octocrab`][octocrab] crate without [OpenSSL]
 installed:
 
 ```shell
