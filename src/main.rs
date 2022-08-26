@@ -10,7 +10,7 @@ use std::error::Error;
 use std::io::Write;
 
 use atty::Stream;
-use clap::Parser;
+use clap::{AppSettings, Parser};
 use eyre::WrapErr;
 use itertools::Itertools;
 use owo_colors::OwoColorize;
@@ -25,6 +25,7 @@ const FSM_XDG_PREFIX: &str = "fsm";
 #[derive(Debug, Parser)]
 #[clap(name = "fsm")]
 #[clap(about = "Automatically set up build environments using Nix", long_about = None)]
+#[clap(setting = AppSettings::DisableHelpSubcommand)]
 struct Cli {
     #[clap(subcommand)]
     command: Commands,
