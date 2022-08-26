@@ -1,8 +1,4 @@
-use crate::{
-    telemetry::{Telemetry, TELEMETRY_HEADER_NAME},
-    FSM_XDG_PREFIX,
-};
-use eyre::eyre;
+use crate::FSM_XDG_PREFIX;
 use serde::Deserialize;
 use std::{path::Path, sync::Arc};
 use tokio::{
@@ -44,11 +40,6 @@ pub struct DependencyRegistry {
 impl DependencyRegistry {
     #[tracing::instrument(skip_all, fields(%disable_telemetry))]
     pub async fn new(disable_telemetry: bool) -> Result<Self, DependencyRegistryError> {
-        let telemetry_handle = if disable_telemetry {
-            None
-        } else {
-            Some(tokio::spawn(Telemetry::new()))
-        };
         let xdg_dirs = BaseDirectories::with_prefix(FSM_XDG_PREFIX)?;
         // Create the directory if needed
         let cached_registry_pathbuf =
@@ -83,33 +74,9 @@ impl DependencyRegistry {
         let data_clone = Arc::clone(&data);
         let refresh_handle = tokio::spawn(async move {
             // Refresh the cache
-            // We don't want to fail if we can't build telemetry data...
-            let maybe_telemetry = if let Some(telemetry) = telemetry_handle {
-                match telemetry.await.map_err(|v| eyre!(v)) {
-                    Ok(telemetry) => Some(telemetry), // But we do want to fail if we can build it but can't parse it
-                    Err(err) => {
-                        tracing::debug!(%err, "Telemetry build error");
-                        None
-                    }
-                }
-            } else {
-                None
-            };
             let http_client = reqwest::Client::new();
-            let mut req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL);
-            if let Some(telemetry) = maybe_telemetry {
-                match telemetry.as_header_data() {
-                    Ok(header_data) => {
-                        req = req.header(TELEMETRY_HEADER_NAME, &header_data);
-                        tracing::trace!(telemetry = %telemetry.redact_header_data(header_data), "Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-                    }
-                    Err(err) => {
-                        tracing::debug!(err = %eyre!(err), "Failed to serialize header data, skipping it")
-                    }
-                };
-            } else {
-                tracing::trace!("Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-            }
+            let req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL);
+            tracing::trace!("Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
             let res = match req.send().await {
                 Ok(res) => res,
                 Err(err) => {

@@ -11,7 +11,7 @@ use tokio::{
 };
 use uuid::Uuid;
 
-use crate::{cmds::Commands, Cli, FSM_XDG_PREFIX};
+use crate::{cmds::Commands, dev_env::DetectedLanguage, Cli, FSM_XDG_PREFIX};
 
 static TELEMETRY_DISTINCT_ID_PATH: &str = "distinct_id";
 static TELEMETRY_IDENTIFIER_DESCRIPTION: &str =  "This is a randomly generated version 4 UUID.
@@ -40,7 +40,7 @@ pub(crate) struct Telemetry {
     is_tty: bool,
     /// The command given to fsm (eg "shell")
     subcommand: Option<String>,
-    detected_languages: HashSet<String>,
+    detected_languages: HashSet<DetectedLanguage>,
 }
 
 impl Telemetry {
@@ -99,7 +99,7 @@ impl Telemetry {
         Self::from_clap_parse_result(cli.as_ref()).await
     }
 
-    pub(crate) fn with_detected_languages(mut self, languages: &HashSet<String>) -> Self {
+    pub(crate) fn with_detected_languages(mut self, languages: &HashSet<DetectedLanguage>) -> Self {
         self.detected_languages = languages.iter().cloned().collect();
         self
     }
