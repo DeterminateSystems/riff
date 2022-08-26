@@ -14,6 +14,7 @@ use crate::telemetry::Telemetry;
 #[tracing::instrument(skip(disable_telemetry))]
 pub async fn generate_flake_from_project_dir(
     project_dir: Option<PathBuf>,
+    offline: bool,
     disable_telemetry: bool,
 ) -> color_eyre::Result<TempDir> {
     let project_dir = match project_dir {
@@ -22,7 +23,7 @@ pub async fn generate_flake_from_project_dir(
     };
     tracing::debug!("Project directory is '{}'.", project_dir.display());
 
-    let registry = DependencyRegistry::new(disable_telemetry).await?;
+    let registry = DependencyRegistry::new(offline).await?;
     let mut dev_env = DevEnvironment::new(registry);
 
     match dev_env.detect(&project_dir).await {
@@ -45,7 +46,7 @@ pub async fn generate_flake_from_project_dir(
         }
     };
 
-    if !disable_telemetry {
+    if !(disable_telemetry || offline) {
         match Telemetry::new()
             .await
             .with_detected_languages(&dev_env.detected_languages)
@@ -75,7 +76,16 @@ pub async fn generate_flake_from_project_dir(
         .arg("-L")
         .arg(format!("path://{}", flake_dir.path().to_str().unwrap()));
 
-    tracing::trace!(command = ?nix_lock_command, "Running");
+    // TODO(@hoverbear): Try to enable this somehow. Right now since we don't keep the lock
+    // in a consistent place, we can't reliably pick up a lock generated in online mode.
+    //
+    // If we stored the generated flake/lock in a consistent place this could be enabled.
+    //
+    // if offline {
+    //     nix_lock_command.arg("--offline");
+    // }
+
+    tracing::trace!(command = ?nix_lock_command.as_std(), "Running");
     let spinner = SimpleSpinner::new_with_message(Some("Running `nix flake lock`"))
         .context("Failed to construct progress spinner")?;
 
@@ -151,7 +161,7 @@ path = "lib.rs"
         .await?;
 
         let flake_dir =
-            generate_flake_from_project_dir(Some(temp_dir.path().to_owned()), true).await?;
+            generate_flake_from_project_dir(Some(temp_dir.path().to_owned()), true, true).await?;
         let flake = read_to_string(flake_dir.path().join("flake.nix")).await?;
 
         assert!(
