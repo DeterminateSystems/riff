@@ -46,7 +46,7 @@ other tool and fail in mysterious ways when they're missing. Here's an example
 error from trying to build the [`octocrab`][octocrab] crate with [OpenSSL]
 installed:
 
-```rust
+```shell
   --- stderr
   thread 'main' panicked at '
 
