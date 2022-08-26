@@ -1,4 +1,4 @@
-use std::{collections::HashSet, path::Path};
+use std::{collections::HashSet, path::Path, time::Duration};
 
 use clap::Parser;
 use eyre::eyre;
@@ -110,7 +110,8 @@ impl Telemetry {
         let http_client = reqwest::Client::new();
         let req = http_client
             .post(TELEMETRY_REMOTE_URL)
-            .header(TELEMETRY_HEADER_NAME, &header_data);
+            .header(TELEMETRY_HEADER_NAME, &header_data)
+            .timeout(Duration::from_millis(250));
         let res = req.send().await?;
         tracing::debug!(telemetry = %header_data, "Sent telemetry data to {TELEMETRY_REMOTE_URL}");
         Ok(res)

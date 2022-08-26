@@ -1,3 +1,4 @@
+use crate::FSM_XDG_PREFIX;
 use serde::Deserialize;
 use std::{path::Path, sync::Arc};
 use tokio::{
@@ -7,11 +8,6 @@ use tokio::{
     task::JoinHandle,
 };
 use xdg::{BaseDirectories, BaseDirectoriesError};
-
-use crate::{
-    telemetry::{Telemetry, TELEMETRY_HEADER_NAME},
-    FSM_XDG_PREFIX,
-};
 
 use self::rust::RustDependencyRegistryData;
 
@@ -78,26 +74,9 @@ impl DependencyRegistry {
         let data_clone = Arc::clone(&data);
         let refresh_handle = tokio::spawn(async move {
             // Refresh the cache
-            // We don't want to fail if we can't build telemetry data...
-            let telemetry = if !disable_telemetry {
-                match Telemetry::new().await.as_header_data() {
-                    Ok(telemetry) => Some(telemetry), // But we do want to fail if we can build it but can't parse it
-                    Err(err) => {
-                        tracing::debug!(%err, "Telemetry build error");
-                        None
-                    }
-                }
-            } else {
-                None
-            };
             let http_client = reqwest::Client::new();
-            let mut req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL);
-            if let Some(telemetry) = telemetry {
-                req = req.header(TELEMETRY_HEADER_NAME, &telemetry);
-                tracing::trace!(%telemetry, "Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-            } else {
-                tracing::trace!("Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-            }
+            let req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL);
+            tracing::trace!("Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
             let res = match req.send().await {
                 Ok(res) => res,
                 Err(err) => {
