@@ -76,14 +76,9 @@ pub async fn generate_flake_from_project_dir(
         .arg("-L")
         .arg(format!("path://{}", flake_dir.path().to_str().unwrap()));
 
-    // TODO(@hoverbear): Try to enable this somehow. Right now since we don't keep the lock
-    // in a consistent place, we can't reliably pick up a lock generated in online mode.
-    //
-    // If we stored the generated flake/lock in a consistent place this could be enabled.
-    //
-    // if offline {
-    //     nix_lock_command.arg("--offline");
-    // }
+    if offline {
+        nix_lock_command.arg("--offline");
+    }
 
     tracing::trace!(command = ?nix_lock_command.as_std(), "Running");
     let spinner = SimpleSpinner::new_with_message(Some("Running `nix flake lock`"))

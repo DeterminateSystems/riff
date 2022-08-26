@@ -40,9 +40,15 @@ impl Shell {
             .stdin(Stdio::inherit())
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit());
-        if self.offline {
-            nix_develop_command.arg("--offline");
-        }
+
+        // TODO(@hoverbear): Try to enable this somehow. Right now since we don't keep the lock
+        // in a consistent place, we can't reliably pick up a lock generated in online mode.
+        //
+        // If we stored the generated flake/lock in a consistent place this could be enabled.
+        //
+        // if self.offline {
+        //     nix_develop_command.arg("--offline");
+        // }
 
         tracing::trace!(command = ?nix_develop_command.as_std(), "Running");
         let nix_develop_exit = match nix_develop_command

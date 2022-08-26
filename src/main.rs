@@ -12,7 +12,6 @@ use std::io::Write;
 use atty::Stream;
 use clap::Parser;
 use eyre::WrapErr;
-use itertools::Itertools;
 use owo_colors::OwoColorize;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -31,7 +30,7 @@ struct Cli {
     /// Turn off user telemetry ping
     #[clap(long, global = true, env = "FSM_DISABLE_TELEMETRY")]
     disable_telemetry: bool,
-    /// Disable all network usage except `nix flake lock`
+    /// Disable all network usage except `nix develop`
     // TODO(@hoverbear): Can we disable that, too?
     #[clap(long, global = true, env = "FSM_OFFLINE")]
     offline: bool,
@@ -50,14 +49,16 @@ async fn main() -> color_eyre::Result<()> {
     let args = match maybe_args {
         Ok(args) => args,
         Err(e) => {
-            let telemetry_ok_via_env = match std::env::var("FSM_DISABLE_TELEMETRY") {
+            let telemetry_ok_via_env = match std::env::var("FSM_DISABLE_TELEMETRY")
+                .or_else(|_| std::env::var("FSM_OFFLINE"))
+            {
                 Ok(val) if val == "false" || val == "0" || val.is_empty() => true,
                 Err(_) => true,
                 _ => false,
             };
-            let telemetry_ok_via_flag = !std::env::args()
-                .take_while(|v| v != "--")
-                .contains(&String::from("--disable-telemetry"));
+            let telemetry_ok_via_flag = !std::env::args().take_while(|v| v != "--").any(|v| {
+                v == String::from("--disable-telemetry") || v == String::from("--offline")
+            });
             if telemetry_ok_via_env && telemetry_ok_via_flag {
                 Telemetry::new().await.send().await.ok();
             }
