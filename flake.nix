@@ -50,22 +50,8 @@
       devShell = forAllSystems ({ system, pkgs, ... }:
         let
           toolchain = fenixToolchain system;
-
-          ci = import ./ci.nix { inherit pkgs; };
-
-          eclint = pkgs.buildGoModule rec {
-            pname = "eclint";
-            version = "0.3.3";
-
-            src = pkgs.fetchFromGitHub {
-              owner = "greut";
-              repo = pname;
-              rev = "v${version}";
-              sha256 = "sha256-9i2oAqFXflWGeBumE/5njaafBRhuRQSbA/ggUS72fwk=";
-            };
-
-            vendorSha256 = "sha256-XAyHy7UAb2LgwhsxaJgj0Qy6ukw9szeRC9JkRb+zc0Y=";
-          };
+          ci = import ./nix/ci.nix { inherit pkgs; };
+          eclint = import ./nix/eclint.nix { inherit pkgs; };
         in
         pkgs.mkShell {
           name = "fsm-shell";
