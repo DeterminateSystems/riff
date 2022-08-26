@@ -57,7 +57,7 @@ async fn main() -> color_eyre::Result<()> {
                 _ => false,
             };
             let telemetry_ok_via_flag = !std::env::args().take_while(|v| v != "--").any(|v| {
-                v == String::from("--disable-telemetry") || v == String::from("--offline")
+                v == *"--disable-telemetry" || v == *"--offline"
             });
             if telemetry_ok_via_env && telemetry_ok_via_flag {
                 Telemetry::new().await.send().await.ok();
