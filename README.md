@@ -47,16 +47,16 @@ error from trying to build the [`octocrab`][octocrab] crate without [OpenSSL]
 installed:
 
 ```shell
-  --- stderr
-  thread 'main' panicked at '
+--- stderr
+thread 'main' panicked at '
 
-  Could not find directory of OpenSSL installation, and this `-sys` crate cannot
-  proceed without this knowledge. If OpenSSL is installed and this crate had
-  trouble finding it,  you can set the `OPENSSL_DIR` environment variable for the
-  compilation process.
+Could not find directory of OpenSSL installation, and this `-sys` crate cannot
+proceed without this knowledge. If OpenSSL is installed and this crate had
+trouble finding it,  you can set the `OPENSSL_DIR` environment variable for the
+compilation process.
 
-  Make sure you also have the development packages of openssl installed.
-  For example, `libssl-dev` on Ubuntu or `openssl-devel` on Fedora.
+Make sure you also have the development packages of openssl installed.
+For example, `libssl-dev` on Ubuntu or `openssl-devel` on Fedora.
 ```
 
 In cases like this, it's up to you to install missing external dependencies,
