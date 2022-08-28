@@ -1,4 +1,4 @@
-use std::{collections::HashSet, path::Path};
+use std::{collections::HashSet, path::Path, time::Duration};
 
 use clap::Parser;
 use eyre::eyre;
@@ -11,7 +11,7 @@ use tokio::{
 };
 use uuid::Uuid;
 
-use crate::{cmds::Commands, Cli, FSM_XDG_PREFIX};
+use crate::{cmds::Commands, dev_env::DetectedLanguage, Cli, FSM_XDG_PREFIX};
 
 static TELEMETRY_DISTINCT_ID_PATH: &str = "distinct_id";
 static TELEMETRY_IDENTIFIER_DESCRIPTION: &str =  "This is a randomly generated version 4 UUID.
@@ -40,7 +40,7 @@ pub(crate) struct Telemetry {
     is_tty: bool,
     /// The command given to fsm (eg "shell")
     subcommand: Option<String>,
-    detected_languages: HashSet<String>,
+    detected_languages: HashSet<DetectedLanguage>,
 }
 
 impl Telemetry {
@@ -99,25 +99,35 @@ impl Telemetry {
         Self::from_clap_parse_result(cli.as_ref()).await
     }
 
-    pub(crate) fn with_detected_languages(mut self, languages: &HashSet<String>) -> Self {
+    pub(crate) fn with_detected_languages(mut self, languages: &HashSet<DetectedLanguage>) -> Self {
         self.detected_languages = languages.iter().cloned().collect();
         self
     }
 
+    #[tracing::instrument(skip_all)]
     pub(crate) async fn send(&self) -> eyre::Result<Response> {
         let header_data = self.as_header_data()?;
-        tracing::trace!(data = %header_data, "Sending telemetry data to {TELEMETRY_REMOTE_URL}");
+        tracing::trace!(data = %self.redact_header_data(header_data.clone()), "Sending telemetry data to {TELEMETRY_REMOTE_URL}");
         let http_client = reqwest::Client::new();
         let req = http_client
             .post(TELEMETRY_REMOTE_URL)
-            .header(TELEMETRY_HEADER_NAME, &header_data);
+            .header(TELEMETRY_HEADER_NAME, &header_data)
+            .timeout(Duration::from_millis(250));
         let res = req.send().await?;
-        tracing::debug!(telemetry = %header_data, "Sent telemetry data to {TELEMETRY_REMOTE_URL}");
+        tracing::debug!(telemetry = %self.redact_header_data(header_data.clone()), "Sent telemetry data to {TELEMETRY_REMOTE_URL}");
         Ok(res)
     }
 
     pub(crate) fn as_header_data(&self) -> Result<String, serde_json::Error> {
         serde_json::to_string(&self)
+    }
+
+    pub(crate) fn redact_header_data(&self, mut val: String) -> String {
+        if let Some(distinct_id) = self.distinct_id {
+            let distinct_id_string = distinct_id.to_string();
+            val = val.replace(&distinct_id_string, "<redacted>");
+        }
+        val
     }
 }
 

@@ -12,6 +12,7 @@ use std::io::Write;
 use atty::Stream;
 use clap::Parser;
 use eyre::WrapErr;
+use itertools::Itertools;
 use owo_colors::OwoColorize;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -45,15 +46,16 @@ async fn main() -> color_eyre::Result<()> {
     let args = match maybe_args {
         Ok(args) => args,
         Err(e) => {
-            // Best effort detect the env var
-            match std::env::var("FSM_DISABLE_TELEMETRY") {
-                Ok(val) if val == "false" || val == "0" || val.is_empty() => {
-                    Telemetry::new().await.send().await.ok();
-                }
-                Err(_) => {
-                    Telemetry::new().await.send().await.ok();
-                }
-                _ => (),
+            let telemetry_ok_via_env = match std::env::var("FSM_DISABLE_TELEMETRY") {
+                Ok(val) if val == "false" || val == "0" || val.is_empty() => true,
+                Err(_) => true,
+                _ => false,
+            };
+            let telemetry_ok_via_flag = !std::env::args()
+                .take_while(|v| v != "--")
+                .contains(&String::from("--disable-telemetry"));
+            if telemetry_ok_via_env && telemetry_ok_via_flag {
+                Telemetry::new().await.send().await.ok();
             }
             e.exit() // Dead!
         }
