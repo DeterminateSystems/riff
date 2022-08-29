@@ -34,12 +34,13 @@ pub enum DependencyRegistryError {
 #[derive(Debug)]
 pub struct DependencyRegistry {
     data: Arc<RwLock<DependencyRegistryData>>,
+    offline: bool,
     refresh_handle: Option<JoinHandle<()>>,
 }
 
 impl DependencyRegistry {
-    #[tracing::instrument(skip_all, fields(%disable_telemetry))]
-    pub async fn new(disable_telemetry: bool) -> Result<Self, DependencyRegistryError> {
+    #[tracing::instrument(skip_all, fields(%offline))]
+    pub async fn new(offline: bool) -> Result<Self, DependencyRegistryError> {
         let xdg_dirs = BaseDirectories::with_prefix(FSM_XDG_PREFIX)?;
         // Create the directory if needed
         let cached_registry_pathbuf =
@@ -72,63 +73,69 @@ impl DependencyRegistry {
         let data = Arc::new(RwLock::new(data));
         // We detach the join handle as we don't actually care when/if this finishes
         let data_clone = Arc::clone(&data);
-        let refresh_handle = tokio::spawn(async move {
-            // Refresh the cache
-            let http_client = reqwest::Client::new();
-            let req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL);
-            tracing::trace!("Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-            let res = match req.send().await {
-                Ok(res) => res,
-                Err(err) => {
-                    tracing::error!(err = %eyre::eyre!(err), "Could not fetch new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-                    return;
-                }
-            };
-            let content = match res.text().await {
-                Ok(content) => content,
-                Err(err) => {
-                    tracing::error!(err = %eyre::eyre!(err), "Could not fetch new registry data body from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-                    return;
-                }
-            };
-            let fresh_data: DependencyRegistryData = match serde_json::from_str(&content) {
-                Ok(data) => data,
-                Err(err) => {
-                    tracing::error!(err = %eyre::eyre!(err), "Could not parse new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
-                    return;
-                }
-            };
-            *data_clone.write().await = fresh_data;
-            // Write out the update
-            let mut cached_registry_file = match OpenOptions::new()
-                .truncate(true)
-                .create(true)
-                .write(true)
-                .open(cached_registry_pathbuf.clone())
-                .await
-            {
-                Ok(cached_registry_file) => cached_registry_file,
-                Err(err) => {
-                    tracing::error!(err = %eyre::eyre!(err), path = %cached_registry_pathbuf.display(), "Could not truncate XDG cached registry file to empty");
-                    return;
-                }
-            };
-            match cached_registry_file
-                .write_all(content.trim().as_bytes())
-                .await
-            {
-                Ok(_) => {
-                    tracing::debug!(path = %cached_registry_pathbuf.display(), "Refreshed remote registry into XDG cache")
-                }
-                Err(err) => {
-                    tracing::error!(err = %eyre::eyre!(err), "Could not write to {}", cached_registry_pathbuf.display());
-                }
-            };
-        });
+        let refresh_handle = if !offline {
+            let handle = tokio::spawn(async move {
+                // Refresh the cache
+                let http_client = reqwest::Client::new();
+                let req = http_client.get(DEPENDENCY_REGISTRY_REMOTE_URL);
+                tracing::trace!("Fetching new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
+                let res = match req.send().await {
+                    Ok(res) => res,
+                    Err(err) => {
+                        tracing::error!(err = %eyre::eyre!(err), "Could not fetch new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
+                        return;
+                    }
+                };
+                let content = match res.text().await {
+                    Ok(content) => content,
+                    Err(err) => {
+                        tracing::error!(err = %eyre::eyre!(err), "Could not fetch new registry data body from {DEPENDENCY_REGISTRY_REMOTE_URL}");
+                        return;
+                    }
+                };
+                let fresh_data: DependencyRegistryData = match serde_json::from_str(&content) {
+                    Ok(data) => data,
+                    Err(err) => {
+                        tracing::error!(err = %eyre::eyre!(err), "Could not parse new registry data from {DEPENDENCY_REGISTRY_REMOTE_URL}");
+                        return;
+                    }
+                };
+                *data_clone.write().await = fresh_data;
+                // Write out the update
+                let mut cached_registry_file = match OpenOptions::new()
+                    .truncate(true)
+                    .create(true)
+                    .write(true)
+                    .open(cached_registry_pathbuf.clone())
+                    .await
+                {
+                    Ok(cached_registry_file) => cached_registry_file,
+                    Err(err) => {
+                        tracing::error!(err = %eyre::eyre!(err), path = %cached_registry_pathbuf.display(), "Could not truncate XDG cached registry file to empty");
+                        return;
+                    }
+                };
+                match cached_registry_file
+                    .write_all(content.trim().as_bytes())
+                    .await
+                {
+                    Ok(_) => {
+                        tracing::debug!(path = %cached_registry_pathbuf.display(), "Refreshed remote registry into XDG cache")
+                    }
+                    Err(err) => {
+                        tracing::error!(err = %eyre::eyre!(err), "Could not write to {}", cached_registry_pathbuf.display());
+                    }
+                };
+            });
+            Some(handle)
+        } else {
+            None
+        };
 
         Ok(Self {
             data,
-            refresh_handle: Some(refresh_handle),
+            offline,
+            refresh_handle,
         })
     }
 
@@ -141,6 +148,10 @@ impl DependencyRegistry {
         }
     }
 
+    pub fn offline(&self) -> bool {
+        self.offline
+    }
+
     pub async fn language(&self) -> RwLockReadGuard<DependencyRegistryLanguageData> {
         RwLockReadGuard::map(self.data.read().await, |v| &v.language)
     }
@@ -150,6 +161,7 @@ impl Clone for DependencyRegistry {
     fn clone(&self) -> Self {
         Self {
             data: self.data.clone(),
+            offline: self.offline,
             refresh_handle: None,
         }
     }

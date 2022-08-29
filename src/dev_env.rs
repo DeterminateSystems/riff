@@ -83,7 +83,12 @@ impl DevEnvironment {
         cargo_metadata_command.arg("--manifest-path");
         cargo_metadata_command.arg(project_dir.join("Cargo.toml"));
 
-        tracing::trace!(command = ?cargo_metadata_command, "Running");
+        // Infer offline-ness from our stored registry
+        if self.registry.offline() {
+            cargo_metadata_command.arg("--offline");
+        }
+
+        tracing::trace!(command = ?cargo_metadata_command.as_std(), "Running");
         let spinner = SimpleSpinner::new_with_message(Some(&format!(
             "Running `{cargo_metadata}`",
             cargo_metadata = "cargo metadata".cyan()

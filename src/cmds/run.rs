@@ -28,6 +28,8 @@ pub struct Run {
     pub(crate) command: Vec<String>,
     #[clap(from_global)]
     disable_telemetry: bool,
+    #[clap(from_global)]
+    offline: bool,
     // TODO(@cole-h): support additional nix develop args?
 }
 
@@ -35,6 +37,7 @@ impl Run {
     pub async fn cmd(&self) -> color_eyre::Result<Option<i32>> {
         let flake_dir = flake_generator::generate_flake_from_project_dir(
             self.project_dir.clone(),
+            self.offline,
             self.disable_telemetry,
         )
         .await?;
@@ -51,7 +54,16 @@ impl Run {
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit());
 
-        tracing::trace!(command = ?nix_develop_command, "Running");
+        // TODO(@hoverbear): Try to enable this somehow. Right now since we don't keep the lock
+        // in a consistent place, we can't reliably pick up a lock generated in online mode.
+        //
+        // If we stored the generated flake/lock in a consistent place this could be enabled.
+        //
+        // if self.offline {
+        //     nix_develop_command.arg("--offline");
+        // }
+
+        tracing::trace!(command = ?nix_develop_command.as_std(), "Running");
         let nix_develop_exit = match nix_develop_command
             .spawn()
             .wrap_err("Failed to spawn `nix develop`")?
@@ -121,6 +133,7 @@ path = "lib.rs"
                 .into_iter()
                 .map(String::from)
                 .collect(),
+            offline: true,
             disable_telemetry: true,
         };
 
