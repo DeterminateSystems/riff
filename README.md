@@ -246,8 +246,8 @@ watch_file cargo.lock
 eval "$(riff print-dev-env)"
 ```
 
-Enable Riff support globally by creating `~/.config/direnv/lib/riff.sh` and adding
-the following contents:
+Enable Riff support globally by creating `~/.config/direnv/lib/riff.sh` and
+adding the following contents:
 
 ```bash
 use_riff() {
