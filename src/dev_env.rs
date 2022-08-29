@@ -22,7 +22,7 @@ pub struct DevEnvironment {
     pub(crate) registry: DependencyRegistry,
     pub(crate) build_inputs: HashSet<String>,
     pub(crate) environment_variables: HashMap<String, String>,
-    pub(crate) ld_library_path: HashSet<String>,
+    pub(crate) runtime_inputs: HashSet<String>,
     pub(crate) detected_languages: HashSet<DetectedLanguage>,
 }
 
@@ -33,7 +33,7 @@ impl DevEnvironment {
             registry,
             build_inputs: Default::default(),
             environment_variables: Default::default(),
-            ld_library_path: Default::default(),
+            runtime_inputs: Default::default(),
             detected_languages: Default::default(),
         }
     }
@@ -47,10 +47,10 @@ impl DevEnvironment {
                 .iter()
                 .map(|(name, value)| format!("\"{}\" = \"{}\";", name, value))
                 .join("\n"),
-            ld_library_path = if !self.ld_library_path.is_empty() {
+            ld_library_path = if !self.runtime_inputs.is_empty() {
                 format!(
                     "\"LD_LIBRARY_PATH\" = \"{}\";",
-                    self.ld_library_path
+                    self.runtime_inputs
                         .iter()
                         .map(|v| format!("${{lib.getLib {v}}}/lib"))
                         .join(":")
@@ -140,7 +140,7 @@ impl DevEnvironment {
 
         tracing::debug!(fresh = %self.registry.fresh(), "Cache freshness");
         let language_registry = self.registry.language().await.clone();
-        language_registry.rust.default.try_apply(self)?;
+        language_registry.rust.default.apply(self);
 
         for package in metadata.packages {
             let name = package.name;
@@ -153,7 +153,7 @@ impl DevEnvironment {
                     "runtime-inputs" = %dep_config.runtime_inputs().iter().join(", "),
                     "Detected known crate information"
                 );
-                dep_config.clone().try_apply(self)?;
+                dep_config.clone().apply(self);
             }
 
             let metadata_object = match package.metadata {
@@ -173,7 +173,7 @@ impl DevEnvironment {
                 "runtime-inputs" = %dep_config.runtime_inputs().iter().join(", "),
                 "Detected `package.metadata.fsm` in `Crate.toml`"
             );
-            dep_config.try_apply(self)?;
+            dep_config.apply(self);
         }
 
         eprintln!(
@@ -183,7 +183,7 @@ impl DevEnvironment {
             colored_inputs = {
                 let mut sorted_build_inputs = self
                     .build_inputs
-                    .union(&self.ld_library_path)
+                    .union(&self.runtime_inputs)
                     .collect::<Vec<_>>();
                 sorted_build_inputs.sort();
                 sorted_build_inputs.iter().map(|v| v.cyan()).join(", ")
@@ -214,13 +214,7 @@ impl DevEnvironment {
 }
 
 pub(crate) trait DevEnvironmentAppliable {
-    fn try_apply(&self, dev_env: &mut DevEnvironment) -> Result<(), TryApplyError>;
-}
-
-#[derive(Debug, thiserror::Error)]
-pub(crate) enum TryApplyError {
-    #[error("Duplicate environment variable `{0}`")]
-    DuplicateEnvironmentVariables(String),
+    fn apply(&self, dev_env: &mut DevEnvironment);
 }
 
 #[cfg(test)]
@@ -243,7 +237,7 @@ mod tests {
                 .into_iter()
                 .map(|(k, v)| (k.to_string(), v.to_string()))
                 .collect(),
-            ld_library_path: ["nix", "libGL"]
+            runtime_inputs: ["nix", "libGL"]
                 .into_iter()
                 .map(ToString::to_string)
                 .collect(),
@@ -306,7 +300,7 @@ HI = "BYE"
             dev_env.environment_variables.get("HI"),
             Some(&String::from("BYE"))
         );
-        assert!(dev_env.ld_library_path.get("libGL").is_some());
+        assert!(dev_env.runtime_inputs.get("libGL").is_some());
         Ok(())
     }
 
