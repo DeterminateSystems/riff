@@ -53,9 +53,10 @@ pub async fn generate_flake_from_project_dir(
     let latest_riff_version = registry.latest_riff_version().await;
     if latest_riff_version.as_str() != env!("CARGO_PKG_VERSION") {
         eprintln!(
-            "📦 A new version of `{riff}` ({latest_riff_version_colored}) is avilable! https://riff.determinate.systems/download",
+            "📦 A new version of `{riff}` ({latest_riff_version_colored}) is available! {riff_download_url}",
             riff = "riff".cyan(),
             latest_riff_version_colored = latest_riff_version.yellow(),
+            riff_download_url = "https://riff.determinate.systems/download".blue().underline(),
         );
     }
 

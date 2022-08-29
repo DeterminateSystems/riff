@@ -263,6 +263,6 @@
       }
     }
   },
-  "version": 1,
-  "latest_riff_version": "unreleased"
+  "latest_riff_version": "unreleased",
+  "version": 1
 }
