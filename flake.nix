@@ -50,6 +50,8 @@
       devShell = forAllSystems ({ system, pkgs, ... }:
         let
           toolchain = fenixToolchain system;
+          ci = import ./nix/ci.nix { inherit pkgs; };
+          eclint = import ./nix/eclint.nix { inherit pkgs; };
 
           spellcheck = pkgs.writeScriptBin "spellcheck" ''
             ${pkgs.codespell}/bin/codespell \
@@ -69,11 +71,18 @@
           buildInputs = with pkgs; [
             toolchain
             openssl
-            nixpkgs-fmt
-            findutils # for xargs
             rust-analyzer
-            spellcheck
-          ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]);
+
+            # CI dependencies
+            jq
+            codespell
+            findutils # for xargs
+            git
+            nixpkgs-fmt
+            eclint
+          ]
+          ++ ci
+          ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]);
         });
 
       packages = forAllSystems

@@ -23,6 +23,10 @@ pub enum DependencyRegistryError {
     BaseDirectories(#[from] BaseDirectoriesError),
     #[error("IO error")]
     Io(#[from] std::io::Error),
+    #[error(
+        "Reading cached registry (Maybe you need to remove `$XDG_CACHE_DIR/fsm/registry.json`?)"
+    )]
+    ReadCachedRegistry(std::io::Error),
     #[error("JSON error")]
     Json(#[from] serde_json::Error),
     #[error("Request error")]
@@ -56,7 +60,8 @@ impl DependencyRegistry {
         let mut cached_registry_content = Default::default();
         cached_registry_file
             .read_to_string(&mut cached_registry_content)
-            .await?;
+            .await
+            .map_err(DependencyRegistryError::ReadCachedRegistry)?;
         drop(cached_registry_file);
 
         cached_registry_content = if cached_registry_content.is_empty() {
