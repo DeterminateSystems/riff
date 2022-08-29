@@ -231,6 +231,24 @@ This diagram provides a basic visual description of that process:
 Because Riff uses Nix, all of the dependencies that it installs are stored in
 your local [Nix store], by default under `/nix/store`.
 
+## Video demo
+
+You can see a video demo of Riff in action on [Asciinema] by clicking this
+image:
+
+<p align="center">
+  <a href="https://asciinema.org/a/SKzlPRupNESGRTvhLeNlzJSLj" target="_blank">
+    <img src="https://asciinema.org/a/SKzlPRupNESGRTvhLeNlzJSLj.svg"
+      alt="Link to Asciicast video demo of Riff with preview image"
+      style="width:80%;" />
+  </a>
+</p>
+
+In the video, running `cargo build` in the [Prost] fails due to missing external
+dependencies. But running `riff run cargo build` succeeds because Riff is able
+to infer which external dependencies are missing and provide them in the
+background using Nix.
+
 ## Privacy policy
 
 For the sake of improving the tool, Riff does collect some [telemetry] from
@@ -250,6 +268,7 @@ riff shell --disable-telemetry
 RIFF_DISABLE_TELEMETRY=true riff run cargo build
 ```
 
+[asciinema]: https://asciinema.org
 [cargo]: https://doc.rust-lang.org/cargo
 [cargo-toml]: https://doc.rust-lang.org/cargo/reference/manifest.html
 [coreservices]: https://developer.apple.com/documentation/coreservices
