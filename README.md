@@ -239,8 +239,8 @@ On a project specific basis, you can create `.env` with the following:
 
 ```bash
 # reload when these files change
-watch_file cargo.toml
-watch_file cargo.lock
+watch_file Cargo.toml
+watch_file Cargo.lock
 # add any other files you might want to trigger a riff reload
 # load the riff dev env
 eval "$(riff print-dev-env)"
@@ -252,8 +252,8 @@ adding the following contents:
 ```bash
 use_riff() {
   # reload when these files change
-  watch_file cargo.toml
-  watch_file cargo.lock
+  watch_file Cargo.toml
+  watch_file Cargo.lock
   # load the riff dev env
   eval "$(riff print-dev-env)"
 }
