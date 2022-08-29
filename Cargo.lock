@@ -940,6 +940,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "target-lexicon",
  "tempfile",
  "thiserror",
  "tokio",

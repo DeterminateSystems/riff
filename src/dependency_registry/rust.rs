@@ -24,7 +24,7 @@ pub struct RustDependencyData {
 }
 
 impl RustDependencyData {
-    #[tracing::instrument]
+    #[tracing::instrument(skip_all)]
     pub(crate) fn build_inputs(&self) -> HashSet<String> {
         let target = format!("{}", target_lexicon::HOST);
         let mut build_inputs = self.default.build_inputs.clone();
@@ -37,7 +37,7 @@ impl RustDependencyData {
         }
         build_inputs
     }
-    #[tracing::instrument]
+    #[tracing::instrument(skip_all)]
     pub(crate) fn environment_variables(&self) -> HashMap<String, String> {
         let target = format!("{}", target_lexicon::HOST);
         let mut environment_variables = self.default.environment_variables.clone();
@@ -49,7 +49,7 @@ impl RustDependencyData {
         }
         environment_variables
     }
-    #[tracing::instrument]
+    #[tracing::instrument(skip_all)]
     pub(crate) fn runtime_inputs(&self) -> HashSet<String> {
         let target = format!("{}", target_lexicon::HOST);
         let mut runtime_inputs = self.default.runtime_inputs.clone();
@@ -65,7 +65,7 @@ impl RustDependencyData {
 }
 
 impl DevEnvironmentAppliable for RustDependencyData {
-    #[tracing::instrument]
+    #[tracing::instrument(skip_all)]
     fn try_apply(&self, dev_env: &mut DevEnvironment) -> Result<(), TryApplyError> {
         self.default.try_apply(dev_env)?;
         let target = format!("{}", target_lexicon::HOST);
@@ -93,6 +93,7 @@ pub struct RustDependencyTargetData {
 }
 
 impl DevEnvironmentAppliable for RustDependencyTargetData {
+    #[tracing::instrument(skip_all)]
     fn try_apply(&self, dev_env: &mut DevEnvironment) -> Result<(), TryApplyError> {
         dev_env.build_inputs = dev_env
             .build_inputs
