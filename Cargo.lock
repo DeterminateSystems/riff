@@ -304,34 +304,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fsm"
-version = "0.1.0"
-dependencies = [
- "atty",
- "cfg-if",
- "clap",
- "color-eyre",
- "eyre",
- "indicatif",
- "itertools",
- "once_cell",
- "os-release",
- "owo-colors",
- "reqwest",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "tokio",
- "tokio-test",
- "tracing",
- "tracing-error",
- "tracing-subscriber",
- "uuid",
- "xdg",
-]
-
-[[package]]
 name = "futures-channel"
 version = "0.3.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -952,6 +924,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "riff"
+version = "0.1.0"
+dependencies = [
+ "atty",
+ "cfg-if",
+ "clap",
+ "color-eyre",
+ "eyre",
+ "indicatif",
+ "itertools",
+ "once_cell",
+ "os-release",
+ "owo-colors",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "target-lexicon",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "tracing-error",
+ "tracing-subscriber",
+ "uuid",
+ "xdg",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1098,6 +1099,12 @@ dependencies = [
  "quote",
  "unicode-ident",
 ]
+
+[[package]]
+name = "target-lexicon"
+version = "0.12.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c02424087780c9b71cc96799eaeddff35af2bc513278cda5c99fc1f5d026d3c1"
 
 [[package]]
 name = "tempfile"

@@ -16,7 +16,7 @@
       devShells = forAllSystems ({{ system, pkgs, ... }}: {{
         default = with pkgs;
           stdenv.mkDerivation {{
-            name = "fsm-shell";
+            name = "riff-shell";
             buildInputs = [ {build_inputs} ] ++ lib.optionals (stdenv.isDarwin) [
               libiconv
             ];

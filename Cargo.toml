@@ -1,11 +1,8 @@
 [package]
-name = "fsm"
+name = "riff"
 version = "0.1.0"
 edition = "2021"
-repository = "https://github.com/DeterminateSystems/fsm"
-
-[package.metadata.fsm]
-build-inputs = [ "darwin.apple_sdk.frameworks.Security" ]
+repository = "https://github.com/DeterminateSystems/riff"
 
 [dependencies]
 atty = "0.2"
@@ -21,6 +18,7 @@ owo-colors = "3"
 reqwest = "0.11"
 serde = { version = "1.0.143", features = ["derive"] }
 serde_json = "1.0.85"
+target-lexicon = "0.12.4"
 tempfile = "3.3"
 thiserror = "1.0.32"
 tokio = { version = "1.20.1", features = ["macros", "sync", "rt-multi-thread", "process", "fs", "io-util"] }
