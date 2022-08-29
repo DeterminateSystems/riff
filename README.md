@@ -231,6 +231,40 @@ This diagram provides a basic visual description of that process:
 Because Riff uses Nix, all of the dependencies that it installs are stored in
 your local [Nix store], by default under `/nix/store`.
 
+## Direnv Integration
+
+You can add Riff support to Direnv on a project specific or global basis.
+
+On a project specific basis, you can create `.env` with the following:
+
+```bash
+# reload when these files change
+watch_file cargo.toml
+watch_file cargo.lock
+# add any other files you might want to trigger a riff reload
+# load the riff dev env
+eval "$(riff print-dev-env)"
+```
+
+Enable Riff support globally by creating `~/.config/direnv/lib/riff.sh` and adding
+the following contents:
+
+```bash
+use_riff() {
+  # reload when these files change
+  watch_file cargo.toml
+  watch_file cargo.lock
+  # load the riff dev env
+  eval "$(riff print-dev-env)"
+}
+```
+
+Then, in any directory you can enable riff with:
+
+```bash
+echo "use riff" > .env
+```
+
 ## Privacy policy
 
 For the sake of improving the tool, Riff does collect some [telemetry] from

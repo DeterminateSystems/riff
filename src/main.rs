@@ -72,6 +72,12 @@ async fn main() -> color_eyre::Result<()> {
                 std::process::exit(code);
             }
         }
+        Commands::PrintDevEnv(print_dev_env) => {
+            let code = print_dev_env.cmd().await?;
+            if let Some(code) = code {
+                std::process::exit(code);
+            }
+        }
         Commands::Run(run) => {
             let code = run.cmd().await?;
             if let Some(code) = code {
