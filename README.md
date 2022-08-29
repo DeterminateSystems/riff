@@ -18,6 +18,8 @@ Riff currently supports [Rust] with support for other languages coming soon. It
 uses the [Nix] package manager to handle dependencies but doesn't require you to
 know or use Nix.
 
+> For a video demo of Riff in action, see [below](#video-demo).
+
 ## Requirements
 
 To use Riff, you need to install these binaries on your system:
