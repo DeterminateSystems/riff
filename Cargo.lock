@@ -304,34 +304,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fsm"
-version = "0.1.0"
-dependencies = [
- "atty",
- "cfg-if",
- "clap",
- "color-eyre",
- "eyre",
- "indicatif",
- "itertools",
- "once_cell",
- "os-release",
- "owo-colors",
- "reqwest",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "tokio",
- "tokio-test",
- "tracing",
- "tracing-error",
- "tracing-subscriber",
- "uuid",
- "xdg",
-]
-
-[[package]]
 name = "futures-channel"
 version = "0.3.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -949,6 +921,34 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "winreg",
+]
+
+[[package]]
+name = "riff"
+version = "0.1.0"
+dependencies = [
+ "atty",
+ "cfg-if",
+ "clap",
+ "color-eyre",
+ "eyre",
+ "indicatif",
+ "itertools",
+ "once_cell",
+ "os-release",
+ "owo-colors",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "tracing-error",
+ "tracing-subscriber",
+ "uuid",
+ "xdg",
 ]
 
 [[package]]
