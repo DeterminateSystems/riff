@@ -1,6 +1,6 @@
+mod print_dev_env;
 mod run;
 mod shell;
-mod print_dev_env;
 
 use clap::Subcommand;
 
