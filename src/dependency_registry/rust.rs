@@ -101,8 +101,14 @@ impl DevEnvironmentAppliable for RustDependencyTargetData {
         for (ref env_key, ref env_val) in &self.environment_variables {
             if let Some(existing_value) = dev_env
                 .environment_variables
-                .insert(env_key.to_string(), env_val.to_string()) {
-                tracing::debug!(key = env_key, existing_value, new_value = env_val, "Overriding previously declared environment variable")
+                .insert(env_key.to_string(), env_val.to_string())
+            {
+                tracing::debug!(
+                    key = env_key,
+                    existing_value,
+                    new_value = env_val,
+                    "Overriding previously declared environment variable"
+                )
             }
         }
         dev_env.runtime_inputs = dev_env
@@ -122,7 +128,7 @@ mod test {
     async fn try_apply() -> eyre::Result<()> {
         let registry = DependencyRegistry::new(true).await?;
         let mut dev_env = DevEnvironment::new(registry);
-        
+
         let target = format!("{}", target_lexicon::HOST);
         let data = RustDependencyData {
             default: RustDependencyTargetData {
@@ -130,33 +136,55 @@ mod test {
                 environment_variables: vec![
                     ("DEFAULT_VAR".into(), "default".into()),
                     ("CONFLICT".into(), "default".into()),
-                ].into_iter().collect(),
+                ]
+                .into_iter()
+                .collect(),
                 runtime_inputs: vec!["default".into()].into_iter().collect(),
             },
             targets: {
                 let mut map = HashMap::default();
-                map.insert(target, RustDependencyTargetData {
-                    build_inputs: vec!["target_specific".into()].into_iter().collect(),
-                    environment_variables: vec![
-                        ("TARGET_VAR".into(), "target_specific".into()),
-                        ("CONFLICT".into(), "target_specific".into()),
-                    ].into_iter().collect(),
-                    runtime_inputs: vec!["target_specific".into()].into_iter().collect(),
-                });
+                map.insert(
+                    target,
+                    RustDependencyTargetData {
+                        build_inputs: vec!["target_specific".into()].into_iter().collect(),
+                        environment_variables: vec![
+                            ("TARGET_VAR".into(), "target_specific".into()),
+                            ("CONFLICT".into(), "target_specific".into()),
+                        ]
+                        .into_iter()
+                        .collect(),
+                        runtime_inputs: vec!["target_specific".into()].into_iter().collect(),
+                    },
+                );
                 map
             },
         };
 
         data.apply(&mut dev_env);
-        
-        assert_eq!(dev_env.build_inputs, vec!["default".into(), "target_specific".into()].into_iter().collect());
-        assert_eq!(dev_env.environment_variables, vec![
-            ("DEFAULT_VAR".into(), "default".into()),
-            ("TARGET_VAR".into(), "target_specific".into()),
-            ("CONFLICT".into(), "target_specific".into()),
-        ].into_iter().collect());
-        assert_eq!(dev_env.runtime_inputs, vec!["default".into(), "target_specific".into()].into_iter().collect());
-        
+
+        assert_eq!(
+            dev_env.build_inputs,
+            vec!["default".into(), "target_specific".into()]
+                .into_iter()
+                .collect()
+        );
+        assert_eq!(
+            dev_env.environment_variables,
+            vec![
+                ("DEFAULT_VAR".into(), "default".into()),
+                ("TARGET_VAR".into(), "target_specific".into()),
+                ("CONFLICT".into(), "target_specific".into()),
+            ]
+            .into_iter()
+            .collect()
+        );
+        assert_eq!(
+            dev_env.runtime_inputs,
+            vec!["default".into(), "target_specific".into()]
+                .into_iter()
+                .collect()
+        );
+
         Ok(())
     }
 
@@ -170,18 +198,26 @@ mod test {
             },
             targets: {
                 let mut map = HashMap::default();
-                map.insert(target, RustDependencyTargetData {
-                    build_inputs: vec!["target_specific".into()].into_iter().collect(),
-                    ..Default::default()
-                });
+                map.insert(
+                    target,
+                    RustDependencyTargetData {
+                        build_inputs: vec!["target_specific".into()].into_iter().collect(),
+                        ..Default::default()
+                    },
+                );
                 map
             },
         };
         let merged = data.build_inputs();
-        assert_eq!(merged, vec!["default".into(), "target_specific".into()].into_iter().collect());
+        assert_eq!(
+            merged,
+            vec!["default".into(), "target_specific".into()]
+                .into_iter()
+                .collect()
+        );
         Ok(())
     }
-    
+
     #[test]
     fn environment_variables_merge() -> eyre::Result<()> {
         let target = format!("{}", target_lexicon::HOST);
@@ -190,30 +226,42 @@ mod test {
                 environment_variables: vec![
                     ("DEFAULT_VAR".into(), "default".into()),
                     ("CONFLICT".into(), "default".into()),
-                ].into_iter().collect(),
+                ]
+                .into_iter()
+                .collect(),
                 ..Default::default()
             },
             targets: {
                 let mut map = HashMap::default();
-                map.insert(target, RustDependencyTargetData {
-                    environment_variables: vec![
-                        ("TARGET_VAR".into(), "target_specific".into()),
-                        ("CONFLICT".into(), "target_specific".into()),
-                    ].into_iter().collect(),
-                    ..Default::default()
-                });
+                map.insert(
+                    target,
+                    RustDependencyTargetData {
+                        environment_variables: vec![
+                            ("TARGET_VAR".into(), "target_specific".into()),
+                            ("CONFLICT".into(), "target_specific".into()),
+                        ]
+                        .into_iter()
+                        .collect(),
+                        ..Default::default()
+                    },
+                );
                 map
             },
         };
         let merged = data.environment_variables();
-        assert_eq!(merged, vec![
-            ("DEFAULT_VAR".into(), "default".into()),
-            ("TARGET_VAR".into(), "target_specific".into()),
-            ("CONFLICT".into(), "target_specific".into()),
-        ].into_iter().collect());
+        assert_eq!(
+            merged,
+            vec![
+                ("DEFAULT_VAR".into(), "default".into()),
+                ("TARGET_VAR".into(), "target_specific".into()),
+                ("CONFLICT".into(), "target_specific".into()),
+            ]
+            .into_iter()
+            .collect()
+        );
         Ok(())
     }
-    
+
     #[test]
     fn runtime_input_merge() -> eyre::Result<()> {
         let target = format!("{}", target_lexicon::HOST);
@@ -224,15 +272,23 @@ mod test {
             },
             targets: {
                 let mut map = HashMap::default();
-                map.insert(target, RustDependencyTargetData {
-                    runtime_inputs: vec!["target_specific".into()].into_iter().collect(),
-                    ..Default::default()
-                });
+                map.insert(
+                    target,
+                    RustDependencyTargetData {
+                        runtime_inputs: vec!["target_specific".into()].into_iter().collect(),
+                        ..Default::default()
+                    },
+                );
                 map
             },
         };
         let merged = data.runtime_inputs();
-        assert_eq!(merged, vec!["default".into(), "target_specific".into()].into_iter().collect());
+        assert_eq!(
+            merged,
+            vec!["default".into(), "target_specific".into()]
+                .into_iter()
+                .collect()
+        );
         Ok(())
     }
 }
