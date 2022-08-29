@@ -123,9 +123,12 @@ impl DevEnvironmentAppliable for RustDependencyTargetData {
 mod test {
     use super::*;
     use crate::dependency_registry::DependencyRegistry;
+    use tempfile::TempDir;
 
     #[tokio::test]
     async fn try_apply() -> eyre::Result<()> {
+        let cache_dir = TempDir::new()?;
+        std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
         let registry = DependencyRegistry::new(true).await?;
         let mut dev_env = DevEnvironment::new(registry);
 
