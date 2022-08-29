@@ -167,7 +167,7 @@ custom targets, such as `riscv32imac-unknown-xous-elf`, though `riff` makes no e
 cross compiling at this time.
 
 When target specific dependencies are present, the `build-inputs` and `runtime-inputs`
-sections are **unioned**, while the target specific environment variables **override**
+sections are **unioned** (joined), while the target specific environment variables **override**
 default environment variables.
 
 #### macOS framework dependencies
