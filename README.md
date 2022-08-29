@@ -162,8 +162,9 @@ build-inputs = [
 ```
 
 The Rust project maintains [a list of well-known targets](https://doc.rust-lang.org/nightly/rustc/platform-support.html)
-which can also be accessed via `nix run nixpkgs#rustup target list`. Riff also supports any
-custom target Rust does, such as `riscv32imac-unknown-xous-elf`.
+which can also be accessed via `nix run nixpkgs#rustup target list`. This field can also contain
+custom targets, such as `riscv32imac-unknown-xous-elf`, though `riff` makes no efforts to support
+cross compiling at this time.
 
 When target specific dependencies are present, the `build-inputs` and `runtime-inputs`
 sections are **unioned**, while the target specific environment variables **override**
