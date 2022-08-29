@@ -155,6 +155,10 @@ impl DependencyRegistry {
     pub async fn language(&self) -> RwLockReadGuard<DependencyRegistryLanguageData> {
         RwLockReadGuard::map(self.data.read().await, |v| &v.language)
     }
+
+    pub async fn latest_riff_version(&self) -> RwLockReadGuard<String> {
+        RwLockReadGuard::map(self.data.read().await, |v| &v.latest_riff_version)
+    }
 }
 
 impl Clone for DependencyRegistry {
@@ -170,6 +174,7 @@ impl Clone for DependencyRegistry {
 /// A registry of known mappings from language specific dependencies to fsm settings
 #[derive(Deserialize, Default, Clone, Debug)]
 pub struct DependencyRegistryData {
+    pub(crate) latest_riff_version: String,
     pub(crate) version: usize, // Checked for ABI compat
     pub(crate) language: DependencyRegistryLanguageData,
 }

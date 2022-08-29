@@ -18,8 +18,8 @@ pub enum DetectedLanguage {
 }
 
 #[derive(Debug, Clone)]
-pub struct DevEnvironment {
-    pub(crate) registry: DependencyRegistry,
+pub struct DevEnvironment<'a> {
+    pub(crate) registry: &'a DependencyRegistry,
     pub(crate) build_inputs: HashSet<String>,
     pub(crate) environment_variables: HashMap<String, String>,
     pub(crate) ld_library_path: HashSet<String>,
@@ -27,8 +27,8 @@ pub struct DevEnvironment {
 }
 
 // TODO(@cole-h): should this become a trait that the various languages we may support have to implement?
-impl DevEnvironment {
-    pub fn new(registry: DependencyRegistry) -> Self {
+impl<'a> DevEnvironment<'a> {
+    pub fn new(registry: &'a DependencyRegistry) -> Self {
         Self {
             registry,
             build_inputs: Default::default(),
@@ -248,7 +248,7 @@ mod tests {
                 .map(ToString::to_string)
                 .collect(),
             detected_languages: vec![DetectedLanguage::Rust].into_iter().collect(),
-            registry,
+            registry: &registry,
         };
 
         let flake = dev_env.to_flake();
@@ -297,7 +297,7 @@ HI = "BYE"
         .await?;
 
         let registry = DependencyRegistry::new(true).await?;
-        let mut dev_env = DevEnvironment::new(registry);
+        let mut dev_env = DevEnvironment::new(&registry);
         let detect = dev_env.detect(temp_dir.path()).await;
         assert!(detect.is_ok(), "{detect:?}");
 
@@ -316,7 +316,7 @@ HI = "BYE"
         std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
         let temp_dir = TempDir::new()?;
         let registry = DependencyRegistry::new(true).await?;
-        let mut dev_env = DevEnvironment::new(registry);
+        let mut dev_env = DevEnvironment::new(&registry);
         let detect = dev_env.detect(temp_dir.path()).await;
         assert!(detect.is_err());
         Ok(())
