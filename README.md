@@ -161,19 +161,22 @@ build-inputs = [
 ]
 ```
 
-The Rust project maintains [a list of well-known targets](https://doc.rust-lang.org/nightly/rustc/platform-support.html)
-which can also be accessed via `nix run nixpkgs#rustup target list`. This field can also contain
-custom targets, such as `riscv32imac-unknown-xous-elf`, though `riff` makes no efforts to support
-cross compiling at this time.
+The Rust project maintains [a list of well-known targets
+](https://doc.rust-lang.org/nightly/rustc/platform-support.html)
+which can also be accessed via `nix run nixpkgs#rustup target list`. This
+field can also contain custom targets, such as `riscv32imac-unknown-xous-elf`,
+though `riff` makes no efforts to support cross compiling at this time.
 
-When target specific dependencies are present, the `build-inputs` and `runtime-inputs`
-sections are **unioned** (joined), while the target specific environment variables **override**
-default environment variables.
+When target specific dependencies are present, the `build-inputs` and
+`runtime-inputs` sections are **unioned** (joined), while the target specific
+environment variables **override** default environment variables.
 
 #### macOS framework dependencies
 
 macOS users may encounter issues with 'framework dependencies', such as
-[`Foundation`][foundation], [`CoreServices`][coreservices], and [`Security`][security].
+[`Foundation`][foundation], [`CoreServices`][coreservices], and
+[`Security`][security].
+
 You may encounter error messages like this:
 
 ```
