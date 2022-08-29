@@ -1,21 +1,32 @@
 [package]
-name = "fsm"
+name = "riff"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/DeterminateSystems/riff"
 
 [dependencies]
 atty = "0.2"
-cargo = { version = "0.64" }
-clap = { version = "3.2.17", features = ["derive"] }
-color-eyre = "0.6.2"
+cfg-if = "1"
+clap = { version = "3.2.17", features = ["derive", "env"] }
+color-eyre = { version = "0.6.2", features = [ "issue-url" ] }
 eyre = "0.6.8"
+indicatif = "0.17.0"
 itertools = "0.10"
 once_cell = "1"
+os-release = "0.1"
+owo-colors = "3"
+reqwest = "0.11"
+serde = { version = "1.0.143", features = ["derive"] }
+serde_json = "1.0.85"
+target-lexicon = "0.12.4"
 tempfile = "3.3"
 thiserror = "1.0.32"
-tokio = { version = "1.20.1", features = ["macros", "rt-multi-thread", "process", "fs"] }
-toml_edit = "0.14"
+tokio = { version = "1.20.1", features = ["macros", "sync", "rt-multi-thread", "process", "fs", "io-util"] }
 tracing = "0.1.36"
 tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.15", features = ["env-filter"] }
-owo-colors = "3"
+uuid = { version = "1.1.2", features = [ "v4", "fast-rng", "serde" ]}
+xdg = "2"
+
+[dev-dependencies]
+tokio-test = "0.4.2"

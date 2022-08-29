@@ -1,16 +1,34 @@
 {{
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-  outputs = {{ self, nixpkgs }}: {{
-    devShells.x86_64-linux.default =
-      with import nixpkgs {{ system = "x86_64-linux"; }};
-      stdenv.mkDerivation {{
-        name = "fsm-shell";
-        buildInputs = [ {} ];
-        {}
+  outputs = {{ self, nixpkgs }}:
+    let
+      nameValuePair = name: value: {{ inherit name value; }};
+      genAttrs = names: f: builtins.listToAttrs (map (n: nameValuePair n (f n)) names);
+      allSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
 
-        # Done to ensure "__FORIFTY_SOURCE requires compiling with optimization" errors don't fail builds
-        # This was noted in `spirv-tools-sys` and others.
-        hardeningDisable = [ "fortify" ];
-      }};
+      forAllSystems = f: genAttrs allSystems (system: f rec {{
+        inherit system;
+        pkgs = import nixpkgs {{ inherit system; }};
+        lib = pkgs.lib;
+      }});
+    in
+    {{
+      devShells = forAllSystems ({{ system, pkgs, ... }}: {{
+        default = with pkgs;
+          stdenv.mkDerivation {{
+            name = "riff-shell";
+            buildInputs = [ {build_inputs} ] ++ lib.optionals (stdenv.isDarwin) [
+              libiconv
+            ];
+
+            {environment_variables}
+
+            {ld_library_path}
+            
+            # Done to ensure "__FORIFTY_SOURCE requires compiling with optimization" errors don't fail builds
+            # This was noted in `spirv-tools-sys` and others.
+            hardeningDisable = [ "fortify" ];
+          }};
+      }});
   }};
 }}
