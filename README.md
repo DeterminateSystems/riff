@@ -1,89 +1,128 @@
 # fsm
 
-`fsm` (Flying Spaghetti Monster) is a tool that automatically provides
-external dependencies for building software projects. When developing
-in a language like Rust, you typically use a language-specific package
-manager like Cargo to handle dependencies. However, these tools often
-don't handle dependencies written in other languages very well, expect
-you to install these via your system package manager, and fail
-mysteriously when they're missing:
+fsm (Flying Spaghetti Monster) is a tool that automatically provides external
+dependencies[^1] for software projects. To enter a shell environment with all
+your project's external dependencies installed, run this at the project root:
 
-```
-   Compiling openssl-sys v0.9.75
-error: failed to run custom build command for `openssl-sys v0.9.75`
-  run pkg_config fail: "`\"pkg-config\" \"--libs\" \"--cflags\"
-    \"openssl\"` did not exit successfully: \n... No package 'openssl' found\n"
+```shell
+fsm shell
 ```
 
-It's then up to you to install the missing dependency, which is often
-laborious and error-prone.
+You can also directly run commands as if the shell environment were in place:
 
-`fsm` instead lets you start a shell in which the external
-dependencies required by your project are present automatically. These
-shells are *transient*, meaning that they don't affect anything
-outside the shell. No software is installed globally, so you don't
-have to worry that the installation of a dependency will break
-anything on your system — when you exit the shell, the dependencies
-are gone.
+```shell
+fsm run cargo build
+```
 
-`fsm` currently supports Rust/Cargo-based projects, with support for
-other languages to be added in the future.
-
-Internally, `fsm` uses the [Nix package manager](nixos.org/nix/) to
-fetch or build native dependencies, but you do not need to know Nix or
-write any Nix files.
+fsm currently supports [Rust] with support for other languages coming soon. It
+uses the [Nix] package manager to handle dependencies but doesn't require you to
+know or use Nix.
 
 ## Requirements
 
-In order to use `fsm`, you will need the following binaries available:
+To use fsm, you need to install these binaries on your system:
 
-* [`nix`](https://nixos.org/nix/)
-* [`cargo`](https://www.rust-lang.org/tools/install)
+* [`nix`][nix-install]
+* [`cargo`][rust-install]
 
 ## Installation
 
 TODO: download the statically linked binary
+### Via Nix
 
-TODO: run/install via Nix, once our repo is public: `nix run
-github:DeterminateSystems/fsm` or `nix profile install
-github:DeterminateSystems/fsm`
+To install fsm using Nix (make sure to have [flakes] enabled):
 
-## Example Usage
-
-In this example, we build the [Tremor
-project](https://github.com/tremor-rs/tremor-runtime) from source. It
-has a number of native dependencies, such as OpenSSL and the Protobuf
-compiler. `fsm` downloads or builds these dependencies for you
-automatically, without installing them into your regular environment.
-
-```
-# git clone https://github.com/tremor-rs/tremor-runtime.git
-
-# cd tremor-runtime
-
-# fsm shell
-
-# type -p protoc
-/nix/store/2qg94y58v1jr4dw360bmpxlrs30m31ca-protobuf-3.19.4/bin/protoc
-
-# cargo build
-
-# exit
-
-# protoc
-protoc: command not found
+```shell
+nix profile install github:DeterminateSystems/fsm
 ```
 
-## How to describe package inputs
+## What fsm provides
 
-Rather than relying on our hand-made mapping of crates to their inputs, it is also possible to specify a project's inputs in its `Cargo.toml`.
-`fsm` currently supports three kinds of inputs:
+Languages typically use language-specific package managers to handle
+dependencies, such as [Cargo] for the [Rust] language. But these
+language-specific tools typically don't handle dependencies written in other
+languages very well. They expect you to install those dependencies using some
+other tool and fail in mysterious ways when they're missing. Here's an example
+error from trying to build the [`octocrab`][octocrab] crate without [OpenSSL]
+installed:
 
-* `build-inputs`, which are native dependencies that the crate may want to link against.
-* `environment-variables`, which are environment variables you may want to set in your dev shell.
-* `runtime-inputs`, which are libraries you may want to add to your `LD_LIBRARY_PATH` to ensure proper execution in your dev shell.
+```shell
+--- stderr
+thread 'main' panicked at '
 
-They can be used as follows:
+Could not find directory of OpenSSL installation, and this `-sys` crate cannot
+proceed without this knowledge. If OpenSSL is installed and this crate had
+trouble finding it,  you can set the `OPENSSL_DIR` environment variable for the
+compilation process.
+
+Make sure you also have the development packages of openssl installed.
+For example, `libssl-dev` on Ubuntu or `openssl-devel` on Fedora.
+```
+
+In cases like this, it's up to you to install missing external dependencies,
+which can be laborious, error prone, and hard to reproduce.
+
+fsm offers a way out of this. It uses your project's language-specific
+configuration to infer which dependencies are required&mdash;or you can [declare
+them](#how-to-declare-package-inputs) if necessary&mdash;and creates a shell
+environment with all of those dependencies both installed and properly linked.
+
+These environments are *transient* in the sense that they don't affect anything
+outside the shell; they install dependencies neither globally nor in your
+current project, so you don't have to worry about fsm breaking anything on your
+system. When you exit the fsm shell, the dependencies are gone.
+
+## Example usage
+
+In this example, we'll build the [Prost] project from source. Prost has an
+external dependency on [OpenSSL], without which commands like `cargo build` and
+`cargo run` are doomed to fail. fsm provides those dependencies automatically,
+without you needing to install them in your regular environment. Follow these
+steps to see dependency inference in action:
+
+```shell
+git clone https://github.com/tokio-rs/prost.git
+cd prost
+
+# Enter the fsm shell environment
+fsm shell
+# ✓ 🦀 rust: cargo, cmake, curl, openssl, pkg-config, rustc, rustfmt, zlib
+
+# Check for the presence of openssl
+which openssl
+# The path should look like this:
+# /nix/store/f3xbf94zykbh6drw6wfg9hdrfgwrkck7-openssl-1.1.1q-bin/bin/openssl
+# This means that fsm is using the Nix-provided openssl
+
+# Build the project
+cargo build
+
+# Leave the shell environment
+exit
+
+# Check for openssl again
+which openssl
+# This should either point to an openssl executable on your PATH or fail
+```
+
+## How to declare package inputs
+
+While fsm does its best to infer external dependencies from your project's crate
+dependencies, you can explicitly declare external dependencies if necessary by
+adding an `fsm` block to the `package.metadata` block in your `Cargo.toml`. fsm
+currently supports three types of inputs:
+
+* `build-inputs` are external dependencies that some crates may need to link
+  against.
+* `environment-variables` are environment variables you want to set in your dev
+  shell.
+* `runtime-inputs` are libraries you want to add to your `LD_LIBRARY_PATH` to
+  ensure that your dev shell works as expected.
+
+Both `build-inputs` and `runtime-inputs` can be any packages available in
+[Nixpkgs].
+
+Here's an example `Cargo.toml` with explicitly supplied fsm configuration:
 
 ```toml
 [package]
@@ -98,11 +137,105 @@ runtime-inputs = [ "libGL" ]
 [package.metadata.fsm.environment-variables]
 HI = "BYE"
 
-[dependencies]
+# Other configuration
 ```
 
-The above example will do the following when you run `fsm shell` for that project:
+When you run `fsm shell` in this project, fsm
 
-* it will add `openssl` to your build environment
-* it will set the `LD_LIBRARY_PATH` environment variable to contain `libGL`'s library path
-* it will set the environment variable `HI` to have a value of `BYE`
+* adds [OpenSSL] to your build environment
+* sets the `LD_LIBRARY_PATH` environment variable to include [libGL]'s library
+  path
+* sets the `HI` environment variable to have a value of `BYE`
+
+### macOS framework dependencies
+
+macOS users working with Rust often struggle with so-called framework
+dependencies, such as [`Foundation`][foundation],
+[`CoreServices`][coreservices], and [`Security`][security]. You may have
+encountered error messages like this when using Rust:
+
+```
+= note: ld: framework not found CoreFoundation
+```
+
+You can solve this by adding framework dependencies to your `build-inputs` as
+`darwin.apple_sdk.frameworks.<framework>`, for example
+`darwin.apple_sdk.frameworks.Security`. Here's an example `Cargo.toml`
+configuration that adds multiple framework dependencies:
+
+```toml
+[package.metadata.fsm]
+build-inputs = [
+  "darwin.apple_sdk.frameworks.CoreServices",
+  "darwin.apple_sdk.frameworks.Security"
+]
+```
+
+## How it works
+
+When you run `fsm shell` in a Rust project, fsm
+
+- **reads** your [`Cargo.toml`][cargo-toml] configuration manifest to determine
+  which external dependencies your project requires and then
+- **uses** the [Nix] package manager&mdash;in the background and without
+  requiring any intervention on your part&mdash;to install any external
+  dependencies, such as [OpenSSL] or [Protobuf], and also sets any environment
+  variables necessary to discover those tools. Once it knows which external
+  tools are required, it
+- **builds** a custom shell environment that enables you to use commands like
+  `cargo build` and `cargo run` without encountering the missing dependency
+  errors that so often dog Rust development.
+
+This diagram provides a basic visual description of that process:
+
+<!-- Image editable at: https://miro.com/app/board/uXjVPdUOswQ=/ -->
+<p align="center">
+  <img src="./img/fsm.jpg" alt="How fsm works" style="width:70%;" />
+</p>
+
+Because fsm uses Nix, all of the dependencies that it installs are stored in
+your local [Nix store], by default under `/nix/store`.
+
+## Privacy policy
+
+For the sake of improving the tool, fsm does collect some [telemetry] from
+users. You can read the full privacy policy for [Determinate Systems], the
+creators of fsm, [here][privacy].
+
+To disable telemetry on any fsm command invocation, you can either
+
+* Use the `--disable-telemetry` flag or
+* Set the `FSM_DISABLE_TELEMETRY` environment variable to any value except
+  `false`,`0`, or an empty string (`""`).
+
+Here are some examples:
+
+```shell
+fsm shell --disable-telemetry
+FSM_DISABLE_TELEMETRY=true fsm run cargo build
+```
+
+[cargo]: https://doc.rust-lang.org/cargo
+[cargo-toml]: https://doc.rust-lang.org/cargo/reference/manifest.html
+[coreservices]: https://developer.apple.com/documentation/coreservices
+[determinate systems]: https://determinate.systems
+[flakes]: https://nixos.wiki/wiki/Flakes
+[foundation]: https://developer.apple.com/documentation/foundation
+[libgl]: https://dri.freedesktop.org/wiki/libGL
+[nix]: https://nixos.org/nix
+[nix-install]: https://nixos.org/download.html
+[nixpkgs]: https://search.nixos.org/packages
+[nix store]: https://nixos.wiki/wiki/Nix_package_manager
+[octocrab]: https://github.com/XAMPPRocky/octocrab
+[openssl]: https://openssl.org
+[privacy]: https://determinate.systems/privacy
+[prost]: https://github.com/tokio-rs/prost
+[protobuf]: https://developers.google.com/protocol-buffers
+[rust]: https://rust-lang.org
+[rust-install]: https://www.rust-lang.org/tools/install
+[security]: https://developer.apple.com/documentation/security
+[telemetry]: ./src/telemetry.rs
+
+[^1]: We define **external** dependencies as those that are written in another
+  language and thus can't be installed using the same language-specific package
+  manager that you use to build your code.

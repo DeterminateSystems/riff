@@ -15,10 +15,10 @@ use crate::{cmds::Commands, dev_env::DetectedLanguage, Cli, FSM_XDG_PREFIX};
 
 static TELEMETRY_DISTINCT_ID_PATH: &str = "distinct_id";
 static TELEMETRY_IDENTIFIER_DESCRIPTION: &str =  "This is a randomly generated version 4 UUID.
-Determinate Systems uses this ID to know how many people use the tool, and to focus our limited research and development.
-This ID is completely random, and contains no personally identifiable information about you.
+Determinate Systems uses this ID to know how many people use the tool and to focus our limited research and development.
+This ID is completely random and contains no personally identifiable information about you.
 You can delete this file at any time to create a new ID.
-You can also disable ID generation, see the documentation on telemetry.";
+You can also disable ID generation; see the documentation on telemetry to see how to do so.";
 static TELEMETRY_REMOTE_URL: &str = "https://fsm-server.fly.dev/telemetry";
 pub static TELEMETRY_HEADER_NAME: &str = "X-FSM-Client-Info";
 
@@ -104,21 +104,30 @@ impl Telemetry {
         self
     }
 
+    #[tracing::instrument(skip_all)]
     pub(crate) async fn send(&self) -> eyre::Result<Response> {
         let header_data = self.as_header_data()?;
-        tracing::trace!(data = %header_data, "Sending telemetry data to {TELEMETRY_REMOTE_URL}");
+        tracing::trace!(data = %self.redact_header_data(header_data.clone()), "Sending telemetry data to {TELEMETRY_REMOTE_URL}");
         let http_client = reqwest::Client::new();
         let req = http_client
             .post(TELEMETRY_REMOTE_URL)
             .header(TELEMETRY_HEADER_NAME, &header_data)
             .timeout(Duration::from_millis(250));
         let res = req.send().await?;
-        tracing::debug!(telemetry = %header_data, "Sent telemetry data to {TELEMETRY_REMOTE_URL}");
+        tracing::debug!(telemetry = %self.redact_header_data(header_data.clone()), "Sent telemetry data to {TELEMETRY_REMOTE_URL}");
         Ok(res)
     }
 
     pub(crate) fn as_header_data(&self) -> Result<String, serde_json::Error> {
         serde_json::to_string(&self)
+    }
+
+    pub(crate) fn redact_header_data(&self, mut val: String) -> String {
+        if let Some(distinct_id) = self.distinct_id {
+            let distinct_id_string = distinct_id.to_string();
+            val = val.replace(&distinct_id_string, "<redacted>");
+        }
+        val
     }
 }
 

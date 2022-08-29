@@ -1,8 +1,12 @@
 [package]
-name = "fsm"
+name = "riff"
 version = "0.1.0"
 edition = "2021"
-repository = "https://github.com/DeterminateSystems/fsm"
+repository = "https://github.com/DeterminateSystems/riff"
+
+# FIXME: rename to riff in the "fsm -> riff in code" PR
+[package.metadata.fsm]
+build-inputs = [ "darwin.apple_sdk.frameworks.Security" ]
 
 [dependencies]
 atty = "0.2"

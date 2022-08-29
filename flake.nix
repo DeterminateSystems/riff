@@ -1,5 +1,5 @@
 {
-  description = "fsm";
+  description = "riff";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-22.05";
@@ -50,9 +50,16 @@
       devShell = forAllSystems ({ system, pkgs, ... }:
         let
           toolchain = fenixToolchain system;
+
+          spellcheck = pkgs.writeScriptBin "spellcheck" ''
+            ${pkgs.codespell}/bin/codespell \
+              --ignore-words-list crate,pullrequest,pullrequests,ser \
+              --skip target \
+              .
+          '';
         in
         pkgs.mkShell {
-          name = "fsm-shell";
+          name = "riff-shell";
 
           RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
 
@@ -62,10 +69,10 @@
           buildInputs = with pkgs; [
             toolchain
             openssl
-            codespell
             nixpkgs-fmt
             findutils # for xargs
             rust-analyzer
+            spellcheck
           ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]);
         });
 
@@ -78,7 +85,7 @@
             };
 
             sharedAttrs = {
-              pname = "fsm";
+              pname = "riff";
               version = "unreleased";
               src = self;
 
@@ -102,17 +109,17 @@
             };
           in
           {
-            fsm = naerskLib.buildPackage
+            riff = naerskLib.buildPackage
               (sharedAttrs // { });
           } // lib.optionalAttrs (system == "x86_64-linux") {
-            fsmStatic = naerskLib.buildPackage
+            riffStatic = naerskLib.buildPackage
               (sharedAttrs // {
                 CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
                 OPENSSL_LIB_DIR = "${pkgs.pkgsStatic.openssl.out}/lib";
                 OPENSSL_INCLUDE_DIR = "${pkgs.pkgsStatic.openssl.dev}";
               });
           } // lib.optionalAttrs (system == "aarch64-linux") {
-            fsmStatic = naerskLib.buildPackage
+            riffStatic = naerskLib.buildPackage
               (sharedAttrs // {
                 CARGO_BUILD_TARGET = "aarch64-unknown-linux-musl";
                 OPENSSL_LIB_DIR = "${pkgs.pkgsStatic.openssl.out}/lib";
@@ -120,6 +127,6 @@
               });
           });
 
-      defaultPackage = forAllSystems ({ system, ... }: self.packages.${system}.fsm);
+      defaultPackage = forAllSystems ({ system, ... }: self.packages.${system}.riff);
     };
 }
