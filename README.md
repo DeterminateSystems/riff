@@ -147,12 +147,32 @@ When you run `fsm shell` in this project, fsm
   path
 * sets the `HI` environment variable to have a value of `BYE`
 
-### macOS framework dependencies
+### Target specific dependencies
 
-macOS users working with Rust often struggle with so-called framework
-dependencies, such as [`Foundation`][foundation],
-[`CoreServices`][coreservices], and [`Security`][security]. You may have
-encountered error messages like this when using Rust:
+If a project has OS, architecture, or vendor specific dependencies, you can
+configure the metadata of `riff` like so:
+
+```toml
+[package.metadata.riff.targets.aarch64-apple-darwin]
+build-inputs = [
+  "darwin.apple_sdk.frameworks.CoreServices",
+  "darwin.apple_sdk.frameworks.Security"
+]
+```
+
+The Rust project maintains [a list of well-known targets](https://doc.rust-lang.org/nightly/rustc/platform-support.html)
+which can also be accessed via `nix run nixpkgs#rustup target list`. Riff also supports any
+custom target Rust does, such as `riscv32imac-unknown-xous-elf`.
+
+When target specific dependencies are present, the `build-inputs` and `runtime-inputs`
+sections are **unioned**, while the target specific environment variables **override**
+default environment variables.
+
+#### macOS framework dependencies
+
+macOS users may encounter issues with 'framework dependencies', such as
+[`Foundation`][foundation], [`CoreServices`][coreservices], and [`Security`][security].
+You may encounter error messages like this:
 
 ```
 = note: ld: framework not found CoreFoundation
@@ -164,7 +184,13 @@ You can solve this by adding framework dependencies to your `build-inputs` as
 configuration that adds multiple framework dependencies:
 
 ```toml
-[package.metadata.fsm]
+[package.metadata.riff.targets.x86_64-apple-darwin]
+build-inputs = [
+  "darwin.apple_sdk.frameworks.CoreServices",
+  "darwin.apple_sdk.frameworks.Security"
+]
+
+[package.metadata.riff.targets.aarch64-apple-darwin]
 build-inputs = [
   "darwin.apple_sdk.frameworks.CoreServices",
   "darwin.apple_sdk.frameworks.Security"
