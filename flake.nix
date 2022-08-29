@@ -50,6 +50,13 @@
       devShell = forAllSystems ({ system, pkgs, ... }:
         let
           toolchain = fenixToolchain system;
+
+          spellcheck = pkgs.writeScriptBin "spellcheck" ''
+            ${pkgs.codespell}/bin/codespell \
+              --ignore-words-list crate,pullrequest,pullrequests,ser \
+              --skip target \
+              .
+          '';
         in
         pkgs.mkShell {
           name = "fsm-shell";
@@ -62,10 +69,10 @@
           buildInputs = with pkgs; [
             toolchain
             openssl
-            codespell
             nixpkgs-fmt
             findutils # for xargs
             rust-analyzer
+            spellcheck
           ] ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]);
         });
 
