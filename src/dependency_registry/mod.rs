@@ -1,4 +1,4 @@
-use crate::FSM_XDG_PREFIX;
+use crate::RIFF_XDG_PREFIX;
 use serde::Deserialize;
 use std::{path::Path, sync::Arc};
 use tokio::{
@@ -13,7 +13,7 @@ use self::rust::RustDependencyRegistryData;
 
 pub(crate) mod rust;
 
-const DEPENDENCY_REGISTRY_REMOTE_URL: &str = "https://fsm-server.fly.dev/fsm-registry.json";
+const DEPENDENCY_REGISTRY_REMOTE_URL: &str = "https://riff-registry.fly.dev/riff-registry.json";
 const DEPENDENCY_REGISTRY_CACHE_PATH: &str = "registry.json";
 const DEPENDENCY_REGISTRY_FALLBACK: &str = include_str!("../../registry/registry.json");
 
@@ -45,7 +45,7 @@ pub struct DependencyRegistry {
 impl DependencyRegistry {
     #[tracing::instrument(skip_all, fields(%offline))]
     pub async fn new(offline: bool) -> Result<Self, DependencyRegistryError> {
-        let xdg_dirs = BaseDirectories::with_prefix(FSM_XDG_PREFIX)?;
+        let xdg_dirs = BaseDirectories::with_prefix(RIFF_XDG_PREFIX)?;
         // Create the directory if needed
         let cached_registry_pathbuf =
             xdg_dirs.place_cache_file(Path::new(DEPENDENCY_REGISTRY_CACHE_PATH))?;
@@ -172,7 +172,7 @@ impl Clone for DependencyRegistry {
     }
 }
 
-/// A registry of known mappings from language specific dependencies to fsm settings
+/// A registry of known mappings from language specific dependencies to riff settings
 #[derive(Deserialize, Default, Clone, Debug)]
 pub struct DependencyRegistryData {
     pub(crate) version: usize, // Checked for ABI compat

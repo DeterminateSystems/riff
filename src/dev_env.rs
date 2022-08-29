@@ -68,7 +68,7 @@ impl DevEnvironment {
             Ok(())
         } else {
             Err(eyre!(
-                "'{}' does not contain a project recognized by FSM.",
+                "'{}' does not contain a project recognized by Riff.",
                 project_dir.display()
             ))
         }
@@ -161,8 +161,8 @@ impl DevEnvironment {
                 None => continue,
             };
 
-            let dep_config = match metadata_object.fsm {
-                Some(fsm_object) => fsm_object,
+            let dep_config = match metadata_object.riff {
+                Some(riff_object) => riff_object,
                 None => continue,
             };
 
@@ -171,7 +171,7 @@ impl DevEnvironment {
                 "build-inputs" = %dep_config.build_inputs().iter().join(", "),
                 "environment-variables" = %dep_config.environment_variables().iter().map(|(k, v)| format!("{k}={v}")).join(", "),
                 "runtime-inputs" = %dep_config.runtime_inputs().iter().join(", "),
-                "Detected `package.metadata.fsm` in `Crate.toml`"
+                "Detected `package.metadata.riff` in `Crate.toml`"
             );
             dep_config.apply(self);
         }
@@ -270,19 +270,19 @@ mod tests {
             temp_dir.path().join("Cargo.toml"),
             r#"
 [package]
-name = "fsm-test"
+name = "riff-test"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "fsm_test"
+name = "riff_test"
 path = "lib.rs"
 
-[package.metadata.fsm]
+[package.metadata.riff]
 build-inputs = [ "hello" ]
 runtime-inputs = [ "libGL" ]
 
-[package.metadata.fsm.environment-variables]
+[package.metadata.riff.environment-variables]
 HI = "BYE"
 
 [dependencies]

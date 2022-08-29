@@ -10,13 +10,13 @@ use crate::flake_generator;
 
 /// Run a command with your project's dependencies
 ///
-/// For example, run `cargo build` inside fsm:
+/// For example, run `cargo build` inside riff:
 ///
-///     $ fsm run cargo build
+///     $ riff run cargo build
 ///
 /// Run cargo check and cargo build at the same time:
 ///
-///     $ fsm run -- sh -c 'cargo check && cargo build'
+///     $ riff run -- sh -c 'cargo check && cargo build'
 #[derive(Debug, Args)]
 pub struct Run {
     /// The root directory of the project
@@ -90,12 +90,12 @@ mod tests {
             temp_dir.path().join("Cargo.toml"),
             r#"
 [package]
-name = "fsm-test"
+name = "riff-test"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "fsm_test"
+name = "riff_test"
 path = "lib.rs"
 
 [dependencies]
