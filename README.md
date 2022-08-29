@@ -1,6 +1,6 @@
-# riff
+# Riff
 
-**riff** is a tool that automatically provides external dependencies[^1] for
+**Riff** is a tool that automatically provides external dependencies[^1] for
 software projects. To enter a shell environment with all your project's external
 dependencies installed, run this at the project root:
 
@@ -14,13 +14,13 @@ You can also directly run commands as if the shell environment were in place:
 riff run cargo build
 ```
 
-riff currently supports [Rust] with support for other languages coming soon. It
+Riff currently supports [Rust] with support for other languages coming soon. It
 uses the [Nix] package manager to handle dependencies but doesn't require you to
 know or use Nix.
 
 ## Requirements
 
-To use riff, you need to install these binaries on your system:
+To use Riff, you need to install these binaries on your system:
 
 * [`nix`][nix-install]
 * [`cargo`][rust-install]
@@ -31,13 +31,13 @@ TODO: download the statically linked binary
 
 ### Via Nix
 
-To install riff using Nix (make sure to have [flakes] enabled):
+To install Riff using Nix (make sure to have [flakes] enabled):
 
 ```shell
 nix profile install github:DeterminateSystems/riff
 ```
 
-## What riff provides
+## What Riff provides
 
 Languages typically use language-specific package managers to handle
 dependencies, such as [Cargo] for the [Rust] language. But these
@@ -63,21 +63,21 @@ For example, `libssl-dev` on Ubuntu or `openssl-devel` on Fedora.
 In cases like this, it's up to you to install missing external dependencies,
 which can be laborious, error prone, and hard to reproduce.
 
-riff offers a way out of this. It uses your project's language-specific
+Riff offers a way out of this. It uses your project's language-specific
 configuration to infer which dependencies are required&mdash;or you can [declare
 them](#how-to-declare-package-inputs) if necessary&mdash;and creates a shell
 environment with all of those dependencies both installed and properly linked.
 
 These environments are *transient* in the sense that they don't affect anything
 outside the shell; they install dependencies neither globally nor in your
-current project, so you don't have to worry about riff breaking anything on your
-system. When you exit the riff shell, the dependencies are gone.
+current project, so you don't have to worry about Riff breaking anything on your
+system. When you exit the Riff shell, the dependencies are gone.
 
 ## Example usage
 
 In this example, we'll build the [Prost] project from source. Prost has an
 external dependency on [OpenSSL], without which commands like `cargo build` and
-`cargo run` are doomed to fail. riff provides those dependencies automatically,
+`cargo run` are doomed to fail. Riff provides those dependencies automatically,
 without you needing to install them in your regular environment. Follow these
 steps to see dependency inference in action:
 
@@ -85,7 +85,7 @@ steps to see dependency inference in action:
 git clone https://github.com/tokio-rs/prost.git
 cd prost
 
-# Enter the riff shell environment
+# Enter the Riff shell environment
 riff shell
 # ✓ 🦀 rust: cargo, cmake, curl, openssl, pkg-config, rustc, rustfmt, zlib
 
@@ -93,7 +93,7 @@ riff shell
 which openssl
 # The path should look like this:
 # /nix/store/f3xbf94zykbh6drw6wfg9hdrfgwrkck7-openssl-1.1.1q-bin/bin/openssl
-# This means that riff is using the Nix-provided openssl
+# This means that Riff is using the Nix-provided openssl
 
 # Build the project
 cargo build
@@ -108,10 +108,10 @@ which openssl
 
 ## How to declare package inputs
 
-While riff does its best to infer external dependencies from your project's
+While Riff does its best to infer external dependencies from your project's
 crate dependencies, you can explicitly declare external dependencies if
 necessary by adding a `riff` block to the `package.metadata` block in your
-`Cargo.toml`. riff currently supports three types of inputs:
+`Cargo.toml`. Riff currently supports three types of inputs:
 
 * `build-inputs` are external dependencies that some crates may need to link
   against.
@@ -123,7 +123,7 @@ necessary by adding a `riff` block to the `package.metadata` block in your
 Both `build-inputs` and `runtime-inputs` can be any packages available in
 [Nixpkgs].
 
-Here's an example `Cargo.toml` with explicitly supplied riff configuration:
+Here's an example `Cargo.toml` with explicitly supplied Riff configuration:
 
 ```toml
 [package]
@@ -141,7 +141,7 @@ HI = "BYE"
 # Other configuration
 ```
 
-When you run `riff shell` in this project, riff
+When you run `riff shell` in this project, Riff
 
 * adds [OpenSSL] to your build environment
 * sets the `LD_LIBRARY_PATH` environment variable to include [libGL]'s library
@@ -174,7 +174,7 @@ build-inputs = [
 
 ## How it works
 
-When you run `riff shell` in a Rust project, riff
+When you run `riff shell` in a Rust project, Riff
 
 - **reads** your [`Cargo.toml`][cargo-toml] configuration manifest to determine
   which external dependencies your project requires and then
@@ -191,19 +191,23 @@ This diagram provides a basic visual description of that process:
 
 <!-- Image editable at: https://miro.com/app/board/uXjVPdUOswQ=/ -->
 <p align="center">
-  <img src="./img/riff.jpg" alt="How riff works" style="width:70%;" />
+  <img
+    src="./img/riff.jpg"
+    alt="Riff reads your Cargo.toml to infer external dependencies and then
+      uses Nix to build a shell environment that provides those dependencies"
+    style="width:70%;" />
 </p>
 
-Because riff uses Nix, all of the dependencies that it installs are stored in
+Because Riff uses Nix, all of the dependencies that it installs are stored in
 your local [Nix store], by default under `/nix/store`.
 
 ## Privacy policy
 
-For the sake of improving the tool, riff does collect some [telemetry] from
+For the sake of improving the tool, Riff does collect some [telemetry] from
 users. You can read the full privacy policy for [Determinate Systems], the
-creators of riff, [here][privacy].
+creators of Riff, [here][privacy].
 
-To disable telemetry on any riff command invocation, you can either
+To disable telemetry on any Riff command invocation, you can either
 
 * Use the `--disable-telemetry` flag or
 * Set the `RIFF_DISABLE_TELEMETRY` environment variable to any value except
