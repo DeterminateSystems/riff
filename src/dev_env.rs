@@ -168,10 +168,10 @@ impl DevEnvironment {
 
             tracing::debug!(
                 package = %name,
-                "build-inputs" = %dep_config.build_inputs.iter().join(", "),
-                "environment-variables" = %dep_config.environment_variables.iter().map(|(k, v)| format!("{k}={v}")).join(", "),
-                "runtime-inputs" = %dep_config.runtime_inputs.iter().join(", "),
-                "Detected `package.fsm` in `Crate.toml`"
+                "build-inputs" = %dep_config.build_inputs().iter().join(", "),
+                "environment-variables" = %dep_config.environment_variables().iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                "runtime-inputs" = %dep_config.runtime_inputs().iter().join(", "),
+                "Detected `package.metadata.fsm` in `Crate.toml`"
             );
             dep_config.try_apply(self)?;
         }

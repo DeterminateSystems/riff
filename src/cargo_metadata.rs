@@ -1,4 +1,4 @@
-use crate::dependency_registry::rust::RustDependencyTargetData;
+use crate::dependency_registry::rust::RustDependencyData;
 
 #[derive(serde::Deserialize)]
 pub struct CargoMetadata {
@@ -13,5 +13,5 @@ pub struct CargoMetadataPackage {
 
 #[derive(serde::Deserialize)]
 pub struct FsmMetadata {
-    pub fsm: Option<RustDependencyTargetData>,
+    pub fsm: Option<RustDependencyData>,
 }
