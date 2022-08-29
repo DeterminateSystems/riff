@@ -4,9 +4,6 @@ version = "0.1.0"
 edition = "2021"
 repository = "https://github.com/DeterminateSystems/fsm"
 
-[package.metadata.fsm]
-build-inputs = [ "darwin.apple_sdk.frameworks.Security" ]
-
 [dependencies]
 atty = "0.2"
 cfg-if = "1"
