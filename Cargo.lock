@@ -254,15 +254,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "etc-passwd"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0abca7c001eeb16c83a0682ceff98d8722379492678acfd23abc3f49ab86ca69"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "eyre"
 version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -940,7 +931,6 @@ dependencies = [
  "cfg-if",
  "clap",
  "color-eyre",
- "etc-passwd",
  "eyre",
  "indicatif",
  "itertools",
