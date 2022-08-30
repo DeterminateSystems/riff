@@ -10,7 +10,7 @@ impl SimpleSpinner {
         spinner.enable_steady_tick(Duration::from_millis(400));
         spinner.set_style(
             ProgressStyle::with_template("{msg}{spinner}")?
-                .tick_strings(&["   ", ".  ", ".. ", "...", "   "]),
+            .tick_strings(&["🎸𝄢    ", "🎸𝄢𝅘𝅥𝅯   ", "🎸𝄢𝅘𝅥𝅯𝅘𝅥𝅮  ", "🎸𝄢𝅘𝅥𝅯𝅘𝅥𝅮𝅘𝅥 ", "🎸𝄢𝅘𝅥𝅯𝅘𝅥𝅮𝅘𝅥𝄽", "🎸𝄢    ", ]),
         );
 
         if let Some(msg) = msg {
