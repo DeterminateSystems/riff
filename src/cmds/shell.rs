@@ -29,7 +29,7 @@ impl Shell {
 
         let dev_env = crate::nix_dev_env::get_nix_dev_env(flake_dir.path()).await?;
 
-        let shell = crate::nix_dev_env::get_shell().await?;
+        let shell = crate::nix_dev_env::get_shell().await;
 
         Ok(crate::nix_dev_env::run_in_dev_env(&dev_env, &shell)
             .await?
