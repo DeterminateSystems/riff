@@ -24,7 +24,7 @@ pub enum DependencyRegistryError {
     #[error("IO error")]
     Io(#[from] std::io::Error),
     #[error(
-        "Reading cached registry (Maybe you need to remove `$XDG_CACHE_DIR/fsm/registry.json`?)"
+        "Reading cached registry (Maybe you need to remove `$XDG_CACHE_DIR/riff/registry.json`?)"
     )]
     ReadCachedRegistry(std::io::Error),
     #[error("JSON error")]

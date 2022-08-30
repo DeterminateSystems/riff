@@ -77,9 +77,9 @@ async fn main() -> color_eyre::Result<std::process::ExitCode> {
                         std::io::stderr(),
                         "The command you attempted to run was not found.
 Try running it in a shell; for example:
-\t{fsm_run_example}\n",
-                        fsm_run_example =
-                            format!("fsm run -- sh -c '{}'", run.command.join(" ")).cyan(),
+\t{riff_run_example}\n",
+                        riff_run_example =
+                            format!("riff run -- sh -c '{}'", run.command.join(" ")).cyan(),
                     )?;
                 }
             }

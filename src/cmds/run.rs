@@ -56,9 +56,9 @@ impl Run {
                     eprintln!(
                         "The command you attempted to run was not found.
 Try running it in a shell; for example:
-\t{fsm_run_example}\n",
-                        fsm_run_example =
-                            format!("fsm run -- sh -c '{}'", self.command.join(" ")).cyan(),
+\t{riff_run_example}\n",
+                        riff_run_example =
+                            format!("riff run -- sh -c '{}'", self.command.join(" ")).cyan(),
                     );
                 };
                 err
