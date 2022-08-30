@@ -1,6 +1,7 @@
 use crate::FSM_XDG_PREFIX;
 use serde::Deserialize;
 use std::{path::Path, sync::Arc};
+use semver::Version;
 use tokio::{
     fs::OpenOptions,
     io::{AsyncReadExt, AsyncWriteExt},
@@ -161,7 +162,7 @@ impl DependencyRegistry {
         RwLockReadGuard::map(self.data.read().await, |v| &v.language)
     }
 
-    pub async fn latest_riff_version(&self) -> RwLockReadGuard<String> {
+    pub async fn latest_riff_version(&self) -> RwLockReadGuard<Version> {
         RwLockReadGuard::map(self.data.read().await, |v| &v.latest_riff_version)
     }
 }
@@ -177,9 +178,9 @@ impl Clone for DependencyRegistry {
 }
 
 /// A registry of known mappings from language specific dependencies to fsm settings
-#[derive(Deserialize, Default, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct DependencyRegistryData {
-    pub(crate) latest_riff_version: String,
+    pub(crate) latest_riff_version: Version,
     pub(crate) version: usize, // Checked for ABI compat
     pub(crate) language: DependencyRegistryLanguageData,
 }
