@@ -7,15 +7,13 @@ pub struct SimpleSpinner;
 impl SimpleSpinner {
     pub fn new_with_message(msg: Option<&str>) -> color_eyre::Result<ProgressBar> {
         let spinner = ProgressBar::new_spinner();
-        spinner.enable_steady_tick(Duration::from_millis(400));
+        spinner.enable_steady_tick(Duration::from_millis(500));
         spinner.set_style(
             ProgressStyle::with_template("{msg}{spinner}")?.tick_strings(&[
-                "🎸𝄢    ",
-                "🎸𝄢𝅘𝅥𝅯   ",
-                "🎸𝄢𝅘𝅥𝅯𝅘𝅥𝅮  ",
-                "🎸𝄢𝅘𝅥𝅯𝅘𝅥𝅮𝅘𝅥 ",
-                "🎸𝄢𝅘𝅥𝅯𝅘𝅥𝅮𝅘𝅥𝄽",
-                "🎸𝄢    ",
+                " 🥁 𝄥𝅘𝅥   ",
+                " 🥁 𝄥𝅘𝅥𝅘𝅥𝅮  ",
+                " 🥁 𝄥𝅘𝅥𝅘𝅥𝅮𝅘𝅥𝅮 ",
+                " 🥁 𝄥𝅘𝅥𝅘𝅥𝅮𝅘𝅥𝅮 ",
             ]),
         );
 
