@@ -8,15 +8,33 @@ use serde::Deserialize;
 use tokio::process::Command;
 
 pub async fn get_nix_dev_env(flake_dir: &Path) -> color_eyre::Result<NixDevEnv> {
-    // TODO(@hoverbear): Try to enable this somehow. Right now since we don't keep the lock
-    // in a consistent place, we can't reliably pick up a lock generated in online mode.
-    //
-    // If we stored the generated flake/lock in a consistent place this could be enabled.
-    //
-    // if self.offline {
-    //     nix_develop_command.arg("--offline");
-    // }
+    let output = get_raw_nix_dev_env(flake_dir).await?;
 
+    serde_json::from_str(&output).wrap_err(
+        "Unable to parse output produced by `nix print-dev-env` into our desired structure",
+    )
+}
+
+/// The output schema of `nix print-dev-env --json`.
+#[derive(Debug, Clone, Deserialize)]
+pub struct NixDevEnv {
+    variables: HashMap<String, Variable>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(tag = "type", content = "value")]
+pub enum Variable {
+    #[serde(rename = "exported")]
+    Exported(String),
+    #[serde(rename = "var")]
+    Var(String),
+    #[serde(rename = "array")]
+    Array(Vec<String>),
+    #[serde(rename = "associative")]
+    Associative(HashMap<String, String>),
+}
+
+pub async fn get_raw_nix_dev_env(flake_dir: &Path) -> color_eyre::Result<String> {
     let mut nix_command = Command::new("nix");
     nix_command
         .arg("print-dev-env")
@@ -28,6 +46,15 @@ pub async fn get_nix_dev_env(flake_dir: &Path) -> color_eyre::Result<NixDevEnv> 
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit());
     tracing::trace!(command = ?nix_command.as_std(), "Running");
+
+    // TODO(@hoverbear): Try to enable this somehow. Right now since we don't keep the lock
+    // in a consistent place, we can't reliably pick up a lock generated in online mode.
+    //
+    // If we stored the generated flake/lock in a consistent place this could be enabled.
+    //
+    // if self.offline {
+    //     nix_develop_command.arg("--offline");
+    // }
 
     let nix_command_exit = match nix_command
         .spawn()
@@ -56,31 +83,8 @@ pub async fn get_nix_dev_env(flake_dir: &Path) -> color_eyre::Result<NixDevEnv> 
         }
     };
 
-    let output = String::from_utf8(nix_command_exit.stdout)
-        .wrap_err("Output produced by `nix print-dev-env` was not valid UTF8")?;
-
-    serde_json::from_str(&output).wrap_err(
-        "Unable to parse output produced by `nix print-dev-env` into our desired structure",
-    )
-}
-
-/// The output schema of `nix print-dev-env --json`.
-#[derive(Debug, Clone, Deserialize)]
-pub struct NixDevEnv {
-    variables: HashMap<String, Variable>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(tag = "type", content = "value")]
-pub enum Variable {
-    #[serde(rename = "exported")]
-    Exported(String),
-    #[serde(rename = "var")]
-    Var(String),
-    #[serde(rename = "array")]
-    Array(Vec<String>),
-    #[serde(rename = "associative")]
-    Associative(HashMap<String, String>),
+    String::from_utf8(nix_command_exit.stdout)
+        .wrap_err("Output produced by `nix print-dev-env` was not valid UTF8")
 }
 
 pub async fn run_in_dev_env(
