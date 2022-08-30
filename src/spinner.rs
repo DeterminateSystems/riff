@@ -9,8 +9,14 @@ impl SimpleSpinner {
         let spinner = ProgressBar::new_spinner();
         spinner.enable_steady_tick(Duration::from_millis(400));
         spinner.set_style(
-            ProgressStyle::with_template("{msg}{spinner}")?
-            .tick_strings(&["🎸𝄢    ", "🎸𝄢𝅘𝅥𝅯   ", "🎸𝄢𝅘𝅥𝅯𝅘𝅥𝅮  ", "🎸𝄢𝅘𝅥𝅯𝅘𝅥𝅮𝅘𝅥 ", "🎸𝄢𝅘𝅥𝅯𝅘𝅥𝅮𝅘𝅥𝄽", "🎸𝄢    ", ]),
+            ProgressStyle::with_template("{msg}{spinner}")?.tick_strings(&[
+                "🎸𝄢    ",
+                "🎸𝄢𝅘𝅥𝅯   ",
+                "🎸𝄢𝅘𝅥𝅯𝅘𝅥𝅮  ",
+                "🎸𝄢𝅘𝅥𝅯𝅘𝅥𝅮𝅘𝅥 ",
+                "🎸𝄢𝅘𝅥𝅯𝅘𝅥𝅮𝅘𝅥𝄽",
+                "🎸𝄢    ",
+            ]),
         );
 
         if let Some(msg) = msg {
