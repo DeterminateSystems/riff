@@ -69,7 +69,23 @@ async fn main() -> color_eyre::Result<std::process::ExitCode> {
     };
     match args.command {
         Commands::Shell(shell) => Ok(exit_status_to_exit_code(shell.cmd().await?)),
-        Commands::Run(run) => Ok(exit_status_to_exit_code(run.cmd().await?)),
+        Commands::Run(run) => {
+            let code = run.cmd().await?;
+            if let Some(code) = code {
+                if code == 127 {
+                    writeln!(
+                        std::io::stderr(),
+                        "The command you attempted to run was not found.
+Try running it in a shell; for example:
+\t{fsm_run_example}\n",
+                        fsm_run_example =
+                            format!("fsm run -- sh -c '{}'", run.command.join(" ")).cyan(),
+                    )?;
+                }
+            }
+
+            Ok(exit_status_to_exit_code(code))
+        }
     }
 }
 
