@@ -1,7 +1,7 @@
 use crate::FSM_XDG_PREFIX;
+use semver::Version;
 use serde::Deserialize;
 use std::{path::Path, sync::Arc};
-use semver::Version;
 use tokio::{
     fs::OpenOptions,
     io::{AsyncReadExt, AsyncWriteExt},

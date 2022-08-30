@@ -51,7 +51,10 @@ pub async fn generate_flake_from_project_dir(
     // output from the program not to be a scary error, especially when it's neither scary or an
     // error.
     let latest_riff_version = registry.latest_riff_version().await;
-    if *latest_riff_version > semver::Version::parse(env!("CARGO_PKG_VERSION")).wrap_err("Could not parse `riff` version")? {
+    if *latest_riff_version
+        > semver::Version::parse(env!("CARGO_PKG_VERSION"))
+            .wrap_err("Could not parse `riff` version")?
+    {
         eprintln!(
             "📦 A new version of `{riff}` ({latest_riff_version_colored}) is available! {riff_download_url}",
             riff = "riff".cyan(),
