@@ -1,12 +1,8 @@
 //! The `shell` subcommand.
-
 use std::path::PathBuf;
-use std::process::Stdio;
 
 use clap::Args;
 use eyre::WrapErr;
-use owo_colors::OwoColorize;
-use tokio::process::Command;
 
 use crate::flake_generator;
 
@@ -31,56 +27,18 @@ impl Shell {
         )
         .await?;
 
-        let mut nix_develop_command = Command::new("nix");
-        nix_develop_command
-            .arg("develop")
-            .args(&["--extra-experimental-features", "flakes nix-command"])
-            .arg("-L")
-            .arg(format!("path://{}", flake_dir.path().to_str().unwrap()))
-            .stdin(Stdio::inherit())
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit());
+        let dev_env = crate::nix_dev_env::get_nix_dev_env(flake_dir.path()).await?;
 
-        // TODO(@hoverbear): Try to enable this somehow. Right now since we don't keep the lock
-        // in a consistent place, we can't reliably pick up a lock generated in online mode.
-        //
-        // If we stored the generated flake/lock in a consistent place this could be enabled.
-        //
-        // if self.offline {
-        //     nix_develop_command.arg("--offline");
-        // }
+        let shell = crate::nix_dev_env::get_shell().await?;
 
-        tracing::trace!(command = ?nix_develop_command.as_std(), "Running");
-        let nix_develop_exit = match nix_develop_command
+        Ok(crate::nix_dev_env::run_in_dev_env(&dev_env, &shell)
+            .await?
             .spawn()
-            .wrap_err("Failed to spawn `nix develop`")? // This could throw a `EWOULDBLOCK`
+            .wrap_err(format!("Cannot run the shell `{}`", shell))?
             .wait_with_output()
-            .await
-        {
-            Ok(nix_develop_exit) => nix_develop_exit,
-            err @ Err(_) => {
-                let wrapped_err = err
-                    .wrap_err_with(|| {
-                        format!(
-                            "\
-                        Could not execute `{nix_develop}`. Is `{nix}` installed?\n\n\
-                        Get instructions for installing Nix: {nix_install_url}\n\
-                        Underlying error\
-                        ",
-                            nix_develop = "nix develop".cyan(),
-                            nix = "nix".cyan(),
-                            nix_install_url = "https://nixos.org/download.html".blue().underline(),
-                        )
-                    })
-                    .unwrap_err();
-                eprintln!("{wrapped_err:#}");
-                std::process::exit(1);
-            }
-        };
-
-        // At this point we have handed off to the user shell. The next lines run after the user CTRL+D's out.
-
-        Ok(nix_develop_exit.status.code())
+            .await?
+            .status
+            .code())
     }
 }
 
