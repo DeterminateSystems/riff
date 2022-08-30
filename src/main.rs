@@ -66,7 +66,9 @@ async fn main() -> color_eyre::Result<std::process::ExitCode> {
         }
     };
     match args.command {
-        Commands::PrintDevEnv(print_dev_env) => Ok(exit_status_to_exit_code(print_dev_env.cmd().await?)),
+        Commands::PrintDevEnv(print_dev_env) => {
+            Ok(exit_status_to_exit_code(print_dev_env.cmd().await?))
+        }
         Commands::Shell(shell) => Ok(exit_status_to_exit_code(shell.cmd().await?)),
         Commands::Run(run) => Ok(exit_status_to_exit_code(run.cmd().await?)),
     }
