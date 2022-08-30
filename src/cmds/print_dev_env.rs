@@ -23,7 +23,6 @@ pub struct PrintDevEnv {
     disable_telemetry: bool,
     #[clap(from_global)]
     offline: bool,
-    // TODO(@cole-h): support additional nix develop args?
 }
 
 impl PrintDevEnv {

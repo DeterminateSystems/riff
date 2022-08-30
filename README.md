@@ -235,7 +235,7 @@ your local [Nix store], by default under `/nix/store`.
 
 You can add Riff support to Direnv on a project specific or global basis.
 
-On a project specific basis, you can create `.env` with the following:
+On a project specific basis, you can create `.envrc` with the following:
 
 ```bash
 # reload when these files change
@@ -262,7 +262,7 @@ use_riff() {
 Then, in any directory you can enable riff with:
 
 ```bash
-echo "use riff" > .env
+echo "use riff" > .envrc
 ```
 
 ## Privacy policy
