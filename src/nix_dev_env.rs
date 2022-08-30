@@ -153,9 +153,15 @@ pub async fn get_shell() -> color_eyre::Result<String> {
     // Use $SHELL, the user's shell from /etc/passwd, or bash.
     Ok(tokio::task::spawn_blocking(|| {
         std::env::var("SHELL").ok().or_else(|| {
-            etc_passwd::Passwd::current_user()
-                .unwrap_or(None)
-                .and_then(|pw| pw.shell.to_str().ok().map(str::to_owned))
+            #[cfg(target_os = "linux")]
+            {
+                etc_passwd::Passwd::current_user()
+                    .unwrap_or(None)
+                    .and_then(|pw| pw.shell.to_str().ok().map(str::to_owned))
+            }
+
+            #[cfg(not(target_os = "linux"))]
+            None
         })
     })
     .await?
