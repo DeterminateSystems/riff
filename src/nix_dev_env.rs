@@ -135,7 +135,16 @@ pub async fn run_in_dev_env(
         }
     }
 
-    command.env("IN_RIFF", "1");
+    // Increment $IN_RIFF.
+    command.env(
+        "IN_RIFF",
+        (std::env::var("IN_RIFF")
+            .ok()
+            .and_then(|s| s.parse::<u32>().ok())
+            .unwrap_or(0)
+            + 1)
+        .to_string(),
+    );
 
     Ok(command)
 }
