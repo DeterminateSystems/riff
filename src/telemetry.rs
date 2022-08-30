@@ -19,7 +19,7 @@ Determinate Systems uses this ID to know how many people use the tool and to foc
 This ID is completely random and contains no personally identifiable information about you.
 You can delete this file at any time to create a new ID.
 You can also disable ID generation; see the documentation on telemetry to see how to do so.";
-static TELEMETRY_REMOTE_URL: &str = "https://riff-registry.fly.dev/telemetry";
+static TELEMETRY_REMOTE_URL: &str = "https://registry.riff.determinate.systems/telemetry";
 pub static TELEMETRY_HEADER_NAME: &str = "X-RIFF-Client-Info";
 
 #[derive(Debug, Serialize)]

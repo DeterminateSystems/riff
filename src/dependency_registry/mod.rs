@@ -13,7 +13,8 @@ use self::rust::RustDependencyRegistryData;
 
 pub(crate) mod rust;
 
-const DEPENDENCY_REGISTRY_REMOTE_URL: &str = "https://riff-registry.fly.dev/riff-registry.json";
+const DEPENDENCY_REGISTRY_REMOTE_URL: &str =
+    "https://registry.riff.determinate.systems/riff-registry.json";
 const DEPENDENCY_REGISTRY_CACHE_PATH: &str = "registry.json";
 const DEPENDENCY_REGISTRY_FALLBACK: &str = include_str!("../../registry/registry.json");
 
