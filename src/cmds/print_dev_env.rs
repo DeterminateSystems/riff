@@ -11,7 +11,7 @@ use crate::flake_generator;
 
 /// print shell code that can be sourced by bash to reproduce the riff environment
 ///
-/// For example, run `cargo build` inside fsm:
+/// For example, run `cargo build` inside riff:
 ///
 ///     $ eval $(riff print-dev-env)
 #[derive(Debug, Args)]
