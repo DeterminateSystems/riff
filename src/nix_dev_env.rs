@@ -158,7 +158,6 @@ pub async fn get_shell() -> color_eyre::Result<String> {
                 .and_then(|pw| pw.shell.to_str().ok().map(str::to_owned))
         })
     })
-    .await
-    .unwrap()
+    .await?
     .unwrap_or_else(|| "bash".to_owned()))
 }
