@@ -7,7 +7,7 @@ repository = "https://github.com/DeterminateSystems/riff"
 [dependencies]
 atty = "0.2"
 cfg-if = "1"
-clap = { version = "3.2.17", features = ["derive", "env"] }
+clap = { version = "3.2.18", features = ["derive", "env"] }
 color-eyre = { version = "0.6.2", features = [ "issue-url" ] }
 eyre = "0.6.8"
 etc-passwd = "0.2"
