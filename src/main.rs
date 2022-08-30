@@ -3,16 +3,16 @@ mod cmds;
 mod dependency_registry;
 mod dev_env;
 mod flake_generator;
+mod nix_dev_env;
 mod spinner;
 mod telemetry;
 
 use std::error::Error;
-use std::io::Write;
+use std::process::ExitCode;
 
 use atty::Stream;
 use clap::Parser;
 use eyre::WrapErr;
-use owo_colors::OwoColorize;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -37,7 +37,7 @@ struct Cli {
 }
 
 #[tokio::main]
-async fn main() -> color_eyre::Result<()> {
+async fn main() -> color_eyre::Result<std::process::ExitCode> {
     color_eyre::config::HookBuilder::default()
         .issue_url(concat!(env!("CARGO_PKG_REPOSITORY"), "/issues/new"))
         .install()?;
@@ -66,37 +66,16 @@ async fn main() -> color_eyre::Result<()> {
         }
     };
     match args.command {
-        Commands::Shell(shell) => {
-            let code = shell.cmd().await?;
-            if let Some(code) = code {
-                std::process::exit(code);
-            }
-        }
-        Commands::PrintDevEnv(print_dev_env) => {
-            let code = print_dev_env.cmd().await?;
-            if let Some(code) = code {
-                std::process::exit(code);
-            }
-        }
-        Commands::Run(run) => {
-            let code = run.cmd().await?;
-            if let Some(code) = code {
-                if code == 127 {
-                    writeln!(
-                        std::io::stderr(),
-                        "The command you attempted to run was not found.
-Try running it in a shell; for example:
-\t{fsm_run_example}\n",
-                        fsm_run_example =
-                            format!("fsm run -- sh -c '{}'", run.command.join(" ")).cyan(),
-                    )?;
-                }
+        Commands::PrintDevEnv(print_dev_env) => Ok(exit_status_to_exit_code(print_dev_env.cmd().await?)),
+        Commands::Shell(shell) => Ok(exit_status_to_exit_code(shell.cmd().await?)),
+        Commands::Run(run) => Ok(exit_status_to_exit_code(run.cmd().await?)),
+    }
+}
 
-                std::process::exit(code);
-            }
-        }
-    };
-    Ok(())
+fn exit_status_to_exit_code(status: Option<i32>) -> ExitCode {
+    status
+        .map(|x| (x as u8).into())
+        .unwrap_or(ExitCode::SUCCESS)
 }
 
 #[tracing::instrument]

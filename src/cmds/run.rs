@@ -1,11 +1,10 @@
 //! The `run` subcommand.
 
-use std::{path::PathBuf, process::Stdio};
+use std::path::PathBuf;
 
 use clap::Args;
 use eyre::WrapErr;
 use owo_colors::OwoColorize;
-use tokio::process::Command;
 
 use crate::flake_generator;
 
@@ -42,56 +41,33 @@ impl Run {
         )
         .await?;
 
-        let mut nix_develop_command = Command::new("nix");
-        nix_develop_command
-            .arg("develop")
-            .args(&["--extra-experimental-features", "flakes nix-command"])
-            .arg("-L")
-            .arg(format!("path://{}", flake_dir.path().to_str().unwrap()))
-            .arg("-c")
-            .args(self.command.clone())
-            .stdin(Stdio::inherit())
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit());
+        let dev_env = crate::nix_dev_env::get_nix_dev_env(flake_dir.path()).await?;
 
-        // TODO(@hoverbear): Try to enable this somehow. Right now since we don't keep the lock
-        // in a consistent place, we can't reliably pick up a lock generated in online mode.
-        //
-        // If we stored the generated flake/lock in a consistent place this could be enabled.
-        //
-        // if self.offline {
-        //     nix_develop_command.arg("--offline");
-        // }
+        let command_name = &self.command[0];
 
-        tracing::trace!(command = ?nix_develop_command.as_std(), "Running");
-        let nix_develop_exit = match nix_develop_command
+        let mut command = crate::nix_dev_env::run_in_dev_env(&dev_env, command_name).await?;
+
+        command.args(&self.command[1..]);
+
+        Ok(command
             .spawn()
-            .wrap_err("Failed to spawn `nix develop`")?
+            .map_err(|err| {
+                if err.kind() == std::io::ErrorKind::NotFound {
+                    eprintln!(
+                        "The command you attempted to run was not found.
+Try running it in a shell; for example:
+\t{fsm_run_example}\n",
+                        fsm_run_example =
+                            format!("fsm run -- sh -c '{}'", self.command.join(" ")).cyan(),
+                    );
+                };
+                err
+            })
+            .wrap_err(format!("Cannot run the command `{}`", command_name))?
             .wait_with_output()
-            .await
-        {
-            Ok(nix_develop_exit) => nix_develop_exit,
-            err @ Err(_) => {
-                let wrapped_err = err
-                    .wrap_err_with(|| {
-                        format!(
-                            "\
-                        Could not execute `{nix_develop}`. Is `{nix}` installed?\n\n\
-                        Get instructions for installing Nix: {nix_install_url}\n\
-                        Underlying error\
-                        ",
-                            nix_develop = "nix develop".cyan(),
-                            nix = "nix".cyan(),
-                            nix_install_url = "https://nixos.org/download.html".blue().underline(),
-                        )
-                    })
-                    .unwrap_err();
-                eprintln!("{wrapped_err:#}");
-                std::process::exit(1);
-            }
-        };
-
-        Ok(nix_develop_exit.status.code())
+            .await?
+            .status
+            .code())
     }
 }
 

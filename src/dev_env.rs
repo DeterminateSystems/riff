@@ -132,9 +132,9 @@ impl DevEnvironment {
             ));
         }
 
-        let cargo_metdata_output = std::str::from_utf8(&cargo_metadata_output.stdout)
+        let cargo_metadata_output = std::str::from_utf8(&cargo_metadata_output.stdout)
             .wrap_err("Output produced by `cargo metadata` was not valid UTF8")?;
-        let metadata: CargoMetadata = serde_json::from_str(cargo_metdata_output).wrap_err(
+        let metadata: CargoMetadata = serde_json::from_str(cargo_metadata_output).wrap_err(
             "Unable to parse output produced by `cargo metadata` into our desired structure",
         )?;
 
