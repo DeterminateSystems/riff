@@ -11,7 +11,7 @@ use tokio::{
 };
 use uuid::Uuid;
 
-use crate::{cmds::Commands, dev_env::DetectedLanguage, Cli, FSM_XDG_PREFIX};
+use crate::{cmds::Commands, dev_env::DetectedLanguage, Cli, RIFF_XDG_PREFIX};
 
 static TELEMETRY_DISTINCT_ID_PATH: &str = "distinct_id";
 static TELEMETRY_IDENTIFIER_DESCRIPTION: &str =  "This is a randomly generated version 4 UUID.
@@ -19,12 +19,12 @@ Determinate Systems uses this ID to know how many people use the tool and to foc
 This ID is completely random and contains no personally identifiable information about you.
 You can delete this file at any time to create a new ID.
 You can also disable ID generation; see the documentation on telemetry to see how to do so.";
-static TELEMETRY_REMOTE_URL: &str = "https://fsm-server.fly.dev/telemetry";
-pub static TELEMETRY_HEADER_NAME: &str = "X-FSM-Client-Info";
+static TELEMETRY_REMOTE_URL: &str = "https://registry.riff.determinate.systems/telemetry";
+pub static TELEMETRY_HEADER_NAME: &str = "X-RIFF-Client-Info";
 
 #[derive(Debug, Serialize)]
 pub(crate) struct Telemetry {
-    /// Stored in `$XDG_DATA_HOME/fsm/distinct_id` as a UUIDv4
+    /// Stored in `$XDG_DATA_HOME/riff/distinct_id` as a UUIDv4
     distinct_id: Option<Uuid>,
     system_os: String,
     system_arch: String,
@@ -32,13 +32,13 @@ pub(crate) struct Telemetry {
     os_release_name: Option<String>,
     /// `VERSION_ID` from `/etc/os-release`
     os_release_version_id: Option<String>,
-    /// The `CARGO_PKG_VERSION` from an `fsm` build
-    fsm_version: String,
+    /// The `CARGO_PKG_VERSION` from a `riff` build
+    riff_version: String,
     /// The version output of `nix --version`
     nix_version: Option<String>,
     /// If the exit code of `test -t 0` is 0, then this is true, otherwise false
     is_tty: bool,
-    /// The command given to fsm (eg "shell")
+    /// The command given to riff (eg "shell")
     subcommand: Option<String>,
     detected_languages: HashSet<DetectedLanguage>,
 }
@@ -55,7 +55,7 @@ impl Telemetry {
 
         let system_os = std::env::consts::OS.to_string();
         let system_arch = std::env::consts::ARCH.to_string();
-        let fsm_version = env!("CARGO_PKG_VERSION").to_string();
+        let riff_version = env!("CARGO_PKG_VERSION").to_string();
         let nix_version = match nix_version().await {
             Ok(nix_version) => nix_version,
             Err(err) => {
@@ -83,7 +83,7 @@ impl Telemetry {
             system_arch,
             os_release_name: os_release.as_ref().map(|x| x.name.clone()),
             os_release_version_id: os_release.as_ref().map(|x| x.version_id.clone()),
-            fsm_version,
+            riff_version,
             nix_version,
             is_tty,
             subcommand,
@@ -133,7 +133,7 @@ impl Telemetry {
 }
 
 async fn distinct_id() -> eyre::Result<Uuid> {
-    let xdg_dirs = xdg::BaseDirectories::with_prefix(FSM_XDG_PREFIX)?;
+    let xdg_dirs = xdg::BaseDirectories::with_prefix(RIFF_XDG_PREFIX)?;
     let distinct_id_path = xdg_dirs.place_config_file(Path::new(TELEMETRY_DISTINCT_ID_PATH))?;
 
     let mut distinct_id_file = OpenOptions::new()

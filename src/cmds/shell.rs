@@ -64,15 +64,15 @@ mod tests {
             temp_dir.path().join("Cargo.toml"),
             r#"
 [package]
-name = "fsm-test"
+name = "riff-test"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "fsm_test"
+name = "riff_test"
 path = "lib.rs"
 
-[package.metadata.fsm.environment-variables]
+[package.metadata.riff.environment-variables]
 shellHook = "exit 6"
 
 [dependencies]

@@ -8,31 +8,33 @@ mod spinner;
 mod telemetry;
 
 use std::error::Error;
+use std::io::Write;
 use std::process::ExitCode;
 
 use atty::Stream;
 use clap::Parser;
 use eyre::WrapErr;
+use owo_colors::OwoColorize;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 use cmds::Commands;
 use telemetry::Telemetry;
 
-const FSM_XDG_PREFIX: &str = "fsm";
+const RIFF_XDG_PREFIX: &str = "riff";
 
 #[derive(Debug, Parser)]
-#[clap(name = "fsm")]
+#[clap(name = "riff")]
 #[clap(about = "Automatically set up build environments using Nix", long_about = None)]
 struct Cli {
     #[clap(subcommand)]
     command: Commands,
     /// Turn off user telemetry ping
-    #[clap(long, global = true, env = "FSM_DISABLE_TELEMETRY")]
+    #[clap(long, global = true, env = "RIFF_DISABLE_TELEMETRY")]
     disable_telemetry: bool,
     /// Disable all network usage except `nix develop`
     // TODO(@hoverbear): Can we disable that, too?
-    #[clap(long, global = true, env = "FSM_OFFLINE")]
+    #[clap(long, global = true, env = "RIFF_OFFLINE")]
     offline: bool,
 }
 
@@ -49,8 +51,8 @@ async fn main() -> color_eyre::Result<std::process::ExitCode> {
     let args = match maybe_args {
         Ok(args) => args,
         Err(e) => {
-            let telemetry_ok_via_env = match std::env::var("FSM_DISABLE_TELEMETRY")
-                .or_else(|_| std::env::var("FSM_OFFLINE"))
+            let telemetry_ok_via_env = match std::env::var("RIFF_DISABLE_TELEMETRY")
+                .or_else(|_| std::env::var("RIFF_OFFLINE"))
             {
                 Ok(val) if val == "false" || val == "0" || val.is_empty() => true,
                 Err(_) => true,
@@ -70,7 +72,23 @@ async fn main() -> color_eyre::Result<std::process::ExitCode> {
             Ok(exit_status_to_exit_code(print_dev_env.cmd().await?))
         }
         Commands::Shell(shell) => Ok(exit_status_to_exit_code(shell.cmd().await?)),
-        Commands::Run(run) => Ok(exit_status_to_exit_code(run.cmd().await?)),
+        Commands::Run(run) => {
+            let code = run.cmd().await?;
+            if let Some(code) = code {
+                if code == 127 {
+                    writeln!(
+                        std::io::stderr(),
+                        "The command you attempted to run was not found.
+Try running it in a shell; for example:
+\t{riff_run_example}\n",
+                        riff_run_example =
+                            format!("riff run -- sh -c '{}'", run.command.join(" ")).cyan(),
+                    )?;
+                }
+            }
+
+            Ok(exit_status_to_exit_code(code))
+        }
     }
 }
 
