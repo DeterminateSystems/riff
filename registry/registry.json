@@ -180,7 +180,19 @@
         "openssl-sys": {
           "build-inputs": [
             "openssl"
-          ]
+          ],
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Security"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Security"
+              ]
+            }
+          }
         },
         "pango-sys": {
           "build-inputs": [
