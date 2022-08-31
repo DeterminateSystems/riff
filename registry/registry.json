@@ -279,6 +279,20 @@
             "spirv-tools"
           ]
         },
+        "sqlx-macros": {
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.SystemConfiguration"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.SystemConfiguration"
+              ]
+            }
+          }
+        },
         "wayland-sys": {
           "build-inputs": [
             "wayland"
