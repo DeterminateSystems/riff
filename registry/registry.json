@@ -57,7 +57,19 @@
         "curl-sys": {
           "build-inputs": [
             "curl"
-          ]
+          ],
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.SystemConfiguration"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.SystemConfiguration"
+              ]
+            }
+          }
         },
         "egl": {
           "build-inputs": [
