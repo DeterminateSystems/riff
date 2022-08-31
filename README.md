@@ -8,7 +8,7 @@ dependencies installed, run this at the project root:
 riff shell
 ```
 
-You can also directly run commands as if the shell environment were in place:
+You can also directly run commands inside the shell enviroment:
 
 ```shell
 riff run cargo build
