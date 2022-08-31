@@ -119,7 +119,8 @@ necessary by adding a `riff` block to the `package.metadata` block in your
   ensure that your dev shell works as expected.
 
 Both `build-inputs` and `runtime-inputs` can be any packages available in
-[Nixpkgs].
+[Nixpkgs]. You may find this particularly useful for [`build.rs`
+scripts][build.rs].
 
 Here's an example `Cargo.toml` with an explicitly supplied Riff configuration:
 
@@ -305,6 +306,7 @@ riff shell --disable-telemetry
 RIFF_DISABLE_TELEMETRY=true riff run cargo build
 ```
 
+[build.rs]: https://doc.rust-lang.org/cargo/reference/build-scripts.html
 [cargo]: https://doc.rust-lang.org/cargo
 [cargo-toml]: https://doc.rust-lang.org/cargo/reference/manifest.html
 [coreservices]: https://developer.apple.com/documentation/coreservices
