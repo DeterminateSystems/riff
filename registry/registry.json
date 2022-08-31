@@ -223,6 +223,11 @@
             "cmake"
           ]
         },
+        "prost-build": {
+          "build-inputs": [
+            "protobuf"
+          ]
+        },
         "protoc-rust": {
           "build-inputs": [
             "protobuf"
