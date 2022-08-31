@@ -25,10 +25,10 @@
 	#g267 { visibility:hidden; }
 }
 html[data-color-mode="dark"] #g1695 {
-	visibility: hidden;
+	visibility: hidden !important;
 }
 html[data-color-mode="light"] #g267 {
-	visibility: hidden;
+	visibility: hidden !important;
 }
 </style>
   <sodipodi:namedview
