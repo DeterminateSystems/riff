@@ -1,6 +1,7 @@
 # Riff
 
-<img src="./img/logo/riff-dynamic.svg">
+![logo-light](img/logos/riff-white.svg#gh-light-mode-only)
+![logo-dark](img/logos/riff-black.svg#gh-dark-mode-only)
 
 **Riff** is a tool that automatically provides external dependencies[^1] for
 software projects. To enter a shell environment with all your project's external
