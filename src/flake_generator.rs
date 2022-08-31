@@ -54,7 +54,7 @@ pub async fn generate_flake_from_project_dir(
     // We don't want to error anywhere here
     if latest_riff_version
         .as_ref()
-        .and_then(|v| semver::Version::parse(&v).ok())
+        .and_then(|v| semver::Version::parse(v).ok())
         .and_then(|registry_version| {
             semver::Version::parse(env!("CARGO_PKG_VERSION"))
                 .ok()
