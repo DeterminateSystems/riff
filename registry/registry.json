@@ -232,6 +232,20 @@
             "cyrus_sasl"
           ]
         },
+        "security-framework-sys": {
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Security"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Security"
+              ]
+            }
+          }
+        },
         "servo-fontconfig-sys": {
           "build-inputs": [
             "fontconfig"
