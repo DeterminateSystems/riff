@@ -223,6 +223,11 @@
             "cmake"
           ]
         },
+        "protoc-rust": {
+          "build-inputs": [
+            "protobuf"
+          ]
+        },
         "pyo3-build-config": {
           "build-inputs": [
             "python3"
