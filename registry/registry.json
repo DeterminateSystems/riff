@@ -173,6 +173,20 @@
             "pango"
           ]
         },
+        "pathos": {
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Foundation"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Foundation"
+              ]
+            }
+          }
+        },
         "pkg-config": {
           "build-inputs": [
             "pkg-config"
