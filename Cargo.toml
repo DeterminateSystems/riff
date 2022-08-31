@@ -4,10 +4,20 @@ version = "0.0.0-unreleased"
 edition = "2021"
 repository = "https://github.com/DeterminateSystems/riff"
 
+[package.metadata.riff.targets.aarch64-apple-darwin]
+build-inputs = [
+  "darwin.apple_sdk.frameworks.Security"
+]
+
+[package.metadata.riff.targets.x86_64-apple-darwin]
+build-inputs = [
+  "darwin.apple_sdk.frameworks.Security"
+]
+
 [dependencies]
 atty = "0.2"
 cfg-if = "1"
-clap = { version = "3.2.17", features = ["derive", "env"] }
+clap = { version = "3.2.19", features = ["derive", "env"] }
 color-eyre = { version = "0.6.2", features = [ "issue-url" ] }
 eyre = "0.6.8"
 indicatif = "0.17.0"
@@ -21,13 +31,16 @@ serde = { version = "1.0.143", features = ["derive"] }
 serde_json = "1.0.85"
 target-lexicon = "0.12.4"
 tempfile = "3.3"
-thiserror = "1.0.32"
+thiserror = "1.0.33"
 tokio = { version = "1.20.1", features = ["macros", "sync", "rt-multi-thread", "process", "fs", "io-util"] }
 tracing = "0.1.36"
 tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.15", features = ["env-filter"] }
 uuid = { version = "1.1.2", features = [ "v4", "fast-rng", "serde" ]}
 xdg = "2"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+etc-passwd = "0.2"
 
 [dev-dependencies]
 tokio-test = "0.4.2"

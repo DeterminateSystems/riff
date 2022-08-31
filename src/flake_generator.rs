@@ -33,11 +33,11 @@ pub async fn generate_flake_from_project_dir(
                 .wrap_err_with(|| {
                     format!(
                         "\
-                            `{colored_project_dir}` doesn't contain a project recognized by FSM.\n\
-                            Try running `{fsm_shell}` in a Rust project directory.\
+                            `{colored_project_dir}` doesn't contain a project recognized by Riff.\n\
+                            Try running `{riff_shell}` in a Rust project directory.\
                     ",
                         colored_project_dir = &project_dir.display().to_string().green(),
-                        fsm_shell = "fsm shell".cyan(),
+                        riff_shell = "riff shell".cyan(),
                     )
                 })
                 .unwrap_err();
@@ -159,12 +159,12 @@ mod tests {
             temp_dir.path().join("Cargo.toml"),
             r#"
 [package]
-name = "fsm-test"
+name = "riff-test"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "fsm_test"
+name = "riff_test"
 path = "lib.rs"
 
 [dependencies]

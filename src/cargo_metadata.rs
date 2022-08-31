@@ -8,10 +8,10 @@ pub struct CargoMetadata {
 #[derive(serde::Deserialize)]
 pub struct CargoMetadataPackage {
     pub name: String,
-    pub metadata: Option<FsmMetadata>,
+    pub metadata: Option<RiffMetadata>,
 }
 
 #[derive(serde::Deserialize)]
-pub struct FsmMetadata {
-    pub fsm: Option<RustDependencyData>,
+pub struct RiffMetadata {
+    pub riff: Option<RustDependencyData>,
 }

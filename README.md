@@ -18,6 +18,8 @@ Riff currently supports [Rust] with support for other languages coming soon. It
 uses the [Nix] package manager to handle dependencies but doesn't require you to
 know or use Nix.
 
+> For a video demo of Riff in action, see [below](#video-demo).
+
 ## Requirements
 
 To use Riff, you need to install these binaries on your system:
@@ -230,6 +232,56 @@ This diagram provides a basic visual description of that process:
 
 Because Riff uses Nix, all of the dependencies that it installs are stored in
 your local [Nix store], by default under `/nix/store`.
+
+## Video demo
+
+You can see a video demo of Riff in action here (click on the image for a
+larger version):
+
+<p align="center">
+  <img src="./img/riff-demo.gif"
+      alt="Asciicast video demo of Riff with preview image"
+      style="width:80%;" />
+</p>
+
+In the video, running `cargo build` in the [Prost] project fails due to missing
+external dependencies. But running `riff run cargo build` succeeds because Riff
+is able to infer which external dependencies are missing and provide them in the
+background using Nix.
+
+## Direnv Integration
+
+You can add Riff support to Direnv on a project specific or global basis.
+
+On a project specific basis, you can create `.envrc` with the following:
+
+```bash
+# reload when these files change
+watch_file Cargo.toml
+watch_file Cargo.lock
+# add any other files you might want to trigger a riff reload
+# load the riff dev env
+eval "$(riff print-dev-env)"
+```
+
+Enable Riff support globally by creating `~/.config/direnv/lib/riff.sh` and
+adding the following contents:
+
+```bash
+use_riff() {
+  # reload when these files change
+  watch_file Cargo.toml
+  watch_file Cargo.lock
+  # load the riff dev env
+  eval "$(riff print-dev-env)"
+}
+```
+
+Then, in any directory you can enable riff with:
+
+```bash
+echo "use riff" > .envrc
+```
 
 ## Privacy policy
 

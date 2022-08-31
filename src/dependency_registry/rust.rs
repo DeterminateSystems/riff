@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::dev_env::{DevEnvironment, DevEnvironmentAppliable};
 
-/// A language specific registry of dependencies to fsm settings
+/// A language specific registry of dependencies to riff settings
 #[derive(Deserialize, Default, Clone, Debug)]
 pub struct RustDependencyRegistryData {
     /// Settings which are needed for every instance of this language (Eg `cargo` for Rust)
@@ -76,7 +76,7 @@ impl DevEnvironmentAppliable for RustDependencyData {
     }
 }
 
-/// Dependency specific information needed for fsm
+/// Dependency specific information needed for riff
 #[derive(Deserialize, Default, Clone, Debug)]
 pub struct RustDependencyTargetData {
     /// The Nix `buildInputs` needed
