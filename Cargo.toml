@@ -4,6 +4,16 @@ version = "0.1.0"
 edition = "2021"
 repository = "https://github.com/DeterminateSystems/riff"
 
+[package.metadata.riff.targets.aarch64-apple-darwin]
+build-inputs = [
+  "darwin.apple_sdk.frameworks.Security"
+]
+
+[package.metadata.riff.targets.x86_64-apple-darwin]
+build-inputs = [
+  "darwin.apple_sdk.frameworks.Security"
+]
+
 [dependencies]
 atty = "0.2"
 cfg-if = "1"
