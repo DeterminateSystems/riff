@@ -121,7 +121,7 @@ necessary by adding a `riff` block to the `package.metadata` block in your
 Both `build-inputs` and `runtime-inputs` can be any packages available in
 [Nixpkgs].
 
-Here's an example `Cargo.toml` with explicitly supplied Riff configuration:
+Here's an example `Cargo.toml` with an explicitly supplied Riff configuration:
 
 ```toml
 [package]
@@ -146,10 +146,11 @@ When you run `riff shell` in this project, Riff
   path
 * sets the `HI` environment variable to have a value of `BYE`
 
-### Target specific dependencies
+### Target-specific dependencies
 
-If a project has OS, architecture, or vendor specific dependencies, you can
-configure the metadata of `riff` like so:
+If a project has OS-, architecture-, or vendor-specific dependencies, you can
+define them in a `targets` block under `package.metadata.riff`. Here's an example
+for Apple M1 (`aarch64-apple-darwin`) systems:
 
 ```toml
 [package.metadata.riff.targets.aarch64-apple-darwin]
@@ -159,23 +160,21 @@ build-inputs = [
 ]
 ```
 
-The Rust project maintains [a list of well-known targets
-](https://doc.rust-lang.org/nightly/rustc/platform-support.html)
-which can also be accessed via `nix run nixpkgs#rustup target list`. This
+The Rust project maintains [a list of well-known targets][targets]
+that you can view by running `nix run nixpkgs#rustup target list`. This
 field can also contain custom targets, such as `riscv32imac-unknown-xous-elf`,
-though `riff` makes no efforts to support cross compiling at this time.
+although `riff` makes no effort to support cross compiling at this time.
 
-When target specific dependencies are present, the `build-inputs` and
-`runtime-inputs` sections are **unioned** (joined), while the target specific
-environment variables **override** default environment variables.
+When target-specific dependencies are present, the `build-inputs` and
+`runtime-inputs` sections are *unioned* (joined), while the target-specific
+environment variables *override* default environment variables.
 
 #### macOS framework dependencies
 
-macOS users may encounter issues with 'framework dependencies', such as
-[`Foundation`][foundation], [`CoreServices`][coreservices], and
-[`Security`][security].
-
-You may encounter error messages like this:
+macOS users may encounter issues with so-called "framework" dependencies, such
+as [`Foundation`][foundation], [`CoreServices`][coreservices], and
+[`Security`][security]. When these dependencies are missing, you may see error
+messages like this:
 
 ```
 = note: ld: framework not found CoreFoundation
@@ -325,6 +324,7 @@ RIFF_DISABLE_TELEMETRY=true riff run cargo build
 [rust]: https://rust-lang.org
 [rust-install]: https://www.rust-lang.org/tools/install
 [security]: https://developer.apple.com/documentation/security
+[targets]: https://doc.rust-lang.org/nightly/rustc/platform-support.html
 [telemetry]: ./src/telemetry.rs
 
 [^1]: We define **external** dependencies as those that are written in another
