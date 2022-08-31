@@ -1,4 +1,4 @@
-# Riff
+# Riff 🎸🎶
 
 **Riff** is a tool that automatically provides external dependencies[^1] for
 software projects. To enter a shell environment with all your project's external
@@ -28,10 +28,6 @@ To use Riff, you need to install these binaries on your system:
 * [`cargo`][rust-install]
 
 ## Installation
-
-TODO: download the statically linked binary
-
-### Via Nix
 
 To install Riff using Nix (make sure to have [flakes] enabled):
 
@@ -251,9 +247,8 @@ background using Nix.
 
 ## Direnv Integration
 
-You can add Riff support to Direnv on a project specific or global basis.
-
-On a project specific basis, you can create `.envrc` with the following:
+You can add Riff support to Direnv on a project-specific or global basis. To
+enable Riff in a project, create a `.envrc` file that contains this:
 
 ```bash
 # reload when these files change
@@ -264,24 +259,30 @@ watch_file Cargo.lock
 eval "$(riff print-dev-env)"
 ```
 
-Enable Riff support globally by creating `~/.config/direnv/lib/riff.sh` and
-adding the following contents:
+You can enable Riff support globally by either adding a `use_riff` function
+either to your `~/.config/direnv/direnvrc` file or a new
+`~/.config/direnv/lib/riff.sh` file. The `use_riff` function should look something
+like this:
 
 ```bash
 use_riff() {
   # reload when these files change
   watch_file Cargo.toml
   watch_file Cargo.lock
-  # load the riff dev env
+  # load the riff development environment
   eval "$(riff print-dev-env)"
 }
 ```
 
-Then, in any directory you can enable riff with:
+With Direnv now aware of this function, you can enable Riff in any directory
+with:
 
 ```bash
 echo "use riff" > .envrc
 ```
+
+When you run `direnv allow` you will automatically enter the Riff shell every
+time you navigate to the directory.
 
 ## Privacy policy
 
@@ -298,7 +299,10 @@ To disable telemetry on any Riff command invocation, you can either
 Here are some examples:
 
 ```shell
+# Via flag
 riff shell --disable-telemetry
+
+# Via environment variable
 RIFF_DISABLE_TELEMETRY=true riff run cargo build
 ```
 
