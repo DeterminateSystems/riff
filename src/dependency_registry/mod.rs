@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-use crate::FSM_XDG_PREFIX;
 use semver::Version;
-=======
 use crate::RIFF_XDG_PREFIX;
->>>>>>> main
 use serde::Deserialize;
 use std::{path::Path, sync::Arc};
 use tokio::{
