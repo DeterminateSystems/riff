@@ -15,6 +15,7 @@ impl SimpleSpinner {
         spinner.enable_steady_tick(Duration::from_millis(260));
         spinner.set_style(
             ProgressStyle::with_template("{msg}{spinner}")?.tick_strings(&[
+                // "Play" the quarter note for a whole 115bpm beat
                 &([LEADER, DRUM, QUARTER_NOTE].into_iter().collect::<String>()),
                 &([LEADER, DRUM, QUARTER_NOTE].into_iter().collect::<String>()),
                 &([LEADER, DRUM, QUARTER_NOTE, EIGHTH_NOTE]
@@ -23,6 +24,7 @@ impl SimpleSpinner {
                 &([LEADER, DRUM, QUARTER_NOTE, EIGHTH_NOTE, EIGHTH_NOTE]
                     .into_iter()
                     .collect::<String>()),
+                // indicatif appears to swallow this next frame, so ...
                 &([LEADER, DRUM, QUARTER_NOTE, EIGHTH_NOTE, EIGHTH_NOTE]
                     .into_iter()
                     .collect::<String>()),

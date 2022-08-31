@@ -41,6 +41,14 @@ impl Run {
         )
         .await?;
 
+        let spinner =
+            crate::spinner::SimpleSpinner::new_with_message(Some("Running `nix flake lock`"))
+                .context("Failed to construct progress spinner")?;
+
+        std::thread::sleep(std::time::Duration::from_millis(10000));
+
+        spinner.finish_and_clear();
+
         let dev_env = crate::nix_dev_env::get_nix_dev_env(flake_dir.path()).await?;
 
         let command_name = &self.command[0];
