@@ -228,6 +228,11 @@
             "protobuf"
           ]
         },
+        "protobuf-build": {
+          "build-inputs": [
+            "protobuf"
+          ]
+        },
         "protoc-rust": {
           "build-inputs": [
             "protobuf"
