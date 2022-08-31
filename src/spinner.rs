@@ -24,7 +24,8 @@ impl SimpleSpinner {
                 &([LEADER, DRUM, QUARTER_NOTE, EIGHTH_NOTE, EIGHTH_NOTE]
                     .into_iter()
                     .collect::<String>()),
-                // indicatif appears to swallow this next frame, so ...
+                // indicatif appears to swallow this next frame.
+                // see: https://github.com/console-rs/indicatif/issues/477
                 &([LEADER, DRUM, QUARTER_NOTE, EIGHTH_NOTE, EIGHTH_NOTE]
                     .into_iter()
                     .collect::<String>()),
