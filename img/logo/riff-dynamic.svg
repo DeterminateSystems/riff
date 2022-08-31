@@ -24,6 +24,12 @@
 @media (prefers-color-scheme: light) {
 	#g267 { visibility:hidden; }
 }
+html[data-color-mode="dark"] #g1695 {
+	visibility: hidden;
+}
+html[data-color-mode="light"] #g267 {
+	visibility: hidden;
+}
 </style>
   <sodipodi:namedview
      id="namedview123"
