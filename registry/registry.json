@@ -298,6 +298,22 @@
             }
           }
         },
+        "sysinfo": {
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.DiskArbitration",
+                "darwin.apple_sdk.frameworks.Foundation"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.DiskArbitration",
+                "darwin.apple_sdk.frameworks.Foundation"
+              ]
+            }
+          }
+        },
         "wayland-sys": {
           "build-inputs": [
             "wayland"
