@@ -52,16 +52,21 @@ pub async fn generate_flake_from_project_dir(
     // error.
     let latest_riff_version = registry.latest_riff_version().await;
     // We don't want to error anywhere here
-    if latest_riff_version.as_ref().and_then(|v| semver::Version::parse(&v).ok())
-        .and_then(|registry_version| semver::Version::parse(env!("CARGO_PKG_VERSION")).ok()
-            .map(|current_version| registry_version > current_version)
-        ).unwrap_or(false)
+    if latest_riff_version
+        .as_ref()
+        .and_then(|v| semver::Version::parse(&v).ok())
+        .and_then(|registry_version| {
+            semver::Version::parse(env!("CARGO_PKG_VERSION"))
+                .ok()
+                .map(|current_version| registry_version > current_version)
+        })
+        .unwrap_or(false)
     {
         eprintln!(
             "📦 A new version of `{riff}` ({latest_riff_version_colored}) is available! {riff_download_url}",
             riff = "riff".cyan(),
             latest_riff_version_colored = latest_riff_version.as_ref().cloned().unwrap_or_else(|| "unknown".to_string()).yellow(),
-            riff_download_url = "https://riff.determinate.systems/download".blue().underline(),
+            riff_download_url = "https://github.com/DeterminateSystems/riff/releases".blue().underline(),
         );
     }
 
