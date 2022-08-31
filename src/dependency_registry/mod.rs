@@ -1,4 +1,3 @@
-use semver::Version;
 use crate::RIFF_XDG_PREFIX;
 use serde::Deserialize;
 use std::{path::Path, sync::Arc};
@@ -163,7 +162,7 @@ impl DependencyRegistry {
         RwLockReadGuard::map(self.data.read().await, |v| &v.language)
     }
 
-    pub async fn latest_riff_version(&self) -> RwLockReadGuard<Version> {
+    pub async fn latest_riff_version(&self) -> RwLockReadGuard<Option<String>> {
         RwLockReadGuard::map(self.data.read().await, |v| &v.latest_riff_version)
     }
 }
@@ -181,7 +180,7 @@ impl Clone for DependencyRegistry {
 /// A registry of known mappings from language specific dependencies to riff settings
 #[derive(Deserialize, Clone, Debug)]
 pub struct DependencyRegistryData {
-    pub(crate) latest_riff_version: Version,
+    pub(crate) latest_riff_version: Option<String>,
     pub(crate) version: usize, // Checked for ABI compat
     pub(crate) language: DependencyRegistryLanguageData,
 }
