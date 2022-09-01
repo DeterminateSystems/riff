@@ -191,9 +191,18 @@
           ]
         },
         "libudev-sys": {
-          "build-inputs": [
-            "eudev"
-          ]
+          "targets": {
+            "aarch64-linux-unknown-gnu": {
+              "build-inputs": [
+                "eudev"
+              ]
+            },
+            "x86_64-linux-unknown-gnu": {
+              "build-inputs": [
+                "eudev"
+              ]
+            }
+          }
         },
         "libusb1-sys": {
           "build-inputs": [
