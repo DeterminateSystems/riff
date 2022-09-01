@@ -17,7 +17,10 @@
         default = with pkgs;
           stdenv.mkDerivation {{
             name = "riff-shell";
-            buildInputs = [ {build_inputs} ] ++ lib.optionals (stdenv.isDarwin) [
+            buildInputs = [
+              bashInteractive
+              {build_inputs}
+            ] ++ lib.optionals (stdenv.isDarwin) [
               libiconv
             ];
 

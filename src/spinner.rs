@@ -2,20 +2,33 @@ use std::time::Duration;
 
 use indicatif::{ProgressBar, ProgressStyle};
 
+const LEADER: char = ' ';
+const DRUM: char = '🥁';
+const QUARTER_NOTE: char = '♩';
+const EIGHTH_NOTE: char = '♪';
+
 pub struct SimpleSpinner;
 
 impl SimpleSpinner {
     pub fn new_with_message(msg: Option<&str>) -> color_eyre::Result<ProgressBar> {
         let spinner = ProgressBar::new_spinner();
-        spinner.enable_steady_tick(Duration::from_millis(400));
+        spinner.enable_steady_tick(Duration::from_millis(260));
         spinner.set_style(
             ProgressStyle::with_template("{msg}{spinner}")?.tick_strings(&[
-                "🎸𝄢    ",
-                "🎸𝄢𝅘𝅥𝅯   ",
-                "🎸𝄢𝅘𝅥𝅯𝅘𝅥𝅮  ",
-                "🎸𝄢𝅘𝅥𝅯𝅘𝅥𝅮𝅘𝅥 ",
-                "🎸𝄢𝅘𝅥𝅯𝅘𝅥𝅮𝅘𝅥𝄽",
-                "🎸𝄢    ",
+                // "Play" the quarter note for a whole 115bpm beat
+                &([LEADER, DRUM, QUARTER_NOTE].into_iter().collect::<String>()),
+                &([LEADER, DRUM, QUARTER_NOTE].into_iter().collect::<String>()),
+                &([LEADER, DRUM, QUARTER_NOTE, EIGHTH_NOTE]
+                    .into_iter()
+                    .collect::<String>()),
+                &([LEADER, DRUM, QUARTER_NOTE, EIGHTH_NOTE, EIGHTH_NOTE]
+                    .into_iter()
+                    .collect::<String>()),
+                // indicatif appears to swallow the previous frame.
+                // see: https://github.com/console-rs/indicatif/issues/477
+                &([LEADER, DRUM, QUARTER_NOTE, EIGHTH_NOTE, EIGHTH_NOTE]
+                    .into_iter()
+                    .collect::<String>()),
             ]),
         );
 

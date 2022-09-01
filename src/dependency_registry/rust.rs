@@ -130,7 +130,7 @@ mod test {
         let cache_dir = TempDir::new()?;
         std::env::set_var("XDG_CACHE_HOME", cache_dir.path());
         let registry = DependencyRegistry::new(true).await?;
-        let mut dev_env = DevEnvironment::new(registry);
+        let mut dev_env = DevEnvironment::new(&registry);
 
         let target = format!("{}", target_lexicon::HOST);
         let data = RustDependencyData {
