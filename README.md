@@ -11,16 +11,16 @@ dependencies installed, run this at the project root:
 riff shell
 ```
 
-You can also directly run commands with the shell enviroment applied but without
-entering the shell:
+You can also directly run commands with the shell environment applied but
+without entering the shell:
 
 ```shell
 riff run cargo build
 ```
 
-Riff currently supports [Rust] with support for other languages coming soon. It
-uses the [Nix] package manager to handle dependencies but doesn't require you to
-know or use Nix.
+Riff currently supports [Rust] with support for other languages coming soon.
+It uses the [Nix] package manager to handle dependencies but doesn't require
+you to know or use Nix.
 
 > For a video demo of Riff in action, see [below](#video-demo).
 
@@ -45,9 +45,9 @@ Most programming languages use language-specific package managers to handle
 dependencies, such as [Cargo] for the [Rust] language. But these
 language-specific tools typically don't handle dependencies written in other
 languages very well. They expect you to install those dependencies using some
-other tool and fail in mysterious ways when they're missing. Here's an example
-error from trying to build the [`octocrab`][octocrab] crate without [OpenSSL]
-installed:
+other tool and fail in mysterious ways when they're missing. Here's an
+example error from trying to build the [`octocrab`][octocrab] crate without
+[OpenSSL] installed:
 
 ```shell
 --- stderr
@@ -65,23 +65,23 @@ For example, `libssl-dev` on Ubuntu or `openssl-devel` on Fedora.
 In cases like this, it's up to you to install missing external dependencies,
 which can be laborious, error prone, and hard to reproduce.
 
-Riff offers a solution. It uses your project's language-specific configuration to
-infer which dependencies are required&mdash;or you can [declare
+Riff offers a solution. It uses your project's language-specific configuration
+to infer which dependencies are required&mdash;or you can [declare
 them](#how-to-declare-package-inputs) if necessary&mdash;and creates a shell
 environment with all of those dependencies both installed and properly linked.
 
-These environments are *transient* in the sense that they don't affect anything
-outside the shell; they install dependencies neither globally nor in your
-current project, so you don't have to worry about Riff breaking anything on your
-system. When you exit the Riff shell, the dependencies are gone.
+These environments are *transient* in the sense that they don't affect
+anything outside the shell; they install dependencies neither globally nor in
+your current project, so you don't have to worry about Riff breaking anything
+on your system. When you exit the Riff shell, the dependencies are gone.
 
 ### Offline mode
 
 In cases where you want to limit Riff's access to the Internet, you can run it
-in offline mode, which disables all network usage *except* what's required by the
-`nix develop` command (which Riff runs in the background). You can enable offline
-mode using either the `--offline` flag or the `RIFF_OFFLINE` environment variable.
-Here are some examples:
+in offline mode, which disables all network usage *except* what's required by
+the `nix develop` command (which Riff runs in the background). You can enable
+offline mode using either the `--offline` flag or the `RIFF_OFFLINE` environment
+variable. Here are some examples:
 
 ```shell
 # Via flag
@@ -91,16 +91,16 @@ riff run --offline
 RIFF_OFFLINE=true riff shell
 ```
 
-When running either `riff run` or `riff shell` you can use the `--offline` flag to
-disable all network usage *except* the usage required to run
+When running either `riff run` or `riff shell` you can use the `--offline` flag
+to disable all network usage *except* the usage required to run
 
 ## Example usage
 
 In this example, we'll build the [Prost] project from source. Prost has an
-external dependency on [OpenSSL], without which commands like `cargo build` and
-`cargo run` are doomed to fail. Riff provides those dependencies automatically,
-without you needing to install them in your regular environment. Follow these
-steps to see dependency inference in action:
+external dependency on [OpenSSL], without which commands like `cargo build`
+and `cargo run` are doomed to fail. Riff provides those dependencies
+automatically, without you needing to install them in your regular
+environment. Follow these steps to see dependency inference in action:
 
 ```shell
 git clone https://github.com/tokio-rs/prost.git
@@ -173,8 +173,8 @@ When you run `riff shell` in this project, Riff
 ### Target-specific dependencies
 
 If a project has OS-, architecture-, or vendor-specific dependencies, you can
-define them in a `targets` block under `package.metadata.riff`. Here's an example
-for Apple M1 (`aarch64-apple-darwin`) systems:
+define them in a `targets` block under `package.metadata.riff`. Here's an
+example for Apple M1 (`aarch64-apple-darwin`) systems:
 
 ```toml
 [package.metadata.riff.targets.aarch64-apple-darwin]
@@ -283,8 +283,8 @@ eval "$(riff print-dev-env)"
 
 You can enable Riff support globally by either adding a `use_riff` function
 either to your `~/.config/direnv/direnvrc` file or a new
-`~/.config/direnv/lib/riff.sh` file. The `use_riff` function should look something
-like this:
+`~/.config/direnv/lib/riff.sh` file. The `use_riff` function should look
+something like this:
 
 ```bash
 use_riff() {
