@@ -74,6 +74,25 @@ outside the shell; they install dependencies neither globally nor in your
 current project, so you don't have to worry about Riff breaking anything on your
 system. When you exit the Riff shell, the dependencies are gone.
 
+### Offline mode
+
+In cases where you want to limit Riff's access to the Internet, you can run it
+in offline mode, which disables all network usage *except* what's required by the
+`nix develop` command (which Riff runs in the background). You can enable offline
+mode using either the `--offline` flag or the `RIFF_OFFLINE` environment variable.
+Here are some examples:
+
+```shell
+# Via flag
+riff run --offline
+
+# Via environment variable
+RIFF_OFFLINE=true riff shell
+```
+
+When running either `riff run` or `riff shell` you can use the `--offline` flag to
+disable all network usage *except* the usage required to run
+
 ## Example usage
 
 In this example, we'll build the [Prost] project from source. Prost has an
@@ -255,8 +274,7 @@ enable Riff in a project, create a `.envrc` file that contains this:
 
 ```bash
 # reload when these files change
-watch_file Cargo.toml
-watch_file Cargo.lock
+watch_file Cargo.toml Cargo.lock
 # add any other files you might want to trigger a riff reload
 # load the riff dev env
 eval "$(riff print-dev-env)"
@@ -269,10 +287,7 @@ like this:
 
 ```bash
 use_riff() {
-  # reload when these files change
-  watch_file Cargo.toml
-  watch_file Cargo.lock
-  # load the riff development environment
+  watch_file Cargo.toml watch_file Cargo.lock
   eval "$(riff print-dev-env)"
 }
 ```
@@ -285,12 +300,12 @@ echo "use riff" > .envrc
 ```
 
 When you run `direnv allow` you will automatically enter the Riff shell every
-time you navigate to the directory.
+time you navigate to the project directory.
 
 ## Privacy policy
 
-For the sake of improving the tool, Riff does collect some [telemetry] from
-users. You can read the full privacy policy for [Determinate Systems], the
+For the sake of improving user experience, Riff does collect some [telemetry].
+You can read the full privacy policy for [Determinate Systems], the
 creators of Riff, [here][privacy].
 
 To disable telemetry on any Riff command invocation, you can either
