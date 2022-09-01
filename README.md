@@ -1,4 +1,4 @@
-# Riff 🎸🎶
+# Riff
 
 ![logo-light](img/logo/riff-white.svg#gh-dark-mode-only)
 ![logo-dark](img/logo/riff-black.svg#gh-light-mode-only)
