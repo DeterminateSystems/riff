@@ -242,6 +242,20 @@
             }
           }
         },
+        "perf_monitor": {
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "xcbuild"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "xcbuild"
+              ]
+            }
+          }
+        },
         "pkg-config": {
           "build-inputs": [
             "pkg-config"
