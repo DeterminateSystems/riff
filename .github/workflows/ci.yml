@@ -73,7 +73,7 @@ jobs:
         run: nix develop --command ci-test-rust
         # run: nix develop -c -- cargo test -- --include-ignored
 
-  Build:
+  BuildX86Linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -112,7 +112,7 @@ jobs:
             result/bin/riff
 
   RiffShell:
-    needs: Build
+    needs: BuildX86Linux
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
