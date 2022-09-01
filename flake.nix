@@ -95,7 +95,7 @@
 
             sharedAttrs = {
               pname = "riff";
-              version = "unreleased";
+              version = "0.0.0-unreleased";
               src = self;
 
               nativeBuildInputs = with pkgs; [

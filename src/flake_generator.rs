@@ -24,7 +24,7 @@ pub async fn generate_flake_from_project_dir(
     tracing::debug!("Project directory is '{}'.", project_dir.display());
 
     let registry = DependencyRegistry::new(offline).await?;
-    let mut dev_env = DevEnvironment::new(registry);
+    let mut dev_env = DevEnvironment::new(&registry);
 
     match dev_env.detect(&project_dir).await {
         Ok(_) => {}
@@ -45,6 +45,30 @@ pub async fn generate_flake_from_project_dir(
             std::process::exit(1);
         }
     };
+
+    // If the user is using an old version of `riff`, we want to let them know.
+    // We do it after detecting the dependencies because we'd prefer the user's first
+    // output from the program not to be a scary error, especially when it's neither scary or an
+    // error.
+    let latest_riff_version = registry.latest_riff_version().await;
+    // We don't want to error anywhere here
+    if latest_riff_version
+        .as_ref()
+        .and_then(|v| semver::Version::parse(v).ok())
+        .and_then(|registry_version| {
+            semver::Version::parse(env!("CARGO_PKG_VERSION"))
+                .ok()
+                .map(|current_version| registry_version > current_version)
+        })
+        .unwrap_or(false)
+    {
+        eprintln!(
+            "📦 A new version of `{riff}` ({latest_riff_version_colored}) is available! {riff_download_url}",
+            riff = "riff".cyan(),
+            latest_riff_version_colored = latest_riff_version.as_ref().cloned().unwrap_or_else(|| "unknown".to_string()).yellow(),
+            riff_download_url = "https://github.com/DeterminateSystems/riff/releases".blue().underline(),
+        );
+    }
 
     if !(disable_telemetry || offline) {
         match Telemetry::new()
