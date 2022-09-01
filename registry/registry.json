@@ -364,6 +364,11 @@
         },
         "wgpu-hal": {
           "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.QuartzCore"
+              ]
+            },
             "aarch64-linux-unknown-gnu": {
               "environment-variables": {
                 "ALSA_PLUGIN_DIR": "${pkgs.symlinkJoin { name = \"merged-alsa-plugins\"; paths = with pkgs; [ alsaPlugins pipewire.lib ]; }}/lib/alsa-lib"
@@ -380,6 +385,11 @@
                 "mesa_drivers",
                 "alsaPlugins",
                 "pipewire"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.QuartzCore"
               ]
             },
             "x86_64-linux-unknown-gnu": {
