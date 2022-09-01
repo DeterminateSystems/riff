@@ -41,6 +41,7 @@ pub(crate) struct Telemetry {
     /// The command given to riff (eg "shell")
     subcommand: Option<String>,
     detected_languages: HashSet<DetectedLanguage>,
+    in_ci: bool,
 }
 
 impl Telemetry {
@@ -88,6 +89,7 @@ impl Telemetry {
             is_tty,
             subcommand,
             detected_languages: Default::default(),
+            in_ci: is_ci::cached(),
         }
     }
 
