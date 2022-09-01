@@ -25,7 +25,7 @@ const RIFF_XDG_PREFIX: &str = "riff";
 
 #[derive(Debug, Parser)]
 #[clap(name = "riff")]
-#[clap(about = "Automatically set up build environments using Nix", long_about = None)]
+#[clap(version, about = "Automatically set up build environments using Nix", long_about = None)]
 struct Cli {
     #[clap(subcommand)]
     command: Commands,
