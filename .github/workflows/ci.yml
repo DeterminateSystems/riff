@@ -86,10 +86,28 @@ jobs:
         run: nix build .#packages.x86_64-linux.riff -L
       - name: Build riffStatic
         run: nix build .#packages.x86_64-linux.riffStatic -L
-      - name: Create artifact for riffStatic
+      - name: Create artifact for x86_64-linux riffStatic
         uses: actions/upload-artifact@v3
         with:
           name: riff-x86_64-linux
+          path: |
+            result/bin/riff
+
+  BuildX86Darwin:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v17
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      # Runs clippy as part of the preBuild.
+      - name: Build riff
+        run: nix build .#packages.x86_64-darwin.riff -L
+      - name: Create artifact for x86_64-darwin riff
+        uses: actions/upload-artifact@v3
+        with:
+          name: riff-x86_64-darwin
           path: |
             result/bin/riff
 
