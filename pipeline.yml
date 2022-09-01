@@ -1,0 +1,5 @@
+steps:
+  - label: BuildAarch64Darwin
+    command:
+      - nix --extra-experimental-features "nix-command flakes" develop -c cargo build
+      - cd target/debug && mv riff riff-aarch64-darwin && buildkite-agent artifact upload riff-aarch64-darwin
