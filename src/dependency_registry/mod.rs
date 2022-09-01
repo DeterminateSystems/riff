@@ -1,6 +1,9 @@
 use crate::RIFF_XDG_PREFIX;
 use serde::Deserialize;
-use std::{path::{Path, PathBuf}, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use tokio::{
     fs::OpenOptions,
     io::{AsyncReadExt, AsyncWriteExt},
@@ -108,7 +111,9 @@ impl DependencyRegistry {
                 };
                 *data_clone.write().await = fresh_data;
                 // Write out the update
-                let new_registry_pathbuf = match xdg_dirs.place_cache_file(PathBuf::from(DEPENDENCY_REGISTRY_CACHE_PATH.to_string() + ".new")) {
+                let new_registry_pathbuf = match xdg_dirs.place_cache_file(PathBuf::from(
+                    DEPENDENCY_REGISTRY_CACHE_PATH.to_string() + ".new",
+                )) {
                     Ok(new_registry_pathbuf) => new_registry_pathbuf,
                     Err(err) => {
                         tracing::error!(err = %eyre::eyre!(err), "Could not place new registry file in XDG cache directory");
@@ -128,10 +133,7 @@ impl DependencyRegistry {
                         return;
                     }
                 };
-                match new_registry_file
-                    .write_all(content.trim().as_bytes())
-                    .await
-                {
+                match new_registry_file.write_all(content.trim().as_bytes()).await {
                     Ok(_) => {
                         tracing::debug!(path = %new_registry_pathbuf.display(), "Refreshed remote registry into XDG cache")
                     }
@@ -144,7 +146,7 @@ impl DependencyRegistry {
                         tracing::debug!(new = %new_registry_pathbuf.display(), current = %cached_registry_pathbuf.display(), "Renamed new registry to replace cached registry")
                     }
                     Err(err) => {
-                        tracing::error!(new = %new_registry_pathbuf.display(), current = %cached_registry_pathbuf.display(), err = %eyre::eyre!(err), "Could not rename registry");
+                        tracing::error!(new = %new_registry_pathbuf.display(), current = %cached_registry_pathbuf.display(), err = %eyre::eyre!(err), "Could not persist the registry update");
                     }
                 }
             });
@@ -181,7 +183,9 @@ impl DependencyRegistry {
 impl Drop for DependencyRegistry {
     fn drop(&mut self) {
         let Self {
-            data: _, offline: _, refresh_handle,
+            data: _,
+            offline: _,
+            refresh_handle,
         } = self;
         if let Some(refresh_handle) = refresh_handle {
             refresh_handle.abort()
