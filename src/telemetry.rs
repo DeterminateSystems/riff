@@ -75,6 +75,7 @@ impl Telemetry {
             Some(Commands::Shell(_)) => Some("shell".to_string()),
             Some(Commands::Run(_)) => Some("run".to_string()),
             Some(Commands::PrintDevEnv(_)) => Some("print-dev-env".to_string()),
+            Some(Commands::Generate(_)) => Some("generate".to_string()),
             None => None,
         };
 

@@ -20,8 +20,10 @@ pub struct Shell {
 
 impl Shell {
     pub async fn cmd(self) -> color_eyre::Result<Option<i32>> {
+        let project_dir = crate::cmds::get_project_dir(&self.project_dir)?;
+
         let flake_dir = flake_generator::generate_flake_from_project_dir(
-            self.project_dir,
+            &project_dir,
             self.offline,
             self.disable_telemetry,
         )

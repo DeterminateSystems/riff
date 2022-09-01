@@ -1,4 +1,4 @@
-//! The `run` subcommand.
+//! The `print-dev-env` subcommand.
 
 use std::{path::PathBuf, process::Stdio};
 
@@ -9,7 +9,7 @@ use tokio::process::Command;
 
 use crate::flake_generator;
 
-/// print shell code that can be sourced by bash to reproduce the riff environment
+/// Print shell code that can be sourced by bash to reproduce the riff environment
 ///
 /// For example, run `cargo build` inside riff:
 ///
@@ -27,8 +27,10 @@ pub struct PrintDevEnv {
 
 impl PrintDevEnv {
     pub async fn cmd(&self) -> color_eyre::Result<Option<i32>> {
+        let project_dir = crate::cmds::get_project_dir(&self.project_dir)?;
+
         let flake_dir = flake_generator::generate_flake_from_project_dir(
-            self.project_dir.clone(),
+            &project_dir,
             self.offline,
             self.disable_telemetry,
         )

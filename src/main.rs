@@ -89,6 +89,10 @@ Try running it in a shell; for example:
 
             Ok(exit_status_to_exit_code(code))
         }
+        Commands::Generate(generate) => {
+            generate.cmd().await?;
+            Ok(ExitCode::SUCCESS)
+        }
     }
 }
 

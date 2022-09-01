@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use eyre::{eyre, WrapErr};
 use owo_colors::OwoColorize;
@@ -13,16 +13,10 @@ use crate::telemetry::Telemetry;
 /// Generates a `flake.nix` by inspecting the specified `project_dir` for supported project types.
 #[tracing::instrument(skip(disable_telemetry))]
 pub async fn generate_flake_from_project_dir(
-    project_dir: Option<PathBuf>,
+    project_dir: &Path,
     offline: bool,
     disable_telemetry: bool,
 ) -> color_eyre::Result<TempDir> {
-    let project_dir = match project_dir {
-        Some(dir) => dir,
-        None => std::env::current_dir().wrap_err("Current working directory was invalid")?,
-    };
-    tracing::debug!("Project directory is '{}'.", project_dir.display());
-
     let registry = DependencyRegistry::new(offline).await?;
     let mut dev_env = DevEnvironment::new(&registry);
 
