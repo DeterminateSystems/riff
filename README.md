@@ -223,6 +223,30 @@ build-inputs = [
 ]
 ```
 
+#### Riff understands dependencies transitively
+
+If you add [Riff metadata](#how-to-declare-package-inputs) to `Cargo.toml`, this
+doesn't just make it easier to build and run your project: it actually benefits
+consumers of your crate as well. That's because Riff can use this metadata
+transitively to infer which external dependencies are necessary *across the
+entire crate dependency graph*. Let's say that you release a crate called
+`make-it-pretty` that has an external dependency on [libGL] and you add that
+to your `Cargo.toml`:
+
+```toml
+[package.metadata.riff]
+runtime-inputs = [ "libGL" ]
+```
+
+Now let's say that another Rust dev releases a crate called `artify` that
+depends on your `make-it-pretty` crate. If someone tries to build `artify` using
+Cargo, they may receive an error if they don't have libGL installed. *But* if
+they use Riff to build `artify`, Riff knows to install libGL without any user
+input.
+
+The implication is that adding Riff metadata to your crates&mdash;if they have
+external dependencies&mdash;can benefit the Rust ecosystem more broadly.
+
 ## How it works
 
 When you run `riff shell` in a Rust project, Riff
