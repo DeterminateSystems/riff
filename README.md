@@ -11,7 +11,8 @@ dependencies installed, run this at the project root:
 riff shell
 ```
 
-You can also directly run commands inside the shell enviroment:
+You can also directly run commands with the shell enviroment applied but without
+entering the shell:
 
 ```shell
 riff run cargo build
@@ -40,7 +41,7 @@ nix profile install github:DeterminateSystems/riff
 
 ## What Riff provides
 
-Languages typically use language-specific package managers to handle
+Most programming languages use language-specific package managers to handle
 dependencies, such as [Cargo] for the [Rust] language. But these
 language-specific tools typically don't handle dependencies written in other
 languages very well. They expect you to install those dependencies using some
@@ -64,8 +65,8 @@ For example, `libssl-dev` on Ubuntu or `openssl-devel` on Fedora.
 In cases like this, it's up to you to install missing external dependencies,
 which can be laborious, error prone, and hard to reproduce.
 
-Riff offers a way out of this. It uses your project's language-specific
-configuration to infer which dependencies are required&mdash;or you can [declare
+Riff offers a solution. It uses your project's language-specific configuration to
+infer which dependencies are required&mdash;or you can [declare
 them](#how-to-declare-package-inputs) if necessary&mdash;and creates a shell
 environment with all of those dependencies both installed and properly linked.
 
@@ -242,7 +243,7 @@ This diagram provides a basic visual description of that process:
 <!-- Image editable at: https://miro.com/app/board/uXjVPdUOswQ=/ -->
 <p align="center">
   <img
-    src="./img/riff.jpg"
+    src="img/riff.jpg"
     alt="Riff reads your Cargo.toml to infer external dependencies and then
       uses Nix to build a shell environment that provides those dependencies"
     style="width:70%;" />
@@ -257,7 +258,7 @@ You can see a video demo of Riff in action here (click on the image for a
 larger version):
 
 <p align="center">
-  <img src="./img/riff-demo.gif"
+  <img src="img/riff-demo.gif"
       alt="Asciicast video demo of Riff with preview image"
       style="width:80%;" />
 </p>
