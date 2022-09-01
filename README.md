@@ -11,15 +11,16 @@ dependencies installed, run this at the project root:
 riff shell
 ```
 
-You can also directly run commands as if the shell environment were in place:
+You can also directly run commands with the shell environment applied but
+without entering the shell:
 
 ```shell
 riff run cargo build
 ```
 
-Riff currently supports [Rust] with support for other languages coming soon. It
-uses the [Nix] package manager to handle dependencies but doesn't require you to
-know or use Nix.
+Riff currently supports [Rust] with support for other languages coming soon.
+It uses the [Nix] package manager to handle dependencies but doesn't require
+you to know or use Nix.
 
 > For a video demo of Riff in action, see [below](#video-demo).
 
@@ -32,10 +33,6 @@ To use Riff, you need to install these binaries on your system:
 
 ## Installation
 
-TODO: download the statically linked binary
-
-### Via Nix
-
 To install Riff using Nix (make sure to have [flakes] enabled):
 
 ```shell
@@ -44,13 +41,13 @@ nix profile install github:DeterminateSystems/riff
 
 ## What Riff provides
 
-Languages typically use language-specific package managers to handle
+Most programming languages use language-specific package managers to handle
 dependencies, such as [Cargo] for the [Rust] language. But these
 language-specific tools typically don't handle dependencies written in other
 languages very well. They expect you to install those dependencies using some
-other tool and fail in mysterious ways when they're missing. Here's an example
-error from trying to build the [`octocrab`][octocrab] crate without [OpenSSL]
-installed:
+other tool and fail in mysterious ways when they're missing. Here's an
+example error from trying to build the [`octocrab`][octocrab] crate without
+[OpenSSL] installed:
 
 ```shell
 --- stderr
@@ -68,23 +65,44 @@ For example, `libssl-dev` on Ubuntu or `openssl-devel` on Fedora.
 In cases like this, it's up to you to install missing external dependencies,
 which can be laborious, error prone, and hard to reproduce.
 
-Riff offers a way out of this. It uses your project's language-specific
-configuration to infer which dependencies are required&mdash;or you can [declare
-them](#how-to-declare-package-inputs) if necessary&mdash;and creates a shell
-environment with all of those dependencies both installed and properly linked.
+Riff enables you to bypass this problem entirely. It uses your your project's
+language-specific configuration to infer which external dependencies are
+required and creates a shell environment with those dependencies both installed
+and properly linked. In cases where those dependencies can't be inferred, for
+example in your [`build.rs`][build.rs] script, you can [explicitly declare
+them](#how-to-declare-package-inputs) in your `Cargo.toml`.
 
-These environments are *transient* in the sense that they don't affect anything
-outside the shell; they install dependencies neither globally nor in your
-current project, so you don't have to worry about Riff breaking anything on your
-system. When you exit the Riff shell, the dependencies are gone.
+These environments are *transient* in the sense that they don't affect
+anything outside the shell; they install dependencies neither globally nor in
+your current project, so you don't have to worry about Riff breaking anything
+on your system. When you exit the Riff shell, the dependencies are gone.
+
+### Offline mode
+
+In cases where you want to limit Riff's access to the Internet, you can run it
+in offline mode, which disables all network usage *except* what's required by
+the `nix develop` command (which Riff runs in the background). You can enable
+offline mode using either the `--offline` flag or the `RIFF_OFFLINE` environment
+variable. Here are some examples:
+
+```shell
+# Via flag
+riff run --offline
+
+# Via environment variable
+RIFF_OFFLINE=true riff shell
+```
+
+When running either `riff run` or `riff shell` you can use the `--offline` flag
+to disable all network usage *except* the usage required to run
 
 ## Example usage
 
 In this example, we'll build the [Prost] project from source. Prost has an
-external dependency on [OpenSSL], without which commands like `cargo build` and
-`cargo run` are doomed to fail. Riff provides those dependencies automatically,
-without you needing to install them in your regular environment. Follow these
-steps to see dependency inference in action:
+external dependency on [OpenSSL], without which commands like `cargo build`
+and `cargo run` are doomed to fail. Riff provides those dependencies
+automatically, without you needing to install them in your regular
+environment. Follow these steps to see dependency inference in action:
 
 ```shell
 git clone https://github.com/tokio-rs/prost.git
@@ -126,9 +144,10 @@ necessary by adding a `riff` block to the `package.metadata` block in your
   ensure that your dev shell works as expected.
 
 Both `build-inputs` and `runtime-inputs` can be any packages available in
-[Nixpkgs].
+[Nixpkgs]. You may find this particularly useful for [`build.rs`
+scripts][build.rs].
 
-Here's an example `Cargo.toml` with explicitly supplied Riff configuration:
+Here's an example `Cargo.toml` with an explicitly supplied Riff configuration:
 
 ```toml
 [package]
@@ -153,10 +172,11 @@ When you run `riff shell` in this project, Riff
   path
 * sets the `HI` environment variable to have a value of `BYE`
 
-### Target specific dependencies
+### Target-specific dependencies
 
-If a project has OS, architecture, or vendor specific dependencies, you can
-configure the metadata of `riff` like so:
+If a project has OS-, architecture-, or vendor-specific dependencies, you can
+define them in a `targets` block under `package.metadata.riff`. Here's an
+example for Apple M1 (`aarch64-apple-darwin`) systems:
 
 ```toml
 [package.metadata.riff.targets.aarch64-apple-darwin]
@@ -166,23 +186,21 @@ build-inputs = [
 ]
 ```
 
-The Rust project maintains [a list of well-known targets
-](https://doc.rust-lang.org/nightly/rustc/platform-support.html)
-which can also be accessed via `nix run nixpkgs#rustup target list`. This
+The Rust project maintains [a list of well-known targets][targets]
+that you can view by running `nix run nixpkgs#rustup target list`. This
 field can also contain custom targets, such as `riscv32imac-unknown-xous-elf`,
-though `riff` makes no efforts to support cross compiling at this time.
+although `riff` makes no effort to support cross compiling at this time.
 
-When target specific dependencies are present, the `build-inputs` and
-`runtime-inputs` sections are **unioned** (joined), while the target specific
-environment variables **override** default environment variables.
+When target-specific dependencies are present, the `build-inputs` and
+`runtime-inputs` sections are *unioned* (joined), while the target-specific
+environment variables *override* default environment variables.
 
 #### macOS framework dependencies
 
-macOS users may encounter issues with 'framework dependencies', such as
-[`Foundation`][foundation], [`CoreServices`][coreservices], and
-[`Security`][security].
-
-You may encounter error messages like this:
+macOS users may encounter issues with so-called "framework" dependencies, such
+as [`Foundation`][foundation], [`CoreServices`][coreservices], and
+[`Security`][security]. When these dependencies are missing, you may see error
+messages like this:
 
 ```
 = note: ld: framework not found CoreFoundation
@@ -207,6 +225,30 @@ build-inputs = [
 ]
 ```
 
+#### Riff understands dependencies transitively
+
+If you add [Riff metadata](#how-to-declare-package-inputs) to `Cargo.toml`, this
+doesn't just make it easier to build and run your project: it actually benefits
+consumers of your crate as well. That's because Riff can use this metadata
+transitively to infer which external dependencies are necessary *across the
+entire crate dependency graph*. Let's say that you release a crate called
+`make-it-pretty` that has an external dependency on [libGL] and you add that
+to your `Cargo.toml`:
+
+```toml
+[package.metadata.riff]
+runtime-inputs = [ "libGL" ]
+```
+
+Now let's say that another Rust dev releases a crate called `artify` that
+depends on your `make-it-pretty` crate. If someone tries to build `artify` using
+Cargo, they may receive an error if they don't have libGL installed. *But* if
+they use Riff to build `artify`, Riff knows to install libGL without any user
+input.
+
+The implication is that adding Riff metadata to your crates&mdash;if they have
+external dependencies&mdash;can benefit the Rust ecosystem more broadly.
+
 ## How it works
 
 When you run `riff shell` in a Rust project, Riff
@@ -227,7 +269,7 @@ This diagram provides a basic visual description of that process:
 <!-- Image editable at: https://miro.com/app/board/uXjVPdUOswQ=/ -->
 <p align="center">
   <img
-    src="./img/riff.jpg"
+    src="img/riff.jpg"
     alt="Riff reads your Cargo.toml to infer external dependencies and then
       uses Nix to build a shell environment that provides those dependencies"
     style="width:70%;" />
@@ -242,7 +284,7 @@ You can see a video demo of Riff in action here (click on the image for a
 larger version):
 
 <p align="center">
-  <img src="./img/riff-demo.gif"
+  <img src="img/riff-demo.gif"
       alt="Asciicast video demo of Riff with preview image"
       style="width:80%;" />
 </p>
@@ -254,42 +296,43 @@ background using Nix.
 
 ## Direnv Integration
 
-You can add Riff support to Direnv on a project specific or global basis.
-
-On a project specific basis, you can create `.envrc` with the following:
+You can add Riff support to Direnv on a project-specific or global basis. To
+enable Riff in a project, create a `.envrc` file that contains this:
 
 ```bash
 # reload when these files change
-watch_file Cargo.toml
-watch_file Cargo.lock
+watch_file Cargo.toml Cargo.lock
 # add any other files you might want to trigger a riff reload
 # load the riff dev env
 eval "$(riff print-dev-env)"
 ```
 
-Enable Riff support globally by creating `~/.config/direnv/lib/riff.sh` and
-adding the following contents:
+You can enable Riff support globally by either adding a `use_riff` function
+either to your `~/.config/direnv/direnvrc` file or a new
+`~/.config/direnv/lib/riff.sh` file. The `use_riff` function should look
+something like this:
 
 ```bash
 use_riff() {
-  # reload when these files change
-  watch_file Cargo.toml
-  watch_file Cargo.lock
-  # load the riff dev env
+  watch_file Cargo.toml watch_file Cargo.lock
   eval "$(riff print-dev-env)"
 }
 ```
 
-Then, in any directory you can enable riff with:
+With Direnv now aware of this function, you can enable Riff in any directory
+with:
 
 ```bash
 echo "use riff" > .envrc
 ```
 
+When you run `direnv allow` you will automatically enter the Riff shell every
+time you navigate to the project directory.
+
 ## Privacy policy
 
-For the sake of improving the tool, Riff does collect some [telemetry] from
-users. You can read the full privacy policy for [Determinate Systems], the
+For the sake of improving user experience, Riff does collect some [telemetry].
+You can read the full privacy policy for [Determinate Systems], the
 creators of Riff, [here][privacy].
 
 To disable telemetry on any Riff command invocation, you can either
@@ -301,10 +344,14 @@ To disable telemetry on any Riff command invocation, you can either
 Here are some examples:
 
 ```shell
+# Via flag
 riff shell --disable-telemetry
+
+# Via environment variable
 RIFF_DISABLE_TELEMETRY=true riff run cargo build
 ```
 
+[build.rs]: https://doc.rust-lang.org/cargo/reference/build-scripts.html
 [cargo]: https://doc.rust-lang.org/cargo
 [cargo-toml]: https://doc.rust-lang.org/cargo/reference/manifest.html
 [coreservices]: https://developer.apple.com/documentation/coreservices
@@ -324,6 +371,7 @@ RIFF_DISABLE_TELEMETRY=true riff run cargo build
 [rust]: https://rust-lang.org
 [rust-install]: https://www.rust-lang.org/tools/install
 [security]: https://developer.apple.com/documentation/security
+[targets]: https://doc.rust-lang.org/nightly/rustc/platform-support.html
 [telemetry]: ./src/telemetry.rs
 
 [^1]: We define **external** dependencies as those that are written in another
