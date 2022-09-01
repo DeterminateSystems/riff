@@ -136,6 +136,20 @@
             "udev"
           ]
         },
+        "isolang": {
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Security"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Security"
+              ]
+            }
+          }
+        },
         "libadwaita-sys": {
           "build-inputs": [
             "libadwaita"
