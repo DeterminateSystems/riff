@@ -54,10 +54,36 @@
             "LIBCLANG_PATH": "${llvmPackages.libclang.lib}/lib"
           }
         },
+        "core-foundation-sys": {
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.CoreFoundation"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.CoreFoundation"
+              ]
+            }
+          }
+        },
         "curl-sys": {
           "build-inputs": [
             "curl"
-          ]
+          ],
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.SystemConfiguration"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.SystemConfiguration"
+              ]
+            }
+          }
         },
         "egl": {
           "build-inputs": [
@@ -154,12 +180,38 @@
         "openssl-sys": {
           "build-inputs": [
             "openssl"
-          ]
+          ],
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Security"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Security"
+              ]
+            }
+          }
         },
         "pango-sys": {
           "build-inputs": [
             "pango"
           ]
+        },
+        "pathos": {
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Foundation"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Foundation"
+              ]
+            }
+          }
         },
         "pkg-config": {
           "build-inputs": [
@@ -169,6 +221,21 @@
         "prost": {
           "build-inputs": [
             "cmake"
+          ]
+        },
+        "prost-build": {
+          "build-inputs": [
+            "protobuf"
+          ]
+        },
+        "protobuf-build": {
+          "build-inputs": [
+            "protobuf"
+          ]
+        },
+        "protoc-rust": {
+          "build-inputs": [
+            "protobuf"
           ]
         },
         "pyo3-build-config": {
@@ -192,6 +259,20 @@
             "cyrus_sasl"
           ]
         },
+        "security-framework-sys": {
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Security"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Security"
+              ]
+            }
+          }
+        },
         "servo-fontconfig-sys": {
           "build-inputs": [
             "fontconfig"
@@ -207,6 +288,36 @@
           "build-inputs": [
             "spirv-tools"
           ]
+        },
+        "sqlx-macros": {
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.SystemConfiguration"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.SystemConfiguration"
+              ]
+            }
+          }
+        },
+        "sysinfo": {
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.DiskArbitration",
+                "darwin.apple_sdk.frameworks.Foundation"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.DiskArbitration",
+                "darwin.apple_sdk.frameworks.Foundation"
+              ]
+            }
+          }
         },
         "wayland-sys": {
           "build-inputs": [
