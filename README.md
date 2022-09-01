@@ -65,10 +65,12 @@ For example, `libssl-dev` on Ubuntu or `openssl-devel` on Fedora.
 In cases like this, it's up to you to install missing external dependencies,
 which can be laborious, error prone, and hard to reproduce.
 
-Riff offers a solution. It uses your project's language-specific configuration
-to infer which dependencies are required&mdash;or you can [declare
-them](#how-to-declare-package-inputs) if necessary&mdash;and creates a shell
-environment with all of those dependencies both installed and properly linked.
+Riff enables you to bypass this problem entirely. It uses your your project's
+language-specific configuration to infer which external dependencies are required
+and creates a shell environment with those dependencies both installed and
+properly linked. In cases where those dependencies can't be inferred, for
+example in your [`build.rs`][build.rs] script, you can [explicitly declare
+them](#how-to-declare-package-inputs) in your `Cargo.toml`.
 
 These environments are *transient* in the sense that they don't affect
 anything outside the shell; they install dependencies neither globally nor in
