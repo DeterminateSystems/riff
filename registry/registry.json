@@ -15,15 +15,30 @@
           ]
         },
         "ash": {
-          "build-inputs": [
-            "vulkan-loader",
-            "vulkan-tools",
-            "vulkan-headers",
-            "vulkan-validation-layers"
-          ],
-          "ld-library-path-inputs": [
-            "vulkan-loader"
-          ]
+          "targets": {
+            "aarch64-linux-unknown-gnu": {
+              "build-inputs": [
+                "vulkan-loader",
+                "vulkan-tools",
+                "vulkan-headers",
+                "vulkan-validation-layers"
+              ],
+              "ld-library-path-inputs": [
+                "vulkan-loader"
+              ]
+            },
+            "x86_64-linux-unknown-gnu": {
+              "build-inputs": [
+                "vulkan-loader",
+                "vulkan-tools",
+                "vulkan-headers",
+                "vulkan-validation-layers"
+              ],
+              "ld-library-path-inputs": [
+                "vulkan-loader"
+              ]
+            }
+          }
         },
         "atk-sys": {
           "build-inputs": [
@@ -136,6 +151,20 @@
             "udev"
           ]
         },
+        "isolang": {
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Security"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Security"
+              ]
+            }
+          }
+        },
         "libadwaita-sys": {
           "build-inputs": [
             "libadwaita"
@@ -162,9 +191,18 @@
           ]
         },
         "libudev-sys": {
-          "build-inputs": [
-            "eudev"
-          ]
+          "targets": {
+            "aarch64-linux-unknown-gnu": {
+              "build-inputs": [
+                "eudev"
+              ]
+            },
+            "x86_64-linux-unknown-gnu": {
+              "build-inputs": [
+                "eudev"
+              ]
+            }
+          }
         },
         "libusb1-sys": {
           "build-inputs": [
@@ -209,6 +247,20 @@
             "x86_64-apple-darwin": {
               "build-inputs": [
                 "darwin.apple_sdk.frameworks.Foundation"
+              ]
+            }
+          }
+        },
+        "perf_monitor": {
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "xcbuild"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "xcbuild"
               ]
             }
           }
@@ -320,27 +372,68 @@
           }
         },
         "wayland-sys": {
-          "build-inputs": [
-            "wayland"
-          ]
+          "targets": {
+            "aarch64-linux-unknown-gnu": {
+              "build-inputs": [
+                "wayland"
+              ]
+            },
+            "x86_64-linux-unknown-gnu": {
+              "build-inputs": [
+                "wayland"
+              ]
+            }
+          }
         },
         "wgpu-hal": {
-          "environment-variables": {
-            "ALSA_PLUGIN_DIR": "${pkgs.symlinkJoin { name = \"merged-alsa-plugins\"; paths = with pkgs; [ alsaPlugins pipewire.lib ]; }}/lib/alsa-lib"
-          },
-          "ld-library-path-inputs": [
-            "libGL",
-            "spirv-tools",
-            "vulkan-tools",
-            "vulkan-loader",
-            "vulkan-headers",
-            "vulkan-extension-layer",
-            "vulkan-validation-layers",
-            "mesa",
-            "mesa_drivers",
-            "alsaPlugins",
-            "pipewire"
-          ]
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.QuartzCore"
+              ]
+            },
+            "aarch64-linux-unknown-gnu": {
+              "environment-variables": {
+                "ALSA_PLUGIN_DIR": "${pkgs.symlinkJoin { name = \"merged-alsa-plugins\"; paths = with pkgs; [ alsaPlugins pipewire.lib ]; }}/lib/alsa-lib"
+              },
+              "ld-library-path-inputs": [
+                "libGL",
+                "spirv-tools",
+                "vulkan-tools",
+                "vulkan-loader",
+                "vulkan-headers",
+                "vulkan-extension-layer",
+                "vulkan-validation-layers",
+                "mesa",
+                "mesa_drivers",
+                "alsaPlugins",
+                "pipewire"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.QuartzCore"
+              ]
+            },
+            "x86_64-linux-unknown-gnu": {
+              "environment-variables": {
+                "ALSA_PLUGIN_DIR": "${pkgs.symlinkJoin { name = \"merged-alsa-plugins\"; paths = with pkgs; [ alsaPlugins pipewire.lib ]; }}/lib/alsa-lib"
+              },
+              "ld-library-path-inputs": [
+                "libGL",
+                "spirv-tools",
+                "vulkan-tools",
+                "vulkan-loader",
+                "vulkan-headers",
+                "vulkan-extension-layer",
+                "vulkan-validation-layers",
+                "mesa",
+                "mesa_drivers",
+                "alsaPlugins",
+                "pipewire"
+              ]
+            }
+          }
         },
         "winit": {
           "build-inputs": [
