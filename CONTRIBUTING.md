@@ -97,7 +97,7 @@ Please:
   or `formatting`
 * Follow existing conventions and style within the code the best you can
 * Describe in your PR the problem and solution so reviewers don't need to
-  rebuild much context..
+  rebuild much context
 * Run `nix check` and `nix build`
 
 
