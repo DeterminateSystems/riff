@@ -472,6 +472,11 @@
             "libxkbcommon"
           ]
         },
+        "zmq-sys": {
+          "build-inputs": [
+            "cmake"
+          ]
+        },
         "zstd-sys": {
           "build-inputs": [
             "zlib",
