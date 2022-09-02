@@ -1,6 +1,9 @@
 use crate::RIFF_XDG_PREFIX;
 use serde::Deserialize;
-use std::{path::Path, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use tokio::{
     fs::OpenOptions,
     io::{AsyncReadExt, AsyncWriteExt},
@@ -108,30 +111,44 @@ impl DependencyRegistry {
                 };
                 *data_clone.write().await = fresh_data;
                 // Write out the update
-                let mut cached_registry_file = match OpenOptions::new()
-                    .truncate(true)
-                    .create(true)
-                    .write(true)
-                    .open(cached_registry_pathbuf.clone())
-                    .await
-                {
-                    Ok(cached_registry_file) => cached_registry_file,
+                let new_registry_pathbuf = match xdg_dirs.place_cache_file(PathBuf::from(
+                    DEPENDENCY_REGISTRY_CACHE_PATH.to_string() + ".new",
+                )) {
+                    Ok(new_registry_pathbuf) => new_registry_pathbuf,
                     Err(err) => {
-                        tracing::error!(err = %eyre::eyre!(err), path = %cached_registry_pathbuf.display(), "Could not truncate XDG cached registry file to empty");
+                        tracing::error!(err = %eyre::eyre!(err), "Could not place new registry file in XDG cache directory");
                         return;
                     }
                 };
-                match cached_registry_file
-                    .write_all(content.trim().as_bytes())
+                let mut new_registry_file = match OpenOptions::new()
+                    .truncate(true)
+                    .create(true)
+                    .write(true)
+                    .open(new_registry_pathbuf.clone())
                     .await
                 {
-                    Ok(_) => {
-                        tracing::debug!(path = %cached_registry_pathbuf.display(), "Refreshed remote registry into XDG cache")
-                    }
+                    Ok(new_registry_file) => new_registry_file,
                     Err(err) => {
-                        tracing::error!(err = %eyre::eyre!(err), "Could not write to {}", cached_registry_pathbuf.display());
+                        tracing::error!(err = %eyre::eyre!(err), path = %new_registry_pathbuf.display(), "Could not truncate XDG cached registry file to empty");
+                        return;
                     }
                 };
+                match new_registry_file.write_all(content.trim().as_bytes()).await {
+                    Ok(_) => {
+                        tracing::debug!(path = %new_registry_pathbuf.display(), "Refreshed remote registry into XDG cache")
+                    }
+                    Err(err) => {
+                        tracing::error!(err = %eyre::eyre!(err), "Could not write to {}", new_registry_pathbuf.display());
+                    }
+                };
+                match tokio::fs::rename(&new_registry_pathbuf, &cached_registry_pathbuf).await {
+                    Ok(_) => {
+                        tracing::debug!(new = %new_registry_pathbuf.display(), current = %cached_registry_pathbuf.display(), "Renamed new registry to replace cached registry")
+                    }
+                    Err(err) => {
+                        tracing::error!(new = %new_registry_pathbuf.display(), current = %cached_registry_pathbuf.display(), err = %eyre::eyre!(err), "Could not persist the registry update");
+                    }
+                }
             });
             Some(handle)
         } else {
@@ -164,6 +181,19 @@ impl DependencyRegistry {
 
     pub async fn latest_riff_version(&self) -> RwLockReadGuard<Option<String>> {
         RwLockReadGuard::map(self.data.read().await, |v| &v.latest_riff_version)
+    }
+}
+
+impl Drop for DependencyRegistry {
+    fn drop(&mut self) {
+        let Self {
+            data: _,
+            offline: _,
+            refresh_handle,
+        } = self;
+        if let Some(refresh_handle) = refresh_handle {
+            refresh_handle.abort()
+        }
     }
 }
 
