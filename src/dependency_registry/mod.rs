@@ -139,6 +139,7 @@ impl DependencyRegistry {
                     }
                     Err(err) => {
                         tracing::error!(err = %eyre::eyre!(err), "Could not write to {}", new_registry_pathbuf.display());
+                        return;
                     }
                 };
                 match tokio::fs::rename(&new_registry_pathbuf, &cached_registry_pathbuf).await {
@@ -147,6 +148,7 @@ impl DependencyRegistry {
                     }
                     Err(err) => {
                         tracing::error!(new = %new_registry_pathbuf.display(), current = %cached_registry_pathbuf.display(), err = %eyre::eyre!(err), "Could not persist the registry update");
+                        return;
                     }
                 }
             });
