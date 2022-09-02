@@ -112,7 +112,9 @@ impl DependencyRegistry {
                 *data_clone.write().await = fresh_data;
                 // Write out the update
                 let new_registry_pathbuf = match xdg_dirs.place_cache_file(PathBuf::from(
-                    DEPENDENCY_REGISTRY_CACHE_PATH.to_string() + ".new",
+                    DEPENDENCY_REGISTRY_CACHE_PATH.to_string()
+                        + ".new"
+                        + &std::process::id().to_string(),
                 )) {
                     Ok(new_registry_pathbuf) => new_registry_pathbuf,
                     Err(err) => {
