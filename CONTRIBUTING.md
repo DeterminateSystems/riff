@@ -10,7 +10,8 @@ if you have any questions about the process.
 
 **Regular Rust committer?** Contributing to `riff` should feel similar to
 contributing to other serious Rust ecosystem projects. You may already know
-the process and expectations of you, if so, you can skip this.
+the process and expectations of you, this document shouldn't contain any
+surprises.
 
 
 # What kinds of contributions are needed?
@@ -43,9 +44,8 @@ You can expect us to:
     + Have no complex conflicts with in-flight high priority work
 
 The maintainers of this project use a separate issue tracker for some internal
-tasks. You may see responses to some issues from the `linear-app` Github bot.
-Unfortunately, the contents of this tracker is not publicly visible as it may
-contain sensitive or confidential data. Our maintainers will endeavor to
+tasks. Unfortunately, the contents of this tracker is not publicly visible as
+it may contain sensitive or confidential data. Our maintainers will endeavor to
 ensure you are not 'left out' of the discussion about your contributions.
 
 
@@ -54,7 +54,7 @@ ensure you are not 'left out' of the discussion about your contributions.
 We expect you to:
 
 * Follow the [Contributor Covenant](CODE_OF_CONDUCT.md), just like them
-* Make an earnest attempt to follow the contribution process desribed in this
+* Make an earnest attempt to follow the contribution process described in this
   document
 * Update bug reports with a solution, if you find one before we do
 * Do your best to follow existing conventions
@@ -94,9 +94,10 @@ proposing the change is **required** for non-maintainers.
 Please:
 
 * Write civil commit messages, it's ok if they are simple like `fmt`
+  or `formatting`
 * Follow existing conventions and style within the code the best you can
 * Describe in your PR the problem and solution so reviewers don't need to
-  rebuild much context.
+  rebuild much context..
 * Run `nix check` and `nix build`
 
 
