@@ -93,9 +93,6 @@ riff run --offline
 RIFF_OFFLINE=true riff shell
 ```
 
-When running either `riff run` or `riff shell` you can use the `--offline` flag
-to disable all network usage *except* the usage required to run
-
 ## Example usage
 
 In this example, we'll build the [Prost] project from source. Prost has an
