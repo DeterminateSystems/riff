@@ -33,11 +33,29 @@ To use Riff, you need to install these binaries on your system:
 
 ## Installation
 
+### Using Nix
+
 To install Riff using Nix (make sure to have [flakes] enabled):
 
 ```shell
 nix profile install github:DeterminateSystems/riff
 ```
+
+### Using Homebrew
+
+To install Riff on macOS using [Homebrew]:
+
+```shell
+brew tap DeterminateSystems/riff
+brew install riff
+```
+
+> **Note**: The `riff` Homebrew formula does *not* install [Nix] or [Cargo].
+
+### Using cURL
+
+You can find instructions for installing Riff using cURL on the
+[releases page][releases].
 
 ## What Riff provides
 
@@ -362,6 +380,7 @@ room](https://matrix.to/#/#riff:matrix.org)).
 [discord]: https://discord.gg/urAzkgf7YM
 [flakes]: https://nixos.wiki/wiki/Flakes
 [foundation]: https://developer.apple.com/documentation/foundation
+[homebrew]: https://brew.sh
 [libgl]: https://dri.freedesktop.org/wiki/libGL
 [nix]: https://nixos.org/nix
 [nix-install]: https://nixos.org/download.html
@@ -372,6 +391,7 @@ room](https://matrix.to/#/#riff:matrix.org)).
 [privacy]: https://determinate.systems/privacy
 [prost]: https://github.com/tokio-rs/prost
 [protobuf]: https://developers.google.com/protocol-buffers
+[releases]: https://github.com/DeterminateSystems/riff/releases
 [rust]: https://rust-lang.org
 [rust-install]: https://www.rust-lang.org/tools/install
 [security]: https://developer.apple.com/documentation/security
