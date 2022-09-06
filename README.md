@@ -46,7 +46,8 @@ nix profile install github:DeterminateSystems/riff
 To install Riff on macOS using [Homebrew]:
 
 ```shell
-brew install DeterminateSystems/riff/riff
+brew tap DeterminateSystems/riff
+brew install riff
 ```
 
 > **Note**: The `riff` Homebrew formula does *not* install [Nix] or [Cargo].
@@ -55,7 +56,6 @@ brew install DeterminateSystems/riff/riff
 
 You can find instructions for installinx Riff using cURL on the
 [releases page][releases].
-
 
 ## What Riff provides
 
