@@ -41,10 +41,21 @@ To install Riff using Nix (make sure to have [flakes] enabled):
 nix profile install github:DeterminateSystems/riff
 ```
 
+### Using Homebrew
+
+To install Riff on macOS using [Homebrew]:
+
+```shell
+brew install DeterminateSystems/riff/riff
+```
+
+> **Note**: The `riff` Homebrew formula does *not* install [Nix] or [Cargo].
+
 ### Using cURL
 
 You can find instructions for installinx Riff using cURL on the
 [releases page][releases].
+
 
 ## What Riff provides
 
@@ -367,6 +378,7 @@ If you'd like to discuss Riff with other users, join our [Discord].
 [discord]: https://discord.gg/urAzkgf7YM
 [flakes]: https://nixos.wiki/wiki/Flakes
 [foundation]: https://developer.apple.com/documentation/foundation
+[homebrew]: https://brew.sh
 [libgl]: https://dri.freedesktop.org/wiki/libGL
 [nix]: https://nixos.org/nix
 [nix-install]: https://nixos.org/download.html
