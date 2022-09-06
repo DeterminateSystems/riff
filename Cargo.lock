@@ -940,7 +940,7 @@ dependencies = [
 
 [[package]]
 name = "riff"
-version = "0.0.0-unreleased"
+version = "1.0.0"
 dependencies = [
  "atty",
  "cfg-if",

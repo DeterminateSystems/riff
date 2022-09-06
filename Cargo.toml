@@ -1,6 +1,6 @@
 [package]
 name = "riff"
-version = "0.0.0-unreleased"
+version = "1.0.0"
 edition = "2021"
 repository = "https://github.com/DeterminateSystems/riff"
 
