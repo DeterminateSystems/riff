@@ -33,11 +33,18 @@ To use Riff, you need to install these binaries on your system:
 
 ## Installation
 
+### Using Nix
+
 To install Riff using Nix (make sure to have [flakes] enabled):
 
 ```shell
 nix profile install github:DeterminateSystems/riff
 ```
+
+### Using cURL
+
+You can find instructions for installinx Riff using cURL on the
+[releases page][releases].
 
 ## What Riff provides
 
@@ -370,6 +377,7 @@ If you'd like to discuss Riff with other users, join our [Discord].
 [privacy]: https://determinate.systems/privacy
 [prost]: https://github.com/tokio-rs/prost
 [protobuf]: https://developers.google.com/protocol-buffers
+[releases]: https://github.com/DeterminateSystems/riff/releases
 [rust]: https://rust-lang.org
 [rust-install]: https://www.rust-lang.org/tools/install
 [security]: https://developer.apple.com/documentation/security
