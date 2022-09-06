@@ -348,11 +348,16 @@ riff shell --disable-telemetry
 RIFF_DISABLE_TELEMETRY=true riff run cargo build
 ```
 
+## Community
+
+If you'd like to discuss Riff with other users, join our [Discord].
+
 [build.rs]: https://doc.rust-lang.org/cargo/reference/build-scripts.html
 [cargo]: https://doc.rust-lang.org/cargo
 [cargo-toml]: https://doc.rust-lang.org/cargo/reference/manifest.html
 [coreservices]: https://developer.apple.com/documentation/coreservices
 [determinate systems]: https://determinate.systems
+[discord]: https://discord.gg/urAzkgf7YM
 [flakes]: https://nixos.wiki/wiki/Flakes
 [foundation]: https://developer.apple.com/documentation/foundation
 [libgl]: https://dri.freedesktop.org/wiki/libGL
