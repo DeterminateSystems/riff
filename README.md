@@ -350,7 +350,9 @@ RIFF_DISABLE_TELEMETRY=true riff run cargo build
 
 ## Community
 
-If you'd like to discuss Riff with other users, join our [Discord].
+If you'd like to discuss Riff with other users, join our [Discord]
+(also bridged to a [Matrix
+room](https://matrix.to/#/#riff:matrix.org)).
 
 [build.rs]: https://doc.rust-lang.org/cargo/reference/build-scripts.html
 [cargo]: https://doc.rust-lang.org/cargo
