@@ -54,7 +54,7 @@ brew install riff
 
 ### Using cURL
 
-You can find instructions for installinx Riff using cURL on the
+You can find instructions for installing Riff using cURL on the
 [releases page][releases].
 
 ## What Riff provides
