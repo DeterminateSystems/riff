@@ -95,7 +95,7 @@
 
             sharedAttrs = {
               pname = "riff";
-              version = "0.0.0-unreleased";
+              version = (builtins.fromTOML (builtins.readFile "${self}/Cargo.toml")).package.version;
               src = self;
 
               nativeBuildInputs = with pkgs; [
