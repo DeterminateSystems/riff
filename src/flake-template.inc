@@ -29,5 +29,8 @@
             {ld_library_path}
           }};
       }});
+
+      # Compatibility with older Nix installations that don't check for `devShells.<arch>.default` first.
+      devShell = forAllSystems ({{ system, ... }}: self.devShells.${{system}}.default);
   }};
 }}
