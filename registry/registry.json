@@ -10,9 +10,18 @@
       },
       "dependencies": {
         "alsa-sys": {
-          "build-inputs": [
-            "alsa-lib"
-          ]
+          "targets": {
+            "aarch64-linux-unknown-gnu": {
+              "build-inputs": [
+                "alsa-lib"
+              ]
+            },
+            "x86_64-linux-unknown-gnu": {
+              "build-inputs": [
+                "alsa-lib"
+              ]
+            }
+          }
         },
         "ash": {
           "targets": {
