@@ -56,6 +56,26 @@ brew install DeterminateSystems/riff/riff
 You can find instructions for installing Riff using cURL on the
 [releases page][releases].
 
+### GitHub Actions
+
+You can install Riff in your [GitHub Actions][actions] pipelines using
+[`install-riff-action`][install-riff-action]. Here's an example configuration:
+
+```yaml
+steps:
+  - uses: actions/checkout@v3
+  - name: Install Nix
+    uses: cachix/install-nix-action@v17
+  - name: Install Rust
+    uses: actions-rs/toolchain@v1
+    with:
+      toolchain: stable
+  - name: Install Riff
+    uses: DeterminateSystems/install-riff-action@v1
+  - name: Build Rust app
+    run: riff run cargo build -- --release
+```
+
 ## What Riff provides
 
 Most programming languages use language-specific package managers to handle
@@ -371,6 +391,7 @@ If you'd like to discuss Riff with other users, join our [Discord]
 (also bridged to a [Matrix
 room](https://matrix.to/#/#riff:matrix.org)).
 
+[actions]: https://github.com/features/actions
 [build.rs]: https://doc.rust-lang.org/cargo/reference/build-scripts.html
 [cargo]: https://doc.rust-lang.org/cargo
 [cargo-toml]: https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -380,6 +401,7 @@ room](https://matrix.to/#/#riff:matrix.org)).
 [flakes]: https://nixos.wiki/wiki/Flakes
 [foundation]: https://developer.apple.com/documentation/foundation
 [homebrew]: https://brew.sh
+[install-riff-action]: https://github.com/DeterminateSystems/install-riff-action
 [libgl]: https://dri.freedesktop.org/wiki/libGL
 [nix]: https://nixos.org/nix
 [nix-install]: https://nixos.org/download.html
