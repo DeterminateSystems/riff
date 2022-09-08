@@ -124,25 +124,3 @@ jobs:
         run: |
           chmod +x riff
           ./riff --help
-
-  InstallRiffAction:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: cachix/install-nix-action@v17
-        with:
-          extra_nix_config: |
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      - name: Install Riff
-        uses: DeterminateSystems/install-riff-action@v1
-        with:
-          riff-version: "1.0.0"
-      - name: Build Riff itself using Riff provided by install-riff-action
-        run: riff run cargo build
