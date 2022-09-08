@@ -61,22 +61,17 @@ impl PrintDevEnv {
             .await
         {
             Ok(nix_print_dev_env_exit) => nix_print_dev_env_exit,
-            err @ Err(_) => {
-                let wrapped_err = err
-                    .wrap_err_with(|| {
-                        format!(
-                            "\
-                        Could not execute `{nix_print_dev_env}`. Is `{nix}` installed?\n\n\
-                        Get instructions for installing Nix: {nix_install_url}\n\
-                        Underlying error\
-                        ",
-                            nix_print_dev_env = "nix print-dev-env".cyan(),
-                            nix = "nix".cyan(),
-                            nix_install_url = "https://nixos.org/download.html".blue().underline(),
-                        )
-                    })
-                    .unwrap_err();
-                eprintln!("{wrapped_err:#}");
+            Err(err) => {
+                let err_msg = format!(
+                    "\
+                    Could not execute `{nix_print_dev_env}`. Is `{nix}` installed?\n\n\
+                    Get instructions for installing Nix: {nix_install_url}\
+                    ",
+                    nix_print_dev_env = "nix print-dev-env".cyan(),
+                    nix = "nix".cyan(),
+                    nix_install_url = "https://nixos.org/download.html".blue().underline(),
+                );
+                eprintln!("{err_msg}\n\nUnderlying error:\n{err}", err = err.red());
                 std::process::exit(1);
             }
         };
