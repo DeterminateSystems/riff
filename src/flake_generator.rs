@@ -28,20 +28,16 @@ pub async fn generate_flake_from_project_dir(
 
     match dev_env.detect(&project_dir).await {
         Ok(_) => {}
-        err @ Err(_) => {
-            let wrapped_err = err
-                .wrap_err_with(|| {
-                    format!(
-                        "\
-                            `{colored_project_dir}` doesn't contain a project recognized by Riff.\n\
-                            Try running `{riff_shell}` in a Rust project directory.\
-                    ",
-                        colored_project_dir = &project_dir.display().to_string().green(),
-                        riff_shell = "riff shell".cyan(),
-                    )
-                })
-                .unwrap_err();
-            eprintln!("{wrapped_err}");
+        Err(err) => {
+            let err_msg = format!(
+                "\
+                `{colored_project_dir}` doesn't contain a project recognized by Riff.\n\
+                Try running `{riff_shell}` in a Rust project directory.\
+                ",
+                colored_project_dir = &project_dir.display().to_string().green(),
+                riff_shell = "riff shell".cyan(),
+            );
+            eprintln!("{err_msg}\n\nUnderlying error:\n{err}", err = err.red());
             std::process::exit(1);
         }
     };
