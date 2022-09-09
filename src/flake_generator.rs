@@ -105,8 +105,11 @@ pub async fn generate_flake_from_project_dir(
     }
 
     tracing::trace!(command = ?nix_lock_command.as_std(), "Running");
-    let spinner = SimpleSpinner::new_with_message(Some("Running `nix flake lock`"))
-        .context("Failed to construct progress spinner")?;
+    let spinner = SimpleSpinner::new_with_message(Some(&format!(
+        "Running `{nix_flake_lock}`",
+        nix_flake_lock = "nix flake lock".cyan()
+    )))
+    .context("Failed to construct progress spinner")?;
 
     let nix_lock_exit = match nix_lock_command.output().await {
         Ok(nix_lock_exit) => nix_lock_exit,

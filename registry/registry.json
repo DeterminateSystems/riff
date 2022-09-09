@@ -10,9 +10,18 @@
       },
       "dependencies": {
         "alsa-sys": {
-          "build-inputs": [
-            "alsa-lib"
-          ]
+          "targets": {
+            "aarch64-linux-unknown-gnu": {
+              "build-inputs": [
+                "alsa-lib"
+              ]
+            },
+            "x86_64-linux-unknown-gnu": {
+              "build-inputs": [
+                "alsa-lib"
+              ]
+            }
+          }
         },
         "ash": {
           "targets": {
@@ -355,6 +364,20 @@
             }
           }
         },
+        "sys-locale": {
+          "targets": {
+            "aarch64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Foundation"
+              ]
+            },
+            "x86_64-apple-darwin": {
+              "build-inputs": [
+                "darwin.apple_sdk.frameworks.Foundation"
+              ]
+            }
+          }
+        },
         "sysinfo": {
           "targets": {
             "aarch64-apple-darwin": {
@@ -458,6 +481,11 @@
             "libxkbcommon"
           ]
         },
+        "zmq-sys": {
+          "build-inputs": [
+            "cmake"
+          ]
+        },
         "zstd-sys": {
           "build-inputs": [
             "zlib",
@@ -467,6 +495,6 @@
       }
     }
   },
-  "latest_riff_version": "0.0.0-unreleased",
+  "latest_riff_version": "1.0.0",
   "version": 1
 }

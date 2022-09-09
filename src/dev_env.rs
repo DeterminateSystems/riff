@@ -260,7 +260,10 @@ mod tests {
         Ok(())
     }
 
+    // This test appears flakey on darwin, occasionally hitting IO errors while writing the
+    // Cargo.toml to the temp dir.
     #[tokio::test]
+    #[ignore]
     async fn dev_env_detect_supported_project() -> eyre::Result<()> {
         let cache_dir = TempDir::new()?;
         std::env::set_var("XDG_CACHE_HOME", cache_dir.path());

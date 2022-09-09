@@ -33,10 +33,47 @@ To use Riff, you need to install these binaries on your system:
 
 ## Installation
 
+### Using Nix
+
 To install Riff using Nix (make sure to have [flakes] enabled):
 
 ```shell
 nix profile install github:DeterminateSystems/riff
+```
+
+### Using Homebrew
+
+To install Riff on macOS using [Homebrew]:
+
+```shell
+brew install DeterminateSystems/riff/riff
+```
+
+> **Note**: The `riff` Homebrew formula does *not* install [Nix] or [Cargo].
+
+### Using cURL
+
+You can find instructions for installing Riff using cURL on the
+[releases page][releases].
+
+### GitHub Actions
+
+You can install Riff in your [GitHub Actions][actions] pipelines using
+[`install-riff-action`][install-riff-action]. Here's an example configuration:
+
+```yaml
+steps:
+  - uses: actions/checkout@v3
+  - name: Install Nix
+    uses: cachix/install-nix-action@v17
+  - name: Install Rust
+    uses: actions-rs/toolchain@v1
+    with:
+      toolchain: stable
+  - name: Install Riff
+    uses: DeterminateSystems/install-riff-action@v1
+  - name: Build Rust app
+    run: riff run cargo build -- --release
 ```
 
 ## What Riff provides
@@ -92,9 +129,6 @@ riff run --offline
 # Via environment variable
 RIFF_OFFLINE=true riff shell
 ```
-
-When running either `riff run` or `riff shell` you can use the `--offline` flag
-to disable all network usage *except* the usage required to run
 
 ## Example usage
 
@@ -352,15 +386,25 @@ riff shell --disable-telemetry
 RIFF_DISABLE_TELEMETRY=true riff run cargo build
 ```
 
+## Community
+
+If you'd like to discuss Riff with other users, join our [Discord] (also bridged
+to a [Matrix room][matrix]).
+
+[actions]: https://github.com/features/actions
 [architecture]: ./ARCHITECTURE.md
 [build.rs]: https://doc.rust-lang.org/cargo/reference/build-scripts.html
 [cargo]: https://doc.rust-lang.org/cargo
 [cargo-toml]: https://doc.rust-lang.org/cargo/reference/manifest.html
 [coreservices]: https://developer.apple.com/documentation/coreservices
 [determinate systems]: https://determinate.systems
+[discord]: https://discord.gg/urAzkgf7YM
 [flakes]: https://nixos.wiki/wiki/Flakes
 [foundation]: https://developer.apple.com/documentation/foundation
+[homebrew]: https://brew.sh
+[install-riff-action]: https://github.com/DeterminateSystems/install-riff-action
 [libgl]: https://dri.freedesktop.org/wiki/libGL
+[matrix]: https://matrix.to/#/#riff:matrix.org
 [nix]: https://nixos.org/nix
 [nix-install]: https://nixos.org/download.html
 [nixpkgs]: https://search.nixos.org/packages
@@ -370,6 +414,7 @@ RIFF_DISABLE_TELEMETRY=true riff run cargo build
 [privacy]: https://determinate.systems/privacy
 [prost]: https://github.com/tokio-rs/prost
 [protobuf]: https://developers.google.com/protocol-buffers
+[releases]: https://github.com/DeterminateSystems/riff/releases
 [rust]: https://rust-lang.org
 [rust-install]: https://www.rust-lang.org/tools/install
 [security]: https://developer.apple.com/documentation/security

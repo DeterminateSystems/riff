@@ -3,6 +3,7 @@ use std::{collections::HashSet, path::Path, time::Duration};
 use clap::Parser;
 use eyre::eyre;
 use reqwest::Response;
+use secrecy::Secret;
 use serde::Serialize;
 use tokio::{
     fs::OpenOptions,
@@ -22,10 +23,18 @@ You can also disable ID generation; see the documentation on telemetry to see ho
 static TELEMETRY_REMOTE_URL: &str = "https://registry.riff.determinate.systems/telemetry";
 pub static TELEMETRY_HEADER_NAME: &str = "X-RIFF-Client-Info";
 
+#[derive(Default, Debug, Clone, Copy, Serialize)]
+struct DistinctId(Uuid);
+
+// Marker traits that allow secrecy::Secret to work its magic.
+impl zeroize::DefaultIsZeroes for DistinctId {}
+impl secrecy::SerializableSecret for DistinctId {}
+impl secrecy::DebugSecret for DistinctId {}
+
 #[derive(Debug, Serialize)]
 pub(crate) struct Telemetry {
     /// Stored in `$XDG_DATA_HOME/riff/distinct_id` as a UUIDv4
-    distinct_id: Option<Uuid>,
+    distinct_id: Option<Secret<DistinctId>>,
     system_os: String,
     system_arch: String,
     /// `NAME` from `/etc/os-release`
@@ -47,7 +56,7 @@ pub(crate) struct Telemetry {
 impl Telemetry {
     pub(crate) async fn from_clap_parse_result(command: Option<&crate::Commands>) -> Self {
         let distinct_id = match distinct_id().await {
-            Ok(distinct_id) => Some(distinct_id),
+            Ok(distinct_id) => Some(Secret::new(DistinctId(distinct_id))),
             Err(err) => {
                 tracing::debug!(err = %eyre::eyre!(err), "Could get distinct ID for telemetry");
                 None
@@ -109,28 +118,20 @@ impl Telemetry {
 
     #[tracing::instrument(skip_all)]
     pub(crate) async fn send(&self) -> eyre::Result<Response> {
+        tracing::trace!(data = ?self, "Sending telemetry data to {TELEMETRY_REMOTE_URL}");
         let header_data = self.as_header_data()?;
-        tracing::trace!(data = %self.redact_header_data(header_data.clone()), "Sending telemetry data to {TELEMETRY_REMOTE_URL}");
         let http_client = reqwest::Client::new();
         let req = http_client
             .post(TELEMETRY_REMOTE_URL)
             .header(TELEMETRY_HEADER_NAME, &header_data)
             .timeout(Duration::from_millis(250));
         let res = req.send().await?;
-        tracing::debug!(telemetry = %self.redact_header_data(header_data.clone()), "Sent telemetry data to {TELEMETRY_REMOTE_URL}");
+        tracing::debug!(telemetry = ?self, "Sent telemetry data to {TELEMETRY_REMOTE_URL}");
         Ok(res)
     }
 
     pub(crate) fn as_header_data(&self) -> Result<String, serde_json::Error> {
         serde_json::to_string(&self)
-    }
-
-    pub(crate) fn redact_header_data(&self, mut val: String) -> String {
-        if let Some(distinct_id) = self.distinct_id {
-            let distinct_id_string = distinct_id.to_string();
-            val = val.replace(&distinct_id_string, "<redacted>");
-        }
-        val
     }
 }
 
