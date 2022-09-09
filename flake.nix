@@ -110,7 +110,7 @@
 
               doCheck = true;
 
-              override = { preBuild ? "", ... }: {
+              overrideMain = { preBuild ? "", ... }: {
                 preBuild = preBuild + ''
                   logRun "cargo clippy --all-targets --all-features -- -D warnings"
                 '';
