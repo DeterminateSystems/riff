@@ -28,20 +28,16 @@ pub async fn generate_flake_from_project_dir(
 
     match dev_env.detect(&project_dir).await {
         Ok(_) => {}
-        err @ Err(_) => {
-            let wrapped_err = err
-                .wrap_err_with(|| {
-                    format!(
-                        "\
-                            `{colored_project_dir}` doesn't contain a project recognized by Riff.\n\
-                            Try running `{riff_shell}` in a Rust project directory.\
-                    ",
-                        colored_project_dir = &project_dir.display().to_string().green(),
-                        riff_shell = "riff shell".cyan(),
-                    )
-                })
-                .unwrap_err();
-            eprintln!("{wrapped_err}");
+        Err(err) => {
+            let err_msg = format!(
+                "\
+                `{colored_project_dir}` doesn't contain a project recognized by Riff.\n\
+                Try running `{riff_shell}` in a Rust project directory.\
+                ",
+                colored_project_dir = &project_dir.display().to_string().green(),
+                riff_shell = "riff shell".cyan(),
+            );
+            eprintln!("{err_msg}\n\nUnderlying error:\n{err}", err = err.red());
             std::process::exit(1);
         }
     };
@@ -113,22 +109,17 @@ pub async fn generate_flake_from_project_dir(
 
     let nix_lock_exit = match nix_lock_command.output().await {
         Ok(nix_lock_exit) => nix_lock_exit,
-        err @ Err(_) => {
-            let wrapped_err = err
-                .wrap_err_with(|| {
-                    format!(
-                        "\
-                    Could not execute `{nix_lock}`. Is `{nix}` installed?\n\n\
-                    Get instructions for installing Nix: {nix_install_url}\n\
-                    Underlying error\
-                    ",
-                        nix_lock = "nix flake lock".cyan(),
-                        nix = "nix".cyan(),
-                        nix_install_url = "https://nixos.org/download.html".blue().underline(),
-                    )
-                })
-                .unwrap_err();
-            eprintln!("{wrapped_err:#}");
+        Err(err) => {
+            let err_msg = format!(
+                "\
+                Could not execute `{nix_lock}`. Is `{nix}` installed?\n\n\
+                Get instructions for installing Nix: {nix_install_url}\
+                ",
+                nix_lock = "nix flake lock".cyan(),
+                nix = "nix".cyan(),
+                nix_install_url = "https://nixos.org/download.html".blue().underline(),
+            );
+            eprintln!("{err_msg}\n\nUnderlying error:\n{err}", err = err.red());
             std::process::exit(1);
         }
     };

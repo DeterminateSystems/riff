@@ -97,23 +97,17 @@ impl<'a> DevEnvironment<'a> {
 
         let cargo_metadata_output = match cargo_metadata_command.output().await {
             Ok(output) => output,
-            err @ Err(_) => {
-                let wrapped_err = err
-                    .wrap_err_with(|| {
-                        format!(
-                            "\
-                        Could not execute `{cargo_metadata}`. Is `{cargo}` installed?\n\n\
-                        Get instructions for installing Cargo: {rust_install_url}\n\
-                        Underlying error\
+            Err(err) => {
+                let err_msg = format!(
+                    "\
+                    Could not execute `{cargo_metadata}`. Is `{cargo}` installed?\n\n\
+                    Get instructions for installing Cargo: {rust_install_url}\
                     ",
-                            cargo_metadata = "cargo metadata".cyan(),
-                            cargo = "cargo".cyan(),
-                            rust_install_url =
-                                "https://www.rust-lang.org/tools/install".blue().underline()
-                        )
-                    })
-                    .unwrap_err();
-                eprintln!("{wrapped_err:#}");
+                    cargo_metadata = "cargo metadata".cyan(),
+                    cargo = "cargo".cyan(),
+                    rust_install_url = "https://www.rust-lang.org/tools/install".blue().underline()
+                );
+                eprintln!("{err_msg}\n\nUnderlying error:\n{err}", err = err.red());
                 std::process::exit(1);
             }
         };
