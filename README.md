@@ -401,7 +401,7 @@ room](https://matrix.to/#/#riff:matrix.org)).
 [flakes]: https://nixos.wiki/wiki/Flakes
 [foundation]: https://developer.apple.com/documentation/foundation
 [homebrew]: https://brew.sh
-[install-riff-action]: https://github.com/DeterminateSystems/install-riff-action
+[install-riff-action]: https://github.com/marketplace/actions/install-riff
 [libgl]: https://dri.freedesktop.org/wiki/libGL
 [nix]: https://nixos.org/nix
 [nix-install]: https://nixos.org/download.html
