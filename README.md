@@ -276,7 +276,8 @@ This diagram provides a basic visual description of that process:
 </p>
 
 Because Riff uses Nix, all of the dependencies that it installs are stored in
-your local [Nix store], by default under `/nix/store`.
+your local [Nix store], by default under `/nix/store`. For a more thorough
+breakdown of how Riff works, see the [architecture docs][architecture].
 
 ## Video demo
 
@@ -351,6 +352,7 @@ riff shell --disable-telemetry
 RIFF_DISABLE_TELEMETRY=true riff run cargo build
 ```
 
+[architecture]: ./ARCHITECTURE.md
 [build.rs]: https://doc.rust-lang.org/cargo/reference/build-scripts.html
 [cargo]: https://doc.rust-lang.org/cargo
 [cargo-toml]: https://doc.rust-lang.org/cargo/reference/manifest.html
