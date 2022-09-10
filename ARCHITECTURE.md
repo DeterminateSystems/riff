@@ -5,28 +5,26 @@ mostly conceptual and intended for those who are curious about how Riff uses Nix
 while exposing very little of Nix to users. If you want to know more about how
 to *use* Riff, we recommend consulting the project [README].
 
-## Language support
-
 At the moment, Riff supports [Rust] projects. We intend to provide support for
 additional languages in the future, so stay tuned for updates from us.
 
 ## How Riff uses Nix flakes
 
-[Flakes][flake] are an opt-in experimental feature for Nix that enable you to
+[Flakes][flake] are an experimental, opt-in feature for Nix that enable you to
 encapsulate your Nix dependencies and outputs&mdash;packages, dev environments,
 libraries, and more&mdash;in a standardized and declarative way.
 
 Riff uses an internal [template] to generate a [`flake.nix`][flake] file tailored to
-the specific needs of your Rust project. To build that `flake.nix`, Riff [traverses
-your Rust project's dependency graph](#package-metadata), using the [`cargo
-metadata`][cargo metadata] command, and supplies the necessary external
-dependencies to the shell's `buildInputs` (the list of packages that are
-included in the Nix shell environment).
+the specific needs of your Rust project. To build that `flake.nix`, Riff traverses
+your Rust project's dependency graph, using the [`cargo metadata`][cargo
+metadata] command, and supplies the necessary external dependencies to the
+shell's `buildInputs` (the list of packages that are included in the Nix shell
+environment).
 
 Once Riff has generated its internal flake, the `riff shell` command essentially
 wraps the [`nix develop`][nix develop] command while `riff run` wraps `nix
-develop --command`. The `flake.nix` file itself, however, isn't written to disk
-and thus doesn't end up in your project directory.
+develop --command`. The `flake.nix` file itself, however, is written to a
+temporary directory and thus doesn't end up in your project directory.
 
 ## How Riff handles dependencies
 
@@ -75,7 +73,7 @@ system&mdash;that is, if the Rust target triple is `aarch64-apple-darwin` or
 [cargo metadata]: https://doc.rust-lang.org/cargo/commands/cargo-metadata.html
 [flake]: https://nixos.wiki/wiki/Flakes
 [nix]: https://nixos.org
-[nix develop]: https://nixos.wiki/wiki/Nix_command/develop
+[nix develop]: https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-develop.html
 [nix store]: https://nixos.org/manual/nix/stable/introduction.html
 [openssl]: https://openssl.org
 [openssl-sys]: https://crates.io/crates/openssl-sys
