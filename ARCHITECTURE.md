@@ -67,7 +67,7 @@ project has a direct or indirect dependency on `openssl-sys`, Riff adds the
 `openssl` Nix package to your project's
 [`buildInputs`](#how-riff-uses-nix-flakes). If the current system is a macOS
 system&mdash;that is, if the Rust target triple is `aarch64-apple-darwin` or
-`x86_64-apple-darwin`, Riff adds the [`Security`][security] framework to your
+`x86_64-apple-darwin`&mdash;Riff adds the [`Security`][security] framework to your
 `buildInputs`.
 
 [cargo metadata]: https://doc.rust-lang.org/cargo/commands/cargo-metadata.html
