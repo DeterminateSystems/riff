@@ -310,7 +310,8 @@ This diagram provides a basic visual description of that process:
 </p>
 
 Because Riff uses Nix, all of the dependencies that it installs are stored in
-your local [Nix store], by default under `/nix/store`.
+your local [Nix store], by default under `/nix/store`. For a more thorough
+breakdown of how Riff works, see the [architecture docs][architecture].
 
 ## Video demo
 
@@ -387,11 +388,11 @@ RIFF_DISABLE_TELEMETRY=true riff run cargo build
 
 ## Community
 
-If you'd like to discuss Riff with other users, join our [Discord]
-(also bridged to a [Matrix
-room](https://matrix.to/#/#riff:matrix.org)).
+If you'd like to discuss Riff with other users, join our [Discord] (also bridged
+to a [Matrix room][matrix]).
 
 [actions]: https://github.com/features/actions
+[architecture]: ./ARCHITECTURE.md
 [build.rs]: https://doc.rust-lang.org/cargo/reference/build-scripts.html
 [cargo]: https://doc.rust-lang.org/cargo
 [cargo-toml]: https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -403,6 +404,7 @@ room](https://matrix.to/#/#riff:matrix.org)).
 [homebrew]: https://brew.sh
 [install-riff-action]: https://github.com/marketplace/actions/install-riff
 [libgl]: https://dri.freedesktop.org/wiki/libGL
+[matrix]: https://matrix.to/#/#riff:matrix.org
 [nix]: https://nixos.org/nix
 [nix-install]: https://nixos.org/download.html
 [nixpkgs]: https://search.nixos.org/packages

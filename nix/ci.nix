@@ -42,4 +42,13 @@ in
     ci-check-registry-format
     ci-check-editorconfig
   '')
+
+  # A helper command for formatting and spelling checks
+  (writeScriptBin "nits" ''
+    ci-check-rustfmt
+    ci-check-spelling
+    ci-check-nixpkgs-fmt
+    ci-check-registry-format
+    ci-check-editorconfig
+  '')
 ]
