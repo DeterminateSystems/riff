@@ -502,7 +502,17 @@
           "nodePackages.npm"
         ]
       },
-      "dependencies": {}
+      "dependencies": {
+        "cypress": {
+          "build-inputs": [
+            "cypress"
+          ],
+          "environment-variables": {
+            "CYPRESS_INSTALL_BINARY": "0",
+            "CYPRESS_RUN_BINARY": "${cypress}/bin/Cypress"
+          }
+        }
+      }
     }
   },
   "latest_riff_version": "1.0.1",

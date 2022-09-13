@@ -220,12 +220,14 @@ impl<'a> DevEnvironment<'a> {
         // Infer offline-ness from our stored registry
         // if self.registry.offline() {
         let mut yarn_install_command = Command::new("nix");
-        yarn_install_command.arg("run");
         yarn_install_command.args(&["--extra-experimental-features"]);
         yarn_install_command.args(&["flakes nix-command"]);
+        yarn_install_command.arg("shell");
+        yarn_install_command.arg("nixpkgs#nodejs");
         yarn_install_command.arg("nixpkgs#yarn");
-        yarn_install_command.arg("--");
-        yarn_install_command.args(&["install"]);
+        yarn_install_command.arg("-c");
+        yarn_install_command.arg("yarn");
+        yarn_install_command.arg("install");
 
         tracing::trace!(command = ?yarn_install_command.as_std(), "Running");
         let spinner = SimpleSpinner::new_with_message(Some(&format!(
@@ -279,7 +281,7 @@ impl<'a> DevEnvironment<'a> {
                 entry.wrap_err_with(|| eyre!("Could not walk `{}`", project_dir.display()))?;
             if entry.path().components().last() != Some(Component::Normal("package.json".as_ref()))
             {
-                break;
+                continue;
             }
             tracing::trace!(path = %entry.path().display(), "Walking");
             let mut package_json = File::open(entry.path()).await?;
@@ -294,27 +296,30 @@ impl<'a> DevEnvironment<'a> {
                 eyre!("Error parsing `{}` as JSON", package_json_path.display())
             })?;
 
-            let name = package_json.name;
-            let riff_config = package_json.config.riff;
+            let riff_config = package_json.config.and_then(|v| v.riff);
 
-            if let Some(dep_config) = language_registry.javascript.dependencies.get(name.as_str()) {
-                tracing::debug!(
-                    package_name = %name,
-                    "build-inputs" = %dep_config.build_inputs().iter().join(", "),
-                    "environment-variables" = %dep_config.environment_variables().iter().map(|(k, v)| format!("{k}={v}")).join(", "),
-                    "runtime-inputs" = %dep_config.runtime_inputs().iter().join(", "),
-                    "Detected known crate information"
-                );
-                dep_config.clone().apply(self);
+            if let Some(ref name) = &package_json.name {
+                if let Some(dep_config) =
+                    language_registry.javascript.dependencies.get(name.as_str())
+                {
+                    tracing::debug!(
+                        package_name = %name,
+                        "build-inputs" = %dep_config.build_inputs().iter().join(", "),
+                        "environment-variables" = %dep_config.environment_variables().iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                        "runtime-inputs" = %dep_config.runtime_inputs().iter().join(", "),
+                        "Detected known package information"
+                    );
+                    dep_config.clone().apply(self);
+                }
             }
 
             if let Some(dep_config) = riff_config {
                 tracing::debug!(
-                    package = %name,
+                    package = %package_json.name.unwrap_or_default(),
                     "build-inputs" = %dep_config.build_inputs().iter().join(", "),
                     "environment-variables" = %dep_config.environment_variables().iter().map(|(k, v)| format!("{k}={v}")).join(", "),
                     "runtime-inputs" = %dep_config.runtime_inputs().iter().join(", "),
-                    "Detected `package.metadata.riff` in `Crate.toml`"
+                    "Detected `config.riff` in `package.json`"
                 );
                 dep_config.apply(self);
             }
