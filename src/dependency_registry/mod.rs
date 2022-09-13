@@ -12,8 +12,10 @@ use tokio::{
 };
 use xdg::{BaseDirectories, BaseDirectoriesError};
 
-use self::rust::RustDependencyRegistryData;
+use javascript::JavascriptDependencyRegistryData;
+use rust::RustDependencyRegistryData;
 
+pub(crate) mod javascript;
 pub(crate) mod rust;
 
 const DEPENDENCY_REGISTRY_REMOTE_URL: &str =
@@ -220,5 +222,8 @@ pub struct DependencyRegistryData {
 
 #[derive(Deserialize, Default, Clone, Debug)]
 pub struct DependencyRegistryLanguageData {
+    #[serde(default)]
     pub(crate) rust: RustDependencyRegistryData,
+    #[serde(default)]
+    pub(crate) javascript: JavascriptDependencyRegistryData,
 }

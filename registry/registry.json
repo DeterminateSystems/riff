@@ -493,6 +493,16 @@
           ]
         }
       }
+    },
+    "javascript": {
+      "default": {
+        "build-inputs": [
+          "nodejs",
+          "yarn",
+          "nodePackages.npm"
+        ]
+      },
+      "dependencies": {}
     }
   },
   "latest_riff_version": "1.0.1",
