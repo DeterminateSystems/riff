@@ -54,6 +54,11 @@
           eclint = import ./nix/eclint.nix { inherit pkgs; };
 
           changelog = pkgs.writeScriptBin "changelog" ''
+            # Set a GITHUB_TOKEN in the local environment to get around rate limits
+            if ! [ -z "''${GITHUB_TOKEN}" ]; then
+              export CHANGELOG_GITHUB_TOKEN="''${GITHUB_TOKEN}"
+            fi
+
             ${pkgs.github-changelog-generator}/bin/github_changelog_generator \
               -u DeterminateSystems \
               -p riff
