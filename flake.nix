@@ -53,11 +53,10 @@
           ci = import ./nix/ci.nix { inherit pkgs; };
           eclint = import ./nix/eclint.nix { inherit pkgs; };
 
-          spellcheck = pkgs.writeScriptBin "spellcheck" ''
-            ${pkgs.codespell}/bin/codespell \
-              --ignore-words-list crate,pullrequest,pullrequests,ser \
-              --skip target \
-              .
+          changelog = pkgs.writeScriptBin "changelog" ''
+            ${pkgs.github-changelog-generator}/bin/github_changelog_generator \
+              -u DeterminateSystems \
+              -p riff
           '';
         in
         pkgs.mkShell {
@@ -80,6 +79,7 @@
             git
             nixpkgs-fmt
             eclint
+            changelog
           ]
           ++ ci
           ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]);
