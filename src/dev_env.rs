@@ -279,6 +279,9 @@ impl<'a> DevEnvironment<'a> {
         for entry in walker {
             let entry =
                 entry.wrap_err_with(|| eyre!("Could not walk `{}`", project_dir.display()))?;
+            if entry.path().components().any(|v| v == Component::Normal("tests".as_ref()) || v == Component::Normal("test".as_ref())) {
+                continue;
+            }
             if entry.path().components().last() != Some(Component::Normal("package.json".as_ref()))
             {
                 continue;

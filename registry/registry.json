@@ -511,6 +511,16 @@
             "CYPRESS_INSTALL_BINARY": "0",
             "CYPRESS_RUN_BINARY": "${cypress}/bin/Cypress"
           }
+        },
+        "node-gyp": {
+          "build-inputs": [
+            "python3"
+          ]
+        },
+        "karma": {
+          "environment-variables": {
+            "CHROME_BIN": "${google-chrome}/bin/google-chrome-stable"
+          }
         }
       }
     }
