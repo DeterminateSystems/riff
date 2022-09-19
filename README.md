@@ -330,13 +330,13 @@ background using Nix.
 
 ## Garbage Collection
 
-While using [Nix] grants Riff its powers, it also comes with some drawbacks,
-one of which being the issue of disk space. After using Riff on a few projects,
-you may notice the `/nix/store` directory grow in size. Luckily, it is
-relatively easy to reclaim this space by running `nix-collect-garbage`.
-Do note that this may cause any Riff shells you have used to be cleaned up,
-and may cause the next `riff` invocation take slightly longer due to fetching
-all the dependencies that were cleaned up.
+One of the disadvantages of Riff using [Nix] is that [Nix] can end up using
+substantial disk space. After using Riff on a few projects, you may notice the
+`/nix/store` directory grow in size. Luckily, it is relatively easy to reclaim
+this space by running `nix-collect-garbage`. Note that garbage collection may
+clean up any Riff shells you have used, which in turn may cause your next riff
+invocation to take slightly longer because Riff&mdash;using Nix&mdash;needs to
+fetch the dependencies that were cleaned up.
 
 ## Direnv Integration
 
