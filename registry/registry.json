@@ -1,5 +1,57 @@
 {
   "language": {
+    "go": {
+      "default": {
+        "build-inputs": [
+          "go"
+        ]
+      },
+      "dependencies": {
+        "github.com/go-gl/glfw/v3.3/glfw": {
+          "build-inputs": [
+            "pkg-config",
+            "xorg.libX11",
+            "xorg.libXcursor",
+            "xorg.libXrandr",
+            "xorg.libXinerama",
+            "xorg.libXi",
+            "xorg.libXext",
+            "xorg.libXxf86vm",
+            "libGL"
+          ]
+        }
+      }
+    },
+    "javascript": {
+      "default": {
+        "build-inputs": [
+          "nodejs",
+          "yarn",
+          "nodePackages.npm"
+        ]
+      },
+      "dependencies": {
+        "cypress": {
+          "build-inputs": [
+            "cypress"
+          ],
+          "environment-variables": {
+            "CYPRESS_INSTALL_BINARY": "0",
+            "CYPRESS_RUN_BINARY": "${cypress}/bin/Cypress"
+          }
+        },
+        "karma": {
+          "environment-variables": {
+            "CHROME_BIN": "${google-chrome}/bin/google-chrome-stable"
+          }
+        },
+        "node-gyp": {
+          "build-inputs": [
+            "python3"
+          ]
+        }
+      }
+    },
     "rust": {
       "default": {
         "build-inputs": [
@@ -491,36 +543,6 @@
             "zlib",
             "clang"
           ]
-        }
-      }
-    },
-    "javascript": {
-      "default": {
-        "build-inputs": [
-          "nodejs",
-          "yarn",
-          "nodePackages.npm"
-        ]
-      },
-      "dependencies": {
-        "cypress": {
-          "build-inputs": [
-            "cypress"
-          ],
-          "environment-variables": {
-            "CYPRESS_INSTALL_BINARY": "0",
-            "CYPRESS_RUN_BINARY": "${cypress}/bin/Cypress"
-          }
-        },
-        "node-gyp": {
-          "build-inputs": [
-            "python3"
-          ]
-        },
-        "karma": {
-          "environment-variables": {
-            "CHROME_BIN": "${google-chrome}/bin/google-chrome-stable"
-          }
         }
       }
     }

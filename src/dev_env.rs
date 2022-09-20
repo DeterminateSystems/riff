@@ -1,9 +1,11 @@
 //! The developer environment setup.
 
 use std::collections::{HashMap, HashSet};
+use std::io::Cursor;
 use std::path::{Component, Path};
 
 use crate::dependency_registry::DependencyRegistry;
+use crate::metadata::go::GoPackage;
 use crate::metadata::{javascript::PackageJson, rust::CargoMetadata};
 use crate::spinner::SimpleSpinner;
 use eyre::{eyre, WrapErr};
@@ -13,11 +15,13 @@ use tokio::fs::File;
 use tokio::io::AsyncReadExt;
 use tokio::process::Command;
 use walkdir::WalkDir;
+use serde::Deserialize;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize)]
 pub enum DetectedLanguage {
     Rust,
     Javascript,
+    Go,
 }
 
 #[derive(Debug, Clone)]
@@ -68,16 +72,20 @@ impl<'a> DevEnvironment<'a> {
         if project_dir.join("Cargo.toml").exists() {
             self.detected_languages.insert(DetectedLanguage::Rust);
             self.add_deps_from_cargo_toml(project_dir).await?;
-            Ok(())
         } else if project_dir.join("package.json").exists() {
             self.detected_languages.insert(DetectedLanguage::Javascript);
             self.add_deps_from_package_json(project_dir).await?;
-            Ok(())
-        } else {
+        } else if project_dir.join("go.mod").exists() {
+            self.detected_languages.insert(DetectedLanguage::Go);
+            self.add_deps_from_go_mod(project_dir).await?;
+        }
+        if self.detected_languages.is_empty() {
             Err(eyre!(
                 "'{}' does not contain a project recognized by Riff.",
                 project_dir.display()
             ))
+        } else {
+            Ok(())
         }
     }
 
@@ -213,6 +221,87 @@ impl<'a> DevEnvironment<'a> {
         Ok(())
     }
 
+    async fn add_deps_from_go_mod(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
+        let mut cmd = Command::new("nix");
+        let cmd_print = "go list".cyan();
+        cmd.current_dir(project_dir);
+        cmd.args(&[
+            "--extra-experimental-features",
+            "flakes nix-command",
+            "run",
+            "nixpkgs#go",
+            "--",
+            "list",
+            "-deps",
+            "-json",
+        ]);
+
+        let spinner = SimpleSpinner::new_with_message(Some(&format!("Running `{cmd_print}`")))
+            .context("Failed to construct progress spinner")?;
+
+        let output = cmd.output().await.unwrap_or_else(|e| {
+            eprintln!(
+                "\
+                Could not execute `{cmd_print}`. Is Nix installed?\n\n\
+                Get instructions for installing Nix: {nix_install_url}\n\n\
+                Underlying error: {err}
+                ",
+                nix_install_url = "https://nixos.org/download.html".blue().underline(),
+                err = e.red(),
+            );
+            std::process::exit(1);
+        });
+
+        spinner.finish_and_clear();
+
+        if !output.status.success() {
+            return Err(eyre!(
+                "{cmd_print} exited with code {exit_code}:\n{output}",
+                exit_code = output
+                    .status
+                    .code()
+                    .map(|x| x.to_string())
+                    .unwrap_or("unknown".to_string()),
+                // TODO: don't return just the UTF8 decode error if it's not valid UTF8
+                output = std::str::from_utf8(&output.stderr)?
+            ));
+        }
+
+        let mut packages: Vec<GoPackage> = Vec::new();
+
+        // We have a bunch of JSON objects which are simply
+        // concatenated with newlines, so we can't deserialise this as
+        // a Vec directly. Instead, we'll repeatedly try to
+        // deserialise a single package's metadata, until we reach the
+        // end of the output.
+        let mut de = serde_json::Deserializer::from_reader(Cursor::new(&output.stdout));
+        loop {
+            match GoPackage::deserialize(&mut de) {
+                Ok(meta) => packages.push(meta),
+                // TODO: does this mean that we'll ignore trailing garbage?
+                Err(e) if e.is_eof() => { break; },
+                Err(e) => Err(e)?,
+            }
+        }
+
+        let language_registry = self.registry.language().await.clone();
+        language_registry.go.default.apply(self);
+        for package in packages {
+            if let Some(dep_config) = language_registry.go.dependencies.get(package.import_path.as_str()) {
+                tracing::debug!(
+                    package_name = %package.import_path,
+                    "build-inputs" = %dep_config.build_inputs().iter().join(", "),
+                    "environment-variables" = %dep_config.environment_variables().iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                    "runtime-inputs" = %dep_config.runtime_inputs().iter().join(", "),
+                    "Detected known crate information"
+                );
+                dep_config.clone().apply(self);
+            }
+        }
+
+        Ok(())
+    }
+
     #[tracing::instrument(skip_all, fields(project_dir = %project_dir.display()))]
     async fn add_deps_from_package_json(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
         tracing::debug!("Adding Javascript dependencies...");
@@ -279,7 +368,9 @@ impl<'a> DevEnvironment<'a> {
         for entry in walker {
             let entry =
                 entry.wrap_err_with(|| eyre!("Could not walk `{}`", project_dir.display()))?;
-            if entry.path().components().any(|v| v == Component::Normal("tests".as_ref()) || v == Component::Normal("test".as_ref())) {
+            if entry.path().components().any(|v| {
+                v == Component::Normal("tests".as_ref()) || v == Component::Normal("test".as_ref())
+            }) {
                 continue;
             }
             if entry.path().components().last() != Some(Component::Normal("package.json".as_ref()))

@@ -14,9 +14,11 @@ use xdg::{BaseDirectories, BaseDirectoriesError};
 
 use javascript::JavascriptDependencyRegistryData;
 use rust::RustDependencyRegistryData;
+use go::GoDependencyRegistryData;
 
 pub(crate) mod javascript;
 pub(crate) mod rust;
+pub(crate) mod go;
 
 const DEPENDENCY_REGISTRY_REMOTE_URL: &str =
     "https://registry.riff.determinate.systems/riff-registry.json";
@@ -226,4 +228,6 @@ pub struct DependencyRegistryLanguageData {
     pub(crate) rust: RustDependencyRegistryData,
     #[serde(default)]
     pub(crate) javascript: JavascriptDependencyRegistryData,
+    #[serde(default)]
+    pub(crate) go: GoDependencyRegistryData,
 }
