@@ -234,6 +234,7 @@ impl<'a> DevEnvironment<'a> {
             "list",
             "-deps",
             "-json",
+            "...",
         ]);
 
         let spinner = SimpleSpinner::new_with_message(Some(&format!("Running `{cmd_print}`")))
@@ -254,6 +255,13 @@ impl<'a> DevEnvironment<'a> {
 
         spinner.finish_and_clear();
 
+        /* In some cases, like podman, things that don't work are
+         * drawn in and go list exits with code 1, but we still get a
+         * usable package list.
+         *
+         * TODO: work out if there's a better way to deal with that than
+         * ignoring failure completely.
+
         if !output.status.success() {
             return Err(eyre!(
                 "{cmd_print} exited with code {exit_code}:\n{output}",
@@ -266,6 +274,7 @@ impl<'a> DevEnvironment<'a> {
                 output = std::str::from_utf8(&output.stderr)?
             ));
         }
+        */
 
         let mut packages: Vec<GoPackage> = Vec::new();
 

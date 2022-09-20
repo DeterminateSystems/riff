@@ -7,6 +7,17 @@
         ]
       },
       "dependencies": {
+        "github.com/containers/storage/drivers/btrfs": {
+          "build-inputs": [
+            "btrfs-progs"
+          ]
+        },
+        "github.com/containers/storage/drivers/devmapper": {
+          "build-inputs": [
+            "pkg-config",
+            "lvm2"
+          ]
+        },
         "github.com/go-gl/glfw/v3.3/glfw": {
           "build-inputs": [
             "pkg-config",
@@ -18,6 +29,12 @@
             "xorg.libXext",
             "xorg.libXxf86vm",
             "libGL"
+          ]
+        },
+        "github.com/proglottis/gpgme": {
+          "build-inputs": [
+            "pkg-config",
+            "gpgme"
           ]
         }
       }
