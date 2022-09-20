@@ -329,6 +329,16 @@ external dependencies. But running `riff run cargo build` succeeds because Riff
 is able to infer which external dependencies are missing and provide them in the
 background using Nix.
 
+## Garbage Collection
+
+One of the disadvantages of Riff using [Nix] is that [Nix] can end up using
+substantial disk space. After using Riff on a few projects, you may notice the
+`/nix/store` directory grow in size. Luckily, it is relatively easy to reclaim
+this space by running `nix-collect-garbage`. Note that garbage collection may
+clean up any Riff shells you have used, which in turn may cause your next riff
+invocation to take slightly longer because Riff&mdash;using Nix&mdash;needs to
+fetch the dependencies that were cleaned up.
+
 ## Direnv Integration
 
 You can add Riff support to Direnv on a project-specific or global basis. To
