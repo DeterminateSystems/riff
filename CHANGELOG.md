@@ -6,6 +6,7 @@
 
 **Merged pull requests:**
 
+- README: document garbage collection [\#139](https://github.com/DeterminateSystems/riff/pull/139) ([cole-h](https://github.com/cole-h))
 - Bump clap from 3.2.20 to 3.2.21 [\#129](https://github.com/DeterminateSystems/riff/pull/129) ([dependabot[bot]](https://github.com/apps/dependabot))
 
 ## [v1.0.1](https://github.com/DeterminateSystems/riff/tree/v1.0.1) (2022-09-12)
