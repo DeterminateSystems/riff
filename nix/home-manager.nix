@@ -8,6 +8,7 @@ in
 {
   options.programs.riff = {
     enable = mkEnableOption "Riff";
+    enableDirenvIntegration = mkEnableOption "use_riff direnv integration";
     enableWrapper = mkEnableOption "Wrap Riff with Cargo" // { default = true; };
     offline = mkEnableOption "Riff offline mode";
     telemetry = mkEnableOption "Riff telemetry" // { default = true; };
@@ -37,6 +38,13 @@ in
       (mkIf (!cfg.telemetry) { RIFF_DISABLE_TELEMETRY = true; })
       (mkIf cfg.offline { RIFF_OFFLINE = true; })
     ];
+
+    programs.direnv.stdlib = mkIf cfg.enableDirenvIntegration ''
+      use_riff() {
+        watch_file Cargo.toml watch_file Cargo.lock
+        eval "$(riff print-dev-env)"
+      }
+    '';
 
     programs.riff.finalPackage =
       if cfg.enableWrapper then
