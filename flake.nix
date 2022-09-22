@@ -85,6 +85,15 @@
           ++ lib.optionals (pkgs.stdenv.isDarwin) (with pkgs; [ libiconv darwin.apple_sdk.frameworks.Security ]);
         });
 
+      homeManagerModule = forAllSystems ({ system, ... }: self.outputs.homeManagerModules.${system}.default);
+
+      homeManagerModules = forAllSystems
+        ({ system, ... }:
+          {
+            default = self.outputs.homeManagerModules.${system}.riff;
+            riff = (import ./nix/home-manager.nix) { flake = self; };
+          });
+
       packages = forAllSystems
         ({ system, pkgs, lib, ... }:
           let
