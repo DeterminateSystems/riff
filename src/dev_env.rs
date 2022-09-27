@@ -72,12 +72,12 @@ impl<'a> DevEnvironment<'a> {
         if project_dir.join("Cargo.toml").exists() {
             self.detected_languages.insert(DetectedLanguage::Rust);
             self.add_deps_from_cargo_toml(project_dir).await?;
-        } else if project_dir.join("package.json").exists() {
-            self.detected_languages.insert(DetectedLanguage::Javascript);
-            self.add_deps_from_package_json(project_dir).await?;
         } else if project_dir.join("go.mod").exists() {
             self.detected_languages.insert(DetectedLanguage::Go);
             self.add_deps_from_go_mod(project_dir).await?;
+        } else if project_dir.join("package.json").exists() {
+            self.detected_languages.insert(DetectedLanguage::Javascript);
+            self.add_deps_from_package_json(project_dir).await?;
         }
         if self.detected_languages.is_empty() {
             Err(eyre!(
