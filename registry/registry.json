@@ -7,6 +7,18 @@
         ]
       },
       "dependencies": {
+        "???": {
+          "build-inputs": [
+            "xkbcommon",
+            "wayland",
+            "pkg-config"
+          ]
+        },
+        "github.com/containerd/btrfs": {
+          "build-inputs": [
+            "btrfs-progs"
+          ]
+        },
         "github.com/containers/storage/drivers/btrfs": {
           "build-inputs": [
             "btrfs-progs"
@@ -16,6 +28,11 @@
           "build-inputs": [
             "pkg-config",
             "lvm2"
+          ]
+        },
+        "github.com/coreos/go-systemd/sdjournal": {
+          "build-inputs": [
+            "systemd"
           ]
         },
         "github.com/go-gl/glfw/v3.3/glfw": {
@@ -31,10 +48,20 @@
             "libGL"
           ]
         },
+        "github.com/google/gopacket/pcap": {
+          "build-inputs": [
+            "libpcap"
+          ]
+        },
         "github.com/proglottis/gpgme": {
           "build-inputs": [
             "pkg-config",
             "gpgme"
+          ]
+        },
+        "github.com/tecbot/gorocksdb": {
+          "build-inputs": [
+            "rocksdb"
           ]
         }
       }
