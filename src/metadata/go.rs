@@ -1,6 +1,4 @@
-use std::path::PathBuf;
-
-use crate::dependency_registry::rust::RustDependencyData;
+// use std::path::PathBuf;
 
 #[derive(Debug, serde::Deserialize)]
 pub(crate) struct GoPackage {
