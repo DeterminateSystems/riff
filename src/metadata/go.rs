@@ -4,8 +4,8 @@ use crate::dependency_registry::rust::RustDependencyData;
 
 #[derive(Debug, serde::Deserialize)]
 pub(crate) struct GoPackage {
-    #[serde(rename = "Dir")]
-    pub(crate) dir: PathBuf,
+    // #[serde(rename = "Dir")]
+    // pub(crate) dir: PathBuf,
     #[serde(rename = "ImportPath")]
     pub(crate) import_path: String,
     // #[serde(rename = "CgoCFLAGS")]
