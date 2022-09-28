@@ -107,22 +107,25 @@ async fn setup_tracing() -> eyre::Result<()> {
         .take_while(|v| v != "--")
         .any(|v| v == "--debug");
 
-    let filter_layer = if debug {
-        EnvFilter::try_new(&format!("{}={}", env!("CARGO_PKG_NAME"), "debug"))?
-    } else {
-        match EnvFilter::try_from_default_env() {
-            Ok(layer) => layer,
-            Err(e) => {
-                // Catch a parse error and report it, ignore a missing env.
-                if let Some(source) = e.source() {
-                    match source.downcast_ref::<std::env::VarError>() {
-                        Some(std::env::VarError::NotPresent) => (),
-                        _ => return Err(e).wrap_err_with(|| "parsing RUST_LOG directives"),
-                    }
+    let filter_layer = match EnvFilter::try_from_default_env() {
+        Ok(layer) => layer,
+        Err(e) => {
+            // Catch a parse error and report it, ignore a missing env.
+            if let Some(source) = e.source() {
+                match source.downcast_ref::<std::env::VarError>() {
+                    Some(std::env::VarError::NotPresent) => (),
+                    _ => return Err(e).wrap_err_with(|| "parsing RUST_LOG directives"),
                 }
-                EnvFilter::try_new(&format!("{}={}", env!("CARGO_PKG_NAME"), "info"))?
             }
+            EnvFilter::try_new(&format!("{}={}", env!("CARGO_PKG_NAME"), "info"))?
         }
+    };
+
+    let filter_layer = if debug {
+        let directive = format!("{}={}", env!("CARGO_PKG_NAME"), "debug").parse()?;
+        filter_layer.add_directive(directive)
+    } else {
+        filter_layer
     };
 
     // Initialize tracing with tracing-error, and eyre
