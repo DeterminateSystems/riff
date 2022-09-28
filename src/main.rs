@@ -36,6 +36,9 @@ struct Cli {
     // TODO(@hoverbear): Can we disable that, too?
     #[clap(long, global = true, env = "RIFF_OFFLINE")]
     offline: bool,
+    /// Print out debug logging
+    #[clap(long, global = true)]
+    debug: bool,
 }
 
 #[tokio::main]
@@ -100,6 +103,10 @@ fn exit_status_to_exit_code(status: Option<i32>) -> ExitCode {
 
 #[tracing::instrument]
 async fn setup_tracing() -> eyre::Result<()> {
+    let debug = std::env::args()
+        .take_while(|v| v != "--")
+        .any(|v| v == "--debug");
+
     let filter_layer = match EnvFilter::try_from_default_env() {
         Ok(layer) => layer,
         Err(e) => {
@@ -112,6 +119,13 @@ async fn setup_tracing() -> eyre::Result<()> {
             }
             EnvFilter::try_new(&format!("{}={}", env!("CARGO_PKG_NAME"), "info"))?
         }
+    };
+
+    let filter_layer = if debug {
+        let directive = format!("{}={}", env!("CARGO_PKG_NAME"), "debug").parse()?;
+        filter_layer.add_directive(directive)
+    } else {
+        filter_layer
     };
 
     // Initialize tracing with tracing-error, and eyre
