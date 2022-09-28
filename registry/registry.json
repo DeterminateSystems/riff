@@ -19,6 +19,14 @@
             "btrfs-progs"
           ]
         },
+        "github.com/containers/image/v5/ostree": {
+          "build-inputs": [
+            "ostree",
+            "glib",
+            "libselinux",
+            "pkg-config"
+          ]
+        },
         "github.com/containers/storage/drivers/btrfs": {
           "build-inputs": [
             "btrfs-progs"
@@ -28,6 +36,16 @@
           "build-inputs": [
             "pkg-config",
             "lvm2"
+          ]
+        },
+        "github.com/containers/storage/pkg/devicemapper": {
+          "build-inputs": [
+            "lvm2"
+          ]
+        },
+        "github.com/containers/storage/pkg/idtools": {
+          "build-inputs": [
+            "shadow"
           ]
         },
         "github.com/coreos/go-systemd/sdjournal": {
@@ -53,10 +71,28 @@
             "libpcap"
           ]
         },
+        "github.com/ostreedev/ostree-go/pkg/glibobject": {
+          "build-inputs": [
+            "glib",
+            "pkg-config"
+          ]
+        },
+        "github.com/ostreedev/ostree-go/pkg/otbuiltin": {
+          "build-inputs": [
+            "ostree",
+            "pkg-config"
+          ]
+        },
         "github.com/proglottis/gpgme": {
           "build-inputs": [
             "pkg-config",
             "gpgme"
+          ]
+        },
+        "github.com/seccomp/libseccomp-golang": {
+          "build-inputs": [
+            "libseccomp",
+            "pkg-config"
           ]
         },
         "github.com/tecbot/gorocksdb": {
