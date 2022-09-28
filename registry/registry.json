@@ -71,6 +71,11 @@
             "libpcap"
           ]
         },
+        "github.com/google/seesaw/netlink": {
+          "build-inputs": [
+            "libnl"
+          ]
+        },
         "github.com/ostreedev/ostree-go/pkg/glibobject": {
           "build-inputs": [
             "glib",
