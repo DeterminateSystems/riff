@@ -76,6 +76,52 @@ steps:
     run: riff run cargo build -- --release
 ```
 
+### Prompt Customization
+
+It is possible to customize your shell's prompt to display when you're in a Riff
+shell environment by relying on the `$IN_NIX_SHELL` environment variable.
+
+If you use [Starship], you get this information for free because the [Nix shell
+module] is enabled by default.
+
+However, if you want to add this to your shell prompt yourself, you can do that
+by adding `$name` to your prompt when `$IN_NIX_SHELL` is set.
+
+In Bash, this might look something like:
+
+```bash
+export PS1="$PWD \${IN_NIX_SHELL:+\$name }\$ "
+```
+
+> Note the escaping of `\${IN_NIX_SHELL}` and `\$name`: this prevents Bash from
+> taking the current values of those environment variables and using them even
+> after either of them have changed.
+
+In Zsh, it might look similar to:
+
+```zsh
+export PROMPT="$PWD \${IN_NIX_SHELL:+\$name }\$ "
+```
+
+And in Fish, you might use something like:
+
+```fish
+function fish_prompt
+    echo -n "$PWD "
+    if set -q IN_NIX_SHELL
+        echo -n "$name "
+    end
+    echo -n "\$ "
+end
+```
+
+> Escaping `$name` is unnecessary here because Fish doesn't capture the value of
+> `$name` until the function is run when your prompt is displayed.
+
+The idea extends to any shell: if you can change the prompt and prevent it from
+evaluating the values of `$IN_NIX_SHELL` and `$name` until the prompt is
+displayed, you can add this information to your prompt.
+
 ## What Riff provides
 
 Most programming languages use language-specific package managers to handle
@@ -455,6 +501,7 @@ to a [Matrix room][matrix]).
 [nix]: https://nixos.org/nix
 [nix-install]: https://nixos.org/download.html
 [nixpkgs]: https://search.nixos.org/packages
+[nix shell module]: https://starship.rs/config/#nix-shell
 [nix store]: https://nixos.wiki/wiki/Nix_package_manager
 [octocrab]: https://github.com/XAMPPRocky/octocrab
 [openssl]: https://openssl.org
@@ -465,6 +512,7 @@ to a [Matrix room][matrix]).
 [rust]: https://rust-lang.org
 [rust-install]: https://www.rust-lang.org/tools/install
 [security]: https://developer.apple.com/documentation/security
+[starship]: https://starship.rs/
 [targets]: https://doc.rust-lang.org/nightly/rustc/platform-support.html
 [telemetry]: ./src/telemetry.rs
 
