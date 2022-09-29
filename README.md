@@ -396,6 +396,47 @@ riff shell --disable-telemetry
 RIFF_DISABLE_TELEMETRY=true riff run cargo build
 ```
 
+### Telemetry
+
+When you use Riff, we generate a random version 4 UUID for you. It contains no
+personally identifiable information about you, and is used to know how many
+people use the tool and to focus our limited research and development. You can
+delete this file at any time to create a new ID.
+
+To see exactly what data we send, you may run Riff as follows:
+
+```shell
+$ RUST_LOG=riff::telemetry=debug riff run echo 'Hello, Riff!'
+✓ 🦀 rust: cargo, openssl, pkg-config, rustc, rustfmt
+  2022-09-29T21:29:01.476342Z DEBUG riff::telemetry: Sent telemetry data to https://registry.riff.determinate.systems/telemetry, telemetry: Telemetry { distinct_id: Some(Secret([REDACTED riff::telemetry::DistinctId])), system_os: "linux", system_arch: "x86_64", os_release_name: Some("NixOS"), os_release_version_id: Some("22.11"), riff_version: "1.0.1", nix_version: Some("nix (Nix) 2.12.0pre20220928_c3c0682"), is_tty: true, subcommand: Some("run"), detected_languages: {Rust}, in_ci: false }
+    at src/telemetry.rs:129
+    in riff::telemetry::send
+    in riff::flake_generator::generate_flake_from_project_dir with project_dir: None, offline: false
+```
+
+(this will also appear when running with `--debug`, accompanied by other debug logging)
+
+In a slightly more readable format, the telemetry that was sent above is:
+
+```
+Telemetry {
+    distinct_id: Some(Secret([REDACTED riff::telemetry::DistinctId])),
+    system_os: "linux",
+    system_arch: "x86_64",
+    os_release_name: Some("NixOS"),
+    os_release_version_id: Some("22.11"),
+    riff_version: "1.0.1",
+    nix_version: Some("nix (Nix) 2.12.0pre20220928_c3c0682"),
+    is_tty: true,
+    subcommand: Some("run"),
+    detected_languages: {Rust},
+    in_ci: false
+}
+```
+
+Notice that the `subcommand` is just `Some("run")` -- we do not collect what
+command you're using Riff to run, only the fact that you used `riff run`.
+
 ## Community
 
 If you'd like to discuss Riff with other users, join our [Discord] (also bridged
