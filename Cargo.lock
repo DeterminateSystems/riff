@@ -951,7 +951,6 @@ dependencies = [
  "indicatif",
  "is_ci",
  "itertools",
- "once_cell",
  "os-release",
  "owo-colors",
  "reqwest",
