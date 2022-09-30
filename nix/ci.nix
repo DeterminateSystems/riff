@@ -31,7 +31,7 @@ in
 
   # EditorConfig
   (writeScriptBin "ci-check-editorconfig" ''
-    eclint
+    eclint -exclude README.md
   '')
 
   (writeScriptBin "ci-all" ''
