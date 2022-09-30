@@ -416,26 +416,21 @@ $ RUST_LOG=riff::telemetry=debug riff run echo 'Hello, Riff!'
 
 (this will also appear when running with `--debug`, accompanied by other debug logging)
 
-In a slightly more readable format, the telemetry that was sent above is:
+In a more readable format, the data we collect is as follows:
 
-```
-Telemetry {
-    distinct_id: Some(Secret([REDACTED riff::telemetry::DistinctId])),
-    system_os: "linux",
-    system_arch: "x86_64",
-    os_release_name: Some("NixOS"),
-    os_release_version_id: Some("22.11"),
-    riff_version: "1.0.1",
-    nix_version: Some("nix (Nix) 2.12.0pre20220928_c3c0682"),
-    is_tty: true,
-    subcommand: Some("run"),
-    detected_languages: {Rust},
-    in_ci: false
-}
-```
-
-Notice that the `subcommand` is just `Some("run")` -- we do not collect what
-command you're using Riff to run, only the fact that you used `riff run`.
+| Field | Use |
+|-------|-----|
+| `distinct_id` | To identify a Riff installation. More specifically, we care about our weekly active users count, and this field helps us measure that. |
+| `system_os` | To identify what operating system Riff is running on. |
+| `system_arch` | To identify the architecture Riff is running on. |
+| `os_release_name` | To identify the distribution Riff is running on. This uses the `NAME` field of `/etc/os-release`, if it exists. |
+| `os_release_version_id` | To identify the version of the distribution Riff is running on. This uses the `VERSION_ID` field of `/etc/os-release`, if it exists. |
+| `riff_version` | To identify which version of Riff is being used. |
+| `nix_version` | To identify which version if Nix is being used by Riff. |
+| `is_tty` | To identify if Riff is being run interactively. |
+| `subcommand` | To identify which subcommand Riff is executing. This only contains information about the Riff subcommand, and not any commands being run by Riff (e.g. `riff run echo 'Hello, Riff!'` will not send any telemetry including the fact that Riff ran `echo 'Hello, Riff!'`). |
+| `detected_languages` | To identify which languages Riff detected in the project. |
+| `in_ci` | To identify whether or not Riff is being used in CI (i.e. GitHub Actions). |
 
 ## Community
 
