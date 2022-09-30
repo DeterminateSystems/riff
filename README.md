@@ -398,10 +398,11 @@ RIFF_DISABLE_TELEMETRY=true riff run cargo build
 
 ### Telemetry
 
-When you use Riff, we generate a random version 4 UUID for you. It contains no
-personally identifiable information about you, and is used to know how many
-people use the tool and to focus our limited research and development. You can
-delete this file at any time to create a new ID.
+When you use Riff, Riff generates a random version 4 UUID for you. It
+contains no personally identifiable information about you and is used
+to know how many people use the tool and to focus our limited research
+and development. You can delete this file at any time to create a new
+ID.
 
 To see exactly what data we send, you may run Riff as follows:
 
@@ -414,23 +415,23 @@ $ RUST_LOG=riff::telemetry=debug riff run echo 'Hello, Riff!'
     in riff::flake_generator::generate_flake_from_project_dir with project_dir: None, offline: false
 ```
 
-(this will also appear when running with `--debug`, accompanied by other debug logging)
+> This will also appear when running with `--debug`, accompanied by other debug logging.
 
-In a more readable format, the data we collect is as follows:
+The table below shows the data Riff collects in a more readable format:
 
 | Field | Use |
 |-------|-----|
-| `distinct_id` | The ID of the Riff installation. More specifically, we care about our weekly active users count, and this field helps us measure that. |
+| `distinct_id` | The ID of the Riff installation. More specifically, we at Determinate Systems care about our weekly active users count and this field helps us measure that. |
 | `system_os` | The operating system Riff is running on. |
 | `system_arch` | The architecture Riff is running on. |
-| `os_release_name` | The distribution Riff is running on. This uses the `NAME` field of `/etc/os-release`, if it exists. |
-| `os_release_version_id` | The version of the distribution Riff is running on. This uses the `VERSION_ID` field of `/etc/os-release`, if it exists. |
-| `riff_version` | Which version of Riff is being used. |
-| `nix_version` | Which version if Nix is being used by Riff. |
-| `is_tty` | If Riff is being run interactively. |
-| `subcommand` | Which subcommand Riff is executing. This only contains information about the Riff subcommand, and not any commands being run by Riff (e.g. `riff run echo 'Hello, Riff!'` will not send any telemetry including the fact that Riff ran `echo 'Hello, Riff!'`). |
+| `os_release_name` | The distribution Riff is running on. This uses the `NAME` field of `/etc/os-release` if it exists. |
+| `os_release_version_id` | The version of the distribution Riff is running on. This uses the `VERSION_ID` field of `/etc/os-release` if it exists. |
+| `riff_version` | The version of Riff being used. |
+| `nix_version` | The version of Nix being used by Riff. |
+| `is_tty` | Whether Riff is being run interactively. |
+| `subcommand` | The subcommand Riff is executing. This only contains information about the Riff subcommand, and not any commands being run by Riff (i.e. `riff run echo 'Hello, Riff!'` will not send any telemetry including the fact that Riff ran `echo 'Hello, Riff!'`). |
 | `detected_languages` | Which languages Riff detected in the project. |
-| `in_ci` | Whether or not Riff is being used in CI (i.e. GitHub Actions). |
+| `in_ci` | Whether Riff is being used in CI (e.g. GitHub Actions). |
 
 ## Community
 
