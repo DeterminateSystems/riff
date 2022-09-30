@@ -420,17 +420,17 @@ In a more readable format, the data we collect is as follows:
 
 | Field | Use |
 |-------|-----|
-| `distinct_id` | To identify a Riff installation. More specifically, we care about our weekly active users count, and this field helps us measure that. |
-| `system_os` | To identify what operating system Riff is running on. |
-| `system_arch` | To identify the architecture Riff is running on. |
-| `os_release_name` | To identify the distribution Riff is running on. This uses the `NAME` field of `/etc/os-release`, if it exists. |
-| `os_release_version_id` | To identify the version of the distribution Riff is running on. This uses the `VERSION_ID` field of `/etc/os-release`, if it exists. |
-| `riff_version` | To identify which version of Riff is being used. |
-| `nix_version` | To identify which version if Nix is being used by Riff. |
-| `is_tty` | To identify if Riff is being run interactively. |
-| `subcommand` | To identify which subcommand Riff is executing. This only contains information about the Riff subcommand, and not any commands being run by Riff (e.g. `riff run echo 'Hello, Riff!'` will not send any telemetry including the fact that Riff ran `echo 'Hello, Riff!'`). |
-| `detected_languages` | To identify which languages Riff detected in the project. |
-| `in_ci` | To identify whether or not Riff is being used in CI (i.e. GitHub Actions). |
+| `distinct_id` | The ID of the Riff installation. More specifically, we care about our weekly active users count, and this field helps us measure that. |
+| `system_os` | The operating system Riff is running on. |
+| `system_arch` | The architecture Riff is running on. |
+| `os_release_name` | The distribution Riff is running on. This uses the `NAME` field of `/etc/os-release`, if it exists. |
+| `os_release_version_id` | The version of the distribution Riff is running on. This uses the `VERSION_ID` field of `/etc/os-release`, if it exists. |
+| `riff_version` | Which version of Riff is being used. |
+| `nix_version` | Which version if Nix is being used by Riff. |
+| `is_tty` | If Riff is being run interactively. |
+| `subcommand` | Which subcommand Riff is executing. This only contains information about the Riff subcommand, and not any commands being run by Riff (e.g. `riff run echo 'Hello, Riff!'` will not send any telemetry including the fact that Riff ran `echo 'Hello, Riff!'`). |
+| `detected_languages` | Which languages Riff detected in the project. |
+| `in_ci` | Whether or not Riff is being used in CI (i.e. GitHub Actions). |
 
 ## Community
 
