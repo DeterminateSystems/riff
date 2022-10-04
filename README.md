@@ -78,14 +78,13 @@ steps:
 
 ### Prompt Customization
 
-It is possible to customize your shell's prompt to display when you're in a Riff
-shell environment by relying on the `$IN_NIX_SHELL` environment variable.
+You can customize your shell's prompt to display when you're in a Riff shell
+environment by relying on the `$IN_NIX_SHELL` environment variable.
 
 If you use [Starship], you get this information for free because the [Nix shell
-module] is enabled by default.
-
-However, if you want to add this to your shell prompt yourself, you can do that
-by adding `$name` to your prompt when `$IN_NIX_SHELL` is set.
+module] is enabled by default. However, if you want to add this to your shell
+prompt yourself, you can do that by adding `$name` to your prompt when
+`$IN_NIX_SHELL` is set.
 
 In Bash, this might look something like:
 
@@ -93,9 +92,9 @@ In Bash, this might look something like:
 export PS1="$PWD \${IN_NIX_SHELL:+\$name }\$ "
 ```
 
-> Note the escaping of `\${IN_NIX_SHELL}` and `\$name`: this prevents Bash from
+> Note the escaping of `\${IN_NIX_SHELL}` and `\$name`. This prevents Bash from
 > taking the current values of those environment variables and using them even
-> after either of them have changed.
+> after one of them has changed.
 
 In Zsh, it might look similar to:
 
