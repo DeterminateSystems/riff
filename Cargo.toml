@@ -17,7 +17,7 @@ build-inputs = [
 [dependencies]
 atty = "0.2"
 cfg-if = "1"
-clap = { version = "4.0.9", features = ["derive", "env"] }
+clap = { version = "4.0.10", features = ["derive", "env"] }
 color-eyre = { version = "0.6.2", features = [ "issue-url" ] }
 eyre = "0.6.8"
 indicatif = "0.17.1"
