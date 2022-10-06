@@ -136,6 +136,11 @@
               });
           });
 
-      defaultPackage = forAllSystems ({ system, ... }: self.packages.${system}.riff);
+      defaultPackage = forAllSystems ({ system, ... }:
+        if (system == "x86_64-linux" || system == "aarch64-linux") then
+          self.packages.${system}.riffStatic
+        else
+          self.packages.${system}.riff
+      );
     };
 }
