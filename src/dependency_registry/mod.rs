@@ -12,9 +12,13 @@ use tokio::{
 };
 use xdg::{BaseDirectories, BaseDirectoriesError};
 
-use self::rust::RustDependencyRegistryData;
+use javascript::JavascriptDependencyRegistryData;
+use rust::RustDependencyRegistryData;
+use go::GoDependencyRegistryData;
 
+pub(crate) mod javascript;
 pub(crate) mod rust;
+pub(crate) mod go;
 
 const DEPENDENCY_REGISTRY_REMOTE_URL: &str =
     "https://registry.riff.determinate.systems/riff-registry.json";
@@ -220,5 +224,10 @@ pub struct DependencyRegistryData {
 
 #[derive(Deserialize, Default, Clone, Debug)]
 pub struct DependencyRegistryLanguageData {
+    #[serde(default)]
     pub(crate) rust: RustDependencyRegistryData,
+    #[serde(default)]
+    pub(crate) javascript: JavascriptDependencyRegistryData,
+    #[serde(default)]
+    pub(crate) go: GoDependencyRegistryData,
 }

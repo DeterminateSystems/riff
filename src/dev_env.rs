@@ -1,20 +1,27 @@
 //! The developer environment setup.
 
 use std::collections::{HashMap, HashSet};
-use std::path::Path;
+use std::io::Cursor;
+use std::path::{Component, Path};
 
+use crate::dependency_registry::DependencyRegistry;
+use crate::metadata::go::GoPackage;
+use crate::metadata::{javascript::PackageJson, rust::CargoMetadata};
+use crate::spinner::SimpleSpinner;
 use eyre::{eyre, WrapErr};
 use itertools::Itertools;
 use owo_colors::OwoColorize;
+use tokio::fs::File;
+use tokio::io::AsyncReadExt;
 use tokio::process::Command;
-
-use crate::cargo_metadata::CargoMetadata;
-use crate::dependency_registry::DependencyRegistry;
-use crate::spinner::SimpleSpinner;
+use walkdir::WalkDir;
+use serde::Deserialize;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize)]
 pub enum DetectedLanguage {
     Rust,
+    Javascript,
+    Go,
 }
 
 #[derive(Debug, Clone)]
@@ -64,18 +71,26 @@ impl<'a> DevEnvironment<'a> {
     pub async fn detect(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
         if project_dir.join("Cargo.toml").exists() {
             self.detected_languages.insert(DetectedLanguage::Rust);
-            self.add_deps_from_cargo(project_dir).await?;
-            Ok(())
-        } else {
+            self.add_deps_from_cargo_toml(project_dir).await?;
+        } else if project_dir.join("go.mod").exists() {
+            self.detected_languages.insert(DetectedLanguage::Go);
+            self.add_deps_from_go_mod(project_dir).await?;
+        } else if project_dir.join("package.json").exists() {
+            self.detected_languages.insert(DetectedLanguage::Javascript);
+            self.add_deps_from_package_json(project_dir).await?;
+        }
+        if self.detected_languages.is_empty() {
             Err(eyre!(
                 "'{}' does not contain a project recognized by Riff.",
                 project_dir.display()
             ))
+        } else {
+            Ok(())
         }
     }
 
     #[tracing::instrument(skip_all, fields(project_dir = %project_dir.display()))]
-    async fn add_deps_from_cargo(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
+    async fn add_deps_from_cargo_toml(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
         tracing::debug!("Adding Cargo dependencies...");
 
         let mut cargo_metadata_command = Command::new("cargo");
@@ -174,6 +189,249 @@ impl<'a> DevEnvironment<'a> {
             "{check} {lang}: {colored_inputs}{maybe_colored_envs}",
             check = "✓".green(),
             lang = "🦀 rust".bold().red(),
+            colored_inputs = {
+                let mut sorted_build_inputs = self
+                    .build_inputs
+                    .union(&self.runtime_inputs)
+                    .collect::<Vec<_>>();
+                sorted_build_inputs.sort();
+                sorted_build_inputs.iter().map(|v| v.cyan()).join(", ")
+            },
+            maybe_colored_envs = {
+                if !self.environment_variables.is_empty() {
+                    let mut sorted_environment_variables = self
+                        .environment_variables
+                        .iter()
+                        .map(|(k, _)| k)
+                        .collect::<Vec<_>>();
+                    sorted_environment_variables.sort();
+                    format!(
+                        " ({})",
+                        sorted_environment_variables
+                            .iter()
+                            .map(|v| v.green())
+                            .join(", ")
+                    )
+                } else {
+                    "".to_string()
+                }
+            }
+        );
+
+        Ok(())
+    }
+
+    async fn add_deps_from_go_mod(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
+        let mut cmd = Command::new("nix");
+        let cmd_print = "go list".cyan();
+        cmd.current_dir(project_dir);
+        cmd.args(&[
+            "--extra-experimental-features",
+            "flakes nix-command",
+            "run",
+            "nixpkgs#go",
+            "--",
+            "list",
+            "-deps",
+            "-json",
+            "...",
+        ]);
+
+        let spinner = SimpleSpinner::new_with_message(Some(&format!("Running `{cmd_print}`")))
+            .context("Failed to construct progress spinner")?;
+
+        let output = cmd.output().await.unwrap_or_else(|e| {
+            eprintln!(
+                "\
+                Could not execute `{cmd_print}`. Is Nix installed?\n\n\
+                Get instructions for installing Nix: {nix_install_url}\n\n\
+                Underlying error: {err}
+                ",
+                nix_install_url = "https://nixos.org/download.html".blue().underline(),
+                err = e.red(),
+            );
+            std::process::exit(1);
+        });
+
+        spinner.finish_and_clear();
+
+        /* In some cases, like podman, things that don't work are
+         * drawn in and go list exits with code 1, but we still get a
+         * usable package list.
+         *
+         * TODO: work out if there's a better way to deal with that than
+         * ignoring failure completely.
+
+        if !output.status.success() {
+            return Err(eyre!(
+                "{cmd_print} exited with code {exit_code}:\n{output}",
+                exit_code = output
+                    .status
+                    .code()
+                    .map(|x| x.to_string())
+                    .unwrap_or("unknown".to_string()),
+                // TODO: don't return just the UTF8 decode error if it's not valid UTF8
+                output = std::str::from_utf8(&output.stderr)?
+            ));
+        }
+        */
+
+        let mut packages: Vec<GoPackage> = Vec::new();
+
+        // We have a bunch of JSON objects which are simply
+        // concatenated with newlines, so we can't deserialise this as
+        // a Vec directly. Instead, we'll repeatedly try to
+        // deserialise a single package's metadata, until we reach the
+        // end of the output.
+        let mut de = serde_json::Deserializer::from_reader(Cursor::new(&output.stdout));
+        loop {
+            match GoPackage::deserialize(&mut de) {
+                Ok(meta) => packages.push(meta),
+                // TODO: does this mean that we'll ignore trailing garbage?
+                Err(e) if e.is_eof() => { break; },
+                Err(e) => Err(e)?,
+            }
+        }
+
+        let language_registry = self.registry.language().await.clone();
+        language_registry.go.default.apply(self);
+        for package in packages {
+            if let Some(dep_config) = language_registry.go.dependencies.get(package.import_path.as_str()) {
+                tracing::debug!(
+                    package_name = %package.import_path,
+                    "build-inputs" = %dep_config.build_inputs().iter().join(", "),
+                    "environment-variables" = %dep_config.environment_variables().iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                    "runtime-inputs" = %dep_config.runtime_inputs().iter().join(", "),
+                    "Detected known crate information"
+                );
+                dep_config.clone().apply(self);
+            }
+        }
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip_all, fields(project_dir = %project_dir.display()))]
+    async fn add_deps_from_package_json(&mut self, project_dir: &Path) -> color_eyre::Result<()> {
+        tracing::debug!("Adding Javascript dependencies...");
+
+        // Infer offline-ness from our stored registry
+        // if self.registry.offline() {
+        let mut yarn_install_command = Command::new("nix");
+        yarn_install_command.args(&["--extra-experimental-features"]);
+        yarn_install_command.args(&["flakes nix-command"]);
+        yarn_install_command.arg("shell");
+        yarn_install_command.arg("nixpkgs#nodejs");
+        yarn_install_command.arg("nixpkgs#yarn");
+        yarn_install_command.arg("-c");
+        yarn_install_command.arg("yarn");
+        yarn_install_command.arg("install");
+
+        tracing::trace!(command = ?yarn_install_command.as_std(), "Running");
+        let spinner = SimpleSpinner::new_with_message(Some(&format!(
+            "Running `{yarn_install}`",
+            yarn_install = "nix run nixpkgs#yarn -- install".cyan()
+        )))
+        .context("Failed to construct progress spinner")?;
+
+        let yarn_install_output = match yarn_install_command.output().await {
+            Ok(output) => output,
+            Err(err) => {
+                let err_msg = format!(
+                    "\
+                        Could not execute `{yarn_install}`. . Is `{nix}` installed?\n\n\
+                        Get instructions for installing Nix: {nix_install_url}\
+                        ",
+                    yarn_install = "nix run nixpkgs#yarn -- install".cyan(),
+                    nix = "nix".cyan(),
+                    nix_install_url = "https://nixos.org/download.html".blue().underline(),
+                );
+                eprintln!("{err_msg}\n\nUnderlying error:\n{err}", err = err.red());
+                std::process::exit(1);
+            }
+        };
+
+        spinner.finish_and_clear();
+
+        if !yarn_install_output.status.success() {
+            return Err(eyre!(
+                "`nix run nixpkgs#yarn -- install` exited with code {}:\n{}",
+                yarn_install_output
+                    .status
+                    .code()
+                    .map(|x| x.to_string())
+                    .unwrap_or_else(|| "unknown".to_string()),
+                std::str::from_utf8(&yarn_install_output.stderr)?,
+            ));
+        }
+        // }
+
+        tracing::debug!(fresh = %self.registry.fresh(), "Cache freshness");
+        let language_registry = self.registry.language().await.clone();
+        language_registry.javascript.default.apply(self);
+
+        let walker = WalkDir::new(&project_dir)
+            .follow_links(false)
+            .same_file_system(true);
+
+        for entry in walker {
+            let entry =
+                entry.wrap_err_with(|| eyre!("Could not walk `{}`", project_dir.display()))?;
+            if entry.path().components().any(|v| {
+                v == Component::Normal("tests".as_ref()) || v == Component::Normal("test".as_ref())
+            }) {
+                continue;
+            }
+            if entry.path().components().last() != Some(Component::Normal("package.json".as_ref()))
+            {
+                continue;
+            }
+            tracing::trace!(path = %entry.path().display(), "Walking");
+            let mut package_json = File::open(entry.path()).await?;
+            let package_json_path = entry.path();
+            let mut buf = String::default();
+            package_json
+                .read_to_string(&mut buf)
+                .await
+                .wrap_err_with(|| eyre!("Could not parse `{}`", package_json_path.display()))?;
+
+            let package_json: PackageJson = serde_json::from_str(&buf).wrap_err_with(|| {
+                eyre!("Error parsing `{}` as JSON", package_json_path.display())
+            })?;
+
+            let riff_config = package_json.config.and_then(|v| v.riff);
+
+            if let Some(ref name) = &package_json.name {
+                if let Some(dep_config) =
+                    language_registry.javascript.dependencies.get(name.as_str())
+                {
+                    tracing::debug!(
+                        package_name = %name,
+                        "build-inputs" = %dep_config.build_inputs().iter().join(", "),
+                        "environment-variables" = %dep_config.environment_variables().iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                        "runtime-inputs" = %dep_config.runtime_inputs().iter().join(", "),
+                        "Detected known package information"
+                    );
+                    dep_config.clone().apply(self);
+                }
+            }
+
+            if let Some(dep_config) = riff_config {
+                tracing::debug!(
+                    package = %package_json.name.unwrap_or_default(),
+                    "build-inputs" = %dep_config.build_inputs().iter().join(", "),
+                    "environment-variables" = %dep_config.environment_variables().iter().map(|(k, v)| format!("{k}={v}")).join(", "),
+                    "runtime-inputs" = %dep_config.runtime_inputs().iter().join(", "),
+                    "Detected `config.riff` in `package.json`"
+                );
+                dep_config.apply(self);
+            }
+        }
+
+        eprintln!(
+            "{check} {lang}: {colored_inputs}{maybe_colored_envs}",
+            check = "✓".green(),
+            lang = "⬢ javascript".bold().green(),
             colored_inputs = {
                 let mut sorted_build_inputs = self
                     .build_inputs

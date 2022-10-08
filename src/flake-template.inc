@@ -8,7 +8,7 @@
 
       forAllSystems = f: genAttrs allSystems (system: f rec {{
         inherit system;
-        pkgs = import nixpkgs {{ inherit system; }};
+        pkgs = import nixpkgs {{ inherit system; config.allowUnfree = true; }};
         lib = pkgs.lib;
       }});
     in

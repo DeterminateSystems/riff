@@ -32,7 +32,7 @@ pub async fn generate_flake_from_project_dir(
             let err_msg = format!(
                 "\
                 `{colored_project_dir}` doesn't contain a project recognized by Riff.\n\
-                Try running `{riff_shell}` in a Rust project directory.\
+                Try running `{riff_shell}` in a Rust or Javascript project directory.\
                 ",
                 colored_project_dir = &project_dir.display().to_string().green(),
                 riff_shell = "riff shell".cyan(),

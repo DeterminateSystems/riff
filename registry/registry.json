@@ -1,5 +1,142 @@
 {
   "language": {
+    "go": {
+      "default": {
+        "build-inputs": [
+          "go"
+        ]
+      },
+      "dependencies": {
+        "???": {
+          "build-inputs": [
+            "xkbcommon",
+            "wayland",
+            "pkg-config"
+          ]
+        },
+        "github.com/containerd/btrfs": {
+          "build-inputs": [
+            "btrfs-progs"
+          ]
+        },
+        "github.com/containers/image/v5/ostree": {
+          "build-inputs": [
+            "ostree",
+            "glib",
+            "libselinux",
+            "pkg-config"
+          ]
+        },
+        "github.com/containers/storage/drivers/btrfs": {
+          "build-inputs": [
+            "btrfs-progs"
+          ]
+        },
+        "github.com/containers/storage/drivers/devmapper": {
+          "build-inputs": [
+            "pkg-config",
+            "lvm2"
+          ]
+        },
+        "github.com/containers/storage/pkg/devicemapper": {
+          "build-inputs": [
+            "lvm2"
+          ]
+        },
+        "github.com/containers/storage/pkg/idtools": {
+          "build-inputs": [
+            "shadow"
+          ]
+        },
+        "github.com/coreos/go-systemd/sdjournal": {
+          "build-inputs": [
+            "systemd"
+          ]
+        },
+        "github.com/go-gl/glfw/v3.3/glfw": {
+          "build-inputs": [
+            "pkg-config",
+            "xorg.libX11",
+            "xorg.libXcursor",
+            "xorg.libXrandr",
+            "xorg.libXinerama",
+            "xorg.libXi",
+            "xorg.libXext",
+            "xorg.libXxf86vm",
+            "libGL"
+          ]
+        },
+        "github.com/google/gopacket/pcap": {
+          "build-inputs": [
+            "libpcap"
+          ]
+        },
+        "github.com/google/seesaw/netlink": {
+          "build-inputs": [
+            "libnl"
+          ]
+        },
+        "github.com/ostreedev/ostree-go/pkg/glibobject": {
+          "build-inputs": [
+            "glib",
+            "pkg-config"
+          ]
+        },
+        "github.com/ostreedev/ostree-go/pkg/otbuiltin": {
+          "build-inputs": [
+            "ostree",
+            "pkg-config"
+          ]
+        },
+        "github.com/proglottis/gpgme": {
+          "build-inputs": [
+            "pkg-config",
+            "gpgme"
+          ]
+        },
+        "github.com/seccomp/libseccomp-golang": {
+          "build-inputs": [
+            "libseccomp",
+            "pkg-config"
+          ]
+        },
+        "github.com/tecbot/gorocksdb": {
+          "build-inputs": [
+            "rocksdb"
+          ]
+        }
+      }
+    },
+    "javascript": {
+      "default": {
+        "build-inputs": [
+          "nodejs",
+          "yarn",
+          "nodePackages.npm"
+        ]
+      },
+      "dependencies": {
+        "cypress": {
+          "build-inputs": [
+            "cypress"
+          ],
+          "environment-variables": {
+            "CYPRESS_INSTALL_BINARY": "0",
+            "CYPRESS_RUN_BINARY": "${cypress}/bin/Cypress"
+          }
+        },
+        "karma": {
+          "environment-variables": {
+            "CHROME_BIN": "${google-chrome}/bin/google-chrome-stable"
+          }
+        },
+        "node-gyp": {
+          "build-inputs": [
+            "python3"
+          ]
+        }
+      }
+    },
     "rust": {
       "default": {
         "build-inputs": [
