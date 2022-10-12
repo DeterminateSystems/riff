@@ -1,5 +1,8 @@
 steps:
   - label: BuildAarch64Darwin
+    agents:
+      mac: 1
+      system: aarch64-darwin
     command:
       - nix --extra-experimental-features "nix-command flakes" build .#packages.aarch64-darwin.riff -L
       - cp result/bin/riff ./riff-aarch64-darwin
