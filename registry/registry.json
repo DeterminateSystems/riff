@@ -2,11 +2,7 @@
   "language": {
     "rust": {
       "default": {
-        "build-inputs": [
-          "rustc",
-          "cargo",
-          "rustfmt"
-        ]
+        "build-inputs": []
       },
       "dependencies": {
         "alsa-sys": {

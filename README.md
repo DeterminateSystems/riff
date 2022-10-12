@@ -31,6 +31,9 @@ To use Riff, you need to install these binaries on your system:
 * [`nix`][nix-install]
 * [`cargo`][rust-install]
 
+> **Note**: We recommend using `rustup` to install Rust, so that you will get
+> `rust-toolchain.toml` support by default.
+
 ## Installation
 
 ### Using Nix
