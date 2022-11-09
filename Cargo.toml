@@ -20,7 +20,7 @@ cfg-if = "1"
 clap = { version = "4.0.13", features = ["derive", "env"] }
 color-eyre = { version = "0.6.2", features = [ "issue-url" ] }
 eyre = "0.6.8"
-indicatif = "0.17.1"
+indicatif = "0.17.2"
 is_ci = "1.1"
 itertools = "0.10"
 os-release = "0.1"
