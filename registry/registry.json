@@ -228,6 +228,9 @@
           "build-inputs": [
             "openssl"
           ],
+          "runtime-inputs": [
+            "openssl"
+          ],
           "targets": {
             "aarch64-apple-darwin": {
               "build-inputs": [
