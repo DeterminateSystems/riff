@@ -23,6 +23,8 @@ pub struct PrintDevEnv {
     disable_telemetry: bool,
     #[clap(from_global)]
     offline: bool,
+    #[clap(long)]
+    json: bool,
 }
 
 impl PrintDevEnv {
@@ -43,6 +45,10 @@ impl PrintDevEnv {
             .stdin(Stdio::inherit())
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit());
+
+        if self.json {
+            nix_print_dev_env_command.arg("--json");
+        }
 
         // TODO(@hoverbear): Try to enable this somehow. Right now since we don't keep the lock
         // in a consistent place, we can't reliably pick up a lock generated in online mode.
