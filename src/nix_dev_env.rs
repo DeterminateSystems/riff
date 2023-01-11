@@ -39,7 +39,7 @@ pub async fn get_raw_nix_dev_env(flake_dir: &Path) -> color_eyre::Result<String>
     nix_command
         .arg("print-dev-env")
         .arg("--json")
-        .args(&["--extra-experimental-features", "flakes nix-command"])
+        .args(["--extra-experimental-features", "flakes nix-command"])
         .arg("-L")
         .arg(format!("path://{}", flake_dir.to_str().unwrap()))
         .stdin(Stdio::inherit())
@@ -86,7 +86,7 @@ pub async fn run_in_dev_env(
     dev_env: &NixDevEnv,
     command_name: &str,
 ) -> color_eyre::Result<Command> {
-    let mut command = Command::new(&command_name);
+    let mut command = Command::new(command_name);
 
     // TODO(@edolstra): Copied from develop.cc, would be nice to
     // keep these in sync somehow (e.g. `nix print-dev-env --json`
@@ -122,8 +122,8 @@ pub async fn run_in_dev_env(
             }
             let mut value = value.clone();
             if prepended_vars.contains(name) {
-                if let Ok(old_value) = std::env::var(&name) {
-                    value = format!("{}:{}", value, old_value);
+                if let Ok(old_value) = std::env::var(name) {
+                    value = format!("{value}:{old_value}");
                 }
             }
             command.env(name, value);

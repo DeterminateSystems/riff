@@ -92,7 +92,7 @@ pub async fn generate_flake_from_project_dir(
     nix_lock_command
         .arg("flake")
         .arg("lock")
-        .args(&["--extra-experimental-features", "flakes nix-command"])
+        .args(["--extra-experimental-features", "flakes nix-command"])
         .arg("-L")
         .arg(format!("path://{}", flake_dir.path().to_str().unwrap()));
 

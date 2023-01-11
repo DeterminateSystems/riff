@@ -63,7 +63,7 @@ Try running it in a shell; for example:
                 };
                 err
             })
-            .wrap_err(format!("Cannot run the command `{}`", command_name))?
+            .wrap_err(format!("Cannot run the command `{command_name}`"))?
             .wait_with_output()
             .await?
             .status

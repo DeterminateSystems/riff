@@ -34,7 +34,7 @@ impl Shell {
         Ok(crate::nix_dev_env::run_in_dev_env(&dev_env, &shell)
             .await?
             .spawn()
-            .wrap_err(format!("Cannot run the shell `{}`", shell))?
+            .wrap_err(format!("Cannot run the shell `{shell}`"))?
             .wait_with_output()
             .await?
             .status

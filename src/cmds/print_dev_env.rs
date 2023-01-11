@@ -39,7 +39,7 @@ impl PrintDevEnv {
         let mut nix_print_dev_env_command = Command::new("nix");
         nix_print_dev_env_command
             .arg("print-dev-env")
-            .args(&["--extra-experimental-features", "flakes nix-command"])
+            .args(["--extra-experimental-features", "flakes nix-command"])
             .arg("-L")
             .arg(format!("path://{}", flake_dir.path().to_str().unwrap()))
             .stdin(Stdio::inherit())
