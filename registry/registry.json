@@ -6,7 +6,10 @@
           "rustc",
           "cargo",
           "rustfmt"
-        ]
+        ],
+        "environment-variables": {
+          "RUST_SRC_PATH": "${rustPlatform.rustLibSrc}"
+        }
       },
       "dependencies": {
         "alsa-sys": {
