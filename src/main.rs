@@ -117,7 +117,7 @@ async fn setup_tracing() -> eyre::Result<()> {
                     _ => return Err(e).wrap_err_with(|| "parsing RUST_LOG directives"),
                 }
             }
-            EnvFilter::try_new(&format!("{}={}", env!("CARGO_PKG_NAME"), "info"))?
+            EnvFilter::try_new(format!("{}={}", env!("CARGO_PKG_NAME"), "info"))?
         }
     };
 

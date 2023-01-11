@@ -45,7 +45,7 @@ impl<'a> DevEnvironment<'a> {
             environment_variables = self
                 .environment_variables
                 .iter()
-                .map(|(name, value)| format!("\"{}\" = \"{}\";", name, value))
+                .map(|(name, value)| format!("\"{name}\" = \"{value}\";"))
                 .join("\n"),
             ld_library_path = if !self.runtime_inputs.is_empty() {
                 format!(
@@ -79,7 +79,7 @@ impl<'a> DevEnvironment<'a> {
         tracing::debug!("Adding Cargo dependencies...");
 
         let mut cargo_metadata_command = Command::new("cargo");
-        cargo_metadata_command.args(&["metadata", "--format-version", "1"]);
+        cargo_metadata_command.args(["metadata", "--format-version", "1"]);
         cargo_metadata_command.arg("--manifest-path");
         cargo_metadata_command.arg(project_dir.join("Cargo.toml"));
 
@@ -184,11 +184,8 @@ impl<'a> DevEnvironment<'a> {
             },
             maybe_colored_envs = {
                 if !self.environment_variables.is_empty() {
-                    let mut sorted_environment_variables = self
-                        .environment_variables
-                        .iter()
-                        .map(|(k, _)| k)
-                        .collect::<Vec<_>>();
+                    let mut sorted_environment_variables =
+                        self.environment_variables.keys().collect::<Vec<_>>();
                     sorted_environment_variables.sort();
                     format!(
                         " ({})",
