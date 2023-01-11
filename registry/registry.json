@@ -14,12 +14,12 @@
       "dependencies": {
         "alsa-sys": {
           "targets": {
-            "aarch64-linux-unknown-gnu": {
+            "aarch64-unknown-linux-gnu": {
               "build-inputs": [
                 "alsa-lib"
               ]
             },
-            "x86_64-linux-unknown-gnu": {
+            "x86_64-unknown-linux-gnu": {
               "build-inputs": [
                 "alsa-lib"
               ]
@@ -28,7 +28,7 @@
         },
         "ash": {
           "targets": {
-            "aarch64-linux-unknown-gnu": {
+            "aarch64-unknown-linux-gnu": {
               "build-inputs": [
                 "vulkan-loader",
                 "vulkan-tools",
@@ -39,7 +39,7 @@
                 "vulkan-loader"
               ]
             },
-            "x86_64-linux-unknown-gnu": {
+            "x86_64-unknown-linux-gnu": {
               "build-inputs": [
                 "vulkan-loader",
                 "vulkan-tools",
@@ -204,12 +204,12 @@
         },
         "libudev-sys": {
           "targets": {
-            "aarch64-linux-unknown-gnu": {
+            "aarch64-unknown-linux-gnu": {
               "build-inputs": [
                 "eudev"
               ]
             },
-            "x86_64-linux-unknown-gnu": {
+            "x86_64-unknown-linux-gnu": {
               "build-inputs": [
                 "eudev"
               ]
@@ -399,12 +399,12 @@
         },
         "wayland-sys": {
           "targets": {
-            "aarch64-linux-unknown-gnu": {
+            "aarch64-unknown-linux-gnu": {
               "build-inputs": [
                 "wayland"
               ]
             },
-            "x86_64-linux-unknown-gnu": {
+            "x86_64-unknown-linux-gnu": {
               "build-inputs": [
                 "wayland"
               ]
@@ -418,7 +418,7 @@
                 "darwin.apple_sdk.frameworks.QuartzCore"
               ]
             },
-            "aarch64-linux-unknown-gnu": {
+            "aarch64-unknown-linux-gnu": {
               "environment-variables": {
                 "ALSA_PLUGIN_DIR": "${pkgs.symlinkJoin { name = \"merged-alsa-plugins\"; paths = with pkgs; [ alsaPlugins pipewire.lib ]; }}/lib/alsa-lib"
               },
@@ -441,7 +441,7 @@
                 "darwin.apple_sdk.frameworks.QuartzCore"
               ]
             },
-            "x86_64-linux-unknown-gnu": {
+            "x86_64-unknown-linux-gnu": {
               "environment-variables": {
                 "ALSA_PLUGIN_DIR": "${pkgs.symlinkJoin { name = \"merged-alsa-plugins\"; paths = with pkgs; [ alsaPlugins pipewire.lib ]; }}/lib/alsa-lib"
               },
