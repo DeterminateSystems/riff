@@ -237,9 +237,19 @@
                 "darwin.apple_sdk.frameworks.Security"
               ]
             },
+            "aarch64-unknown-linux-gnu": {
+              "runtime-inputs": [
+                "openssl"
+              ]
+            },
             "x86_64-apple-darwin": {
               "build-inputs": [
                 "darwin.apple_sdk.frameworks.Security"
+              ]
+            },
+            "x86_64-unknown-linux-gnu": {
+              "runtime-inputs": [
+                "openssl"
               ]
             }
           }
