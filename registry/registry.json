@@ -32,7 +32,7 @@
                 "vulkan-headers",
                 "vulkan-validation-layers"
               ],
-              "ld-library-path-inputs": [
+              "runtime-inputs": [
                 "vulkan-loader"
               ]
             },
@@ -43,7 +43,7 @@
                 "vulkan-headers",
                 "vulkan-validation-layers"
               ],
-              "ld-library-path-inputs": [
+              "runtime-inputs": [
                 "vulkan-loader"
               ]
             }
@@ -419,7 +419,7 @@
               "environment-variables": {
                 "ALSA_PLUGIN_DIR": "${pkgs.symlinkJoin { name = \"merged-alsa-plugins\"; paths = with pkgs; [ alsaPlugins pipewire.lib ]; }}/lib/alsa-lib"
               },
-              "ld-library-path-inputs": [
+              "runtime-inputs": [
                 "libGL",
                 "spirv-tools",
                 "vulkan-tools",
@@ -442,7 +442,7 @@
               "environment-variables": {
                 "ALSA_PLUGIN_DIR": "${pkgs.symlinkJoin { name = \"merged-alsa-plugins\"; paths = with pkgs; [ alsaPlugins pipewire.lib ]; }}/lib/alsa-lib"
               },
-              "ld-library-path-inputs": [
+              "runtime-inputs": [
                 "libGL",
                 "spirv-tools",
                 "vulkan-tools",
@@ -462,7 +462,7 @@
           "build-inputs": [
             "xorg.libX11"
           ],
-          "ld-library-path-inputs": [
+          "runtime-inputs": [
             "xorg.libX11",
             "xorg.libXcursor",
             "xorg.libXrandr",
