@@ -58,7 +58,7 @@
           ]
         },
         "bindgen": {
-          "build-inputs": [
+          "native-build-inputs": [
             "rustPlatform.bindgenHook"
           ]
         },
@@ -134,8 +134,10 @@
         },
         "gdk-sys": {
           "build-inputs": [
-            "wrapGAppsHook",
             "gtk3"
+          ],
+          "native-build-inputs": [
+            "wrapGAppsHook"
           ]
         },
         "gio-sys": {
@@ -223,7 +225,9 @@
         },
         "libz-sys": {
           "build-inputs": [
-            "zlib",
+            "zlib"
+          ],
+          "native-build-inputs": [
             "cmake"
           ]
         },
@@ -288,12 +292,12 @@
           }
         },
         "pkg-config": {
-          "build-inputs": [
+          "native-build-inputs": [
             "pkg-config"
           ]
         },
         "prost": {
-          "build-inputs": [
+          "native-build-inputs": [
             "cmake"
           ]
         },
@@ -354,7 +358,9 @@
         },
         "smithay-client-toolkit": {
           "build-inputs": [
-            "libxkbcommon",
+            "libxkbcommon"
+          ],
+          "native-build-inputs": [
             "pkg-config"
           ]
         },
@@ -495,7 +501,7 @@
           ]
         },
         "zmq-sys": {
-          "build-inputs": [
+          "native-build-inputs": [
             "cmake"
           ]
         },
