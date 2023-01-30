@@ -504,12 +504,6 @@
           "native-build-inputs": [
             "cmake"
           ]
-        },
-        "zstd-sys": {
-          "build-inputs": [
-            "zlib",
-            "clang"
-          ]
         }
       }
     }
