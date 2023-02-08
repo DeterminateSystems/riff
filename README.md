@@ -28,8 +28,8 @@ you to know or use Nix.
 
 To use Riff, you need to install these binaries on your system:
 
-* [`nix`][nix-install]
-* [`cargo`][rust-install]
+- [`nix`][nix-install]
+- [`cargo`][rust-install]
 
 ## Installation
 
@@ -49,7 +49,7 @@ To install Riff on macOS using [Homebrew]:
 brew install DeterminateSystems/riff/riff
 ```
 
-> **Note**: The `riff` Homebrew formula does *not* install [Nix] or [Cargo].
+> **Note**: The `riff` Homebrew formula does _not_ install [Nix] or [Cargo].
 
 ### Using cURL
 
@@ -65,7 +65,7 @@ You can install Riff in your [GitHub Actions][actions] pipelines using
 steps:
   - uses: actions/checkout@v3
   - name: Install Nix
-    uses: cachix/install-nix-action@v17
+    uses: DeterminateSystems/nix-installer-action@main
   - name: Install Rust
     uses: actions-rs/toolchain@v1
     with:
@@ -154,7 +154,7 @@ and properly linked. In cases where those dependencies can't be inferred, for
 example in your [`build.rs`][build.rs] script, you can [explicitly declare
 them](#how-to-declare-package-inputs) in your `Cargo.toml`.
 
-These environments are *transient* in the sense that they don't affect
+These environments are _transient_ in the sense that they don't affect
 anything outside the shell; they install dependencies neither globally nor in
 your current project, so you don't have to worry about Riff breaking anything
 on your system. When you exit the Riff shell, the dependencies are gone.
@@ -162,7 +162,7 @@ on your system. When you exit the Riff shell, the dependencies are gone.
 ### Offline mode
 
 In cases where you want to limit Riff's access to the Internet, you can run it
-in offline mode, which disables all network usage *except* what's required by
+in offline mode, which disables all network usage _except_ what's required by
 the `nix develop` command (which Riff runs in the background). You can enable
 offline mode using either the `--offline` flag or the `RIFF_OFFLINE` environment
 variable. Here are some examples:
@@ -215,11 +215,11 @@ crate dependencies, you can explicitly declare external dependencies if
 necessary by adding a `riff` block to the `package.metadata` block in your
 `Cargo.toml`. Riff currently supports three types of inputs:
 
-* `build-inputs` are external dependencies that some crates may need to link
+- `build-inputs` are external dependencies that some crates may need to link
   against.
-* `environment-variables` are environment variables you want to set in your dev
+- `environment-variables` are environment variables you want to set in your dev
   shell.
-* `runtime-inputs` are libraries you want to add to your `LD_LIBRARY_PATH` to
+- `runtime-inputs` are libraries you want to add to your `LD_LIBRARY_PATH` to
   ensure that your dev shell works as expected.
 
 Both `build-inputs` and `runtime-inputs` can be any packages available in
@@ -246,10 +246,10 @@ HI = "BYE"
 
 When you run `riff shell` in this project, Riff
 
-* adds [OpenSSL] to your build environment
-* sets the `LD_LIBRARY_PATH` environment variable to include [libGL]'s library
+- adds [OpenSSL] to your build environment
+- sets the `LD_LIBRARY_PATH` environment variable to include [libGL]'s library
   path
-* sets the `HI` environment variable to have a value of `BYE`
+- sets the `HI` environment variable to have a value of `BYE`
 
 ### Target-specific dependencies
 
@@ -271,8 +271,8 @@ field can also contain custom targets, such as `riscv32imac-unknown-xous-elf`,
 although `riff` makes no effort to support cross compiling at this time.
 
 When target-specific dependencies are present, the `build-inputs` and
-`runtime-inputs` sections are *unioned* (joined), while the target-specific
-environment variables *override* default environment variables.
+`runtime-inputs` sections are _unioned_ (joined), while the target-specific
+environment variables _override_ default environment variables.
 
 #### macOS framework dependencies
 
@@ -309,8 +309,8 @@ build-inputs = [
 If you add [Riff metadata](#how-to-declare-package-inputs) to `Cargo.toml`, this
 doesn't just make it easier to build and run your project: it actually benefits
 consumers of your crate as well. That's because Riff can use this metadata
-transitively to infer which external dependencies are necessary *across the
-entire crate dependency graph*. Let's say that you release a crate called
+transitively to infer which external dependencies are necessary _across the
+entire crate dependency graph_. Let's say that you release a crate called
 `make-it-pretty` that has an external dependency on [libGL] and you add that
 to your `Cargo.toml`:
 
@@ -321,7 +321,7 @@ runtime-inputs = [ "libGL" ]
 
 Now let's say that another Rust dev releases a crate called `artify` that
 depends on your `make-it-pretty` crate. If someone tries to build `artify` using
-Cargo, they may receive an error if they don't have libGL installed. *But* if
+Cargo, they may receive an error if they don't have libGL installed. _But_ if
 they use Riff to build `artify`, Riff knows to install libGL without any user
 input.
 
@@ -427,8 +427,8 @@ creators of Riff, [here][privacy].
 
 To disable telemetry on any Riff command invocation, you can either
 
-* Use the `--disable-telemetry` flag or
-* Set the `RIFF_DISABLE_TELEMETRY` environment variable to any value except
+- Use the `--disable-telemetry` flag or
+- Set the `RIFF_DISABLE_TELEMETRY` environment variable to any value except
   `false`,`0`, or an empty string (`""`).
 
 Here are some examples:
@@ -464,19 +464,19 @@ $ RUST_LOG=riff::telemetry=debug riff run echo 'Hello, Riff!'
 
 The table below shows the data Riff collects in a more readable format:
 
-| Field | Use |
-|-------|-----|
-| `distinct_id` | The ID of the Riff installation. More specifically, we at Determinate Systems care about our weekly active users count and this field helps us measure that. |
-| `system_os` | The operating system Riff is running on. |
-| `system_arch` | The architecture Riff is running on. |
-| `os_release_name` | The distribution Riff is running on. This uses the `NAME` field of `/etc/os-release` if it exists. |
-| `os_release_version_id` | The version of the distribution Riff is running on. This uses the `VERSION_ID` field of `/etc/os-release` if it exists. |
-| `riff_version` | The version of Riff being used. |
-| `nix_version` | The version of Nix being used by Riff. |
-| `is_tty` | Whether Riff is being run interactively. |
-| `subcommand` | The subcommand Riff is executing. This only contains information about the Riff subcommand, and not any commands being run by Riff (i.e. `riff run echo 'Hello, Riff!'` will not send any telemetry including the fact that Riff ran `echo 'Hello, Riff!'`). |
-| `detected_languages` | Which languages Riff detected in the project. |
-| `in_ci` | Whether Riff is being used in CI (e.g. GitHub Actions). |
+| Field                   | Use                                                                                                                                                                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `distinct_id`           | The ID of the Riff installation. More specifically, we at Determinate Systems care about our weekly active users count and this field helps us measure that.                                                                                                 |
+| `system_os`             | The operating system Riff is running on.                                                                                                                                                                                                                     |
+| `system_arch`           | The architecture Riff is running on.                                                                                                                                                                                                                         |
+| `os_release_name`       | The distribution Riff is running on. This uses the `NAME` field of `/etc/os-release` if it exists.                                                                                                                                                           |
+| `os_release_version_id` | The version of the distribution Riff is running on. This uses the `VERSION_ID` field of `/etc/os-release` if it exists.                                                                                                                                      |
+| `riff_version`          | The version of Riff being used.                                                                                                                                                                                                                              |
+| `nix_version`           | The version of Nix being used by Riff.                                                                                                                                                                                                                       |
+| `is_tty`                | Whether Riff is being run interactively.                                                                                                                                                                                                                     |
+| `subcommand`            | The subcommand Riff is executing. This only contains information about the Riff subcommand, and not any commands being run by Riff (i.e. `riff run echo 'Hello, Riff!'` will not send any telemetry including the fact that Riff ran `echo 'Hello, Riff!'`). |
+| `detected_languages`    | Which languages Riff detected in the project.                                                                                                                                                                                                                |
+| `in_ci`                 | Whether Riff is being used in CI (e.g. GitHub Actions).                                                                                                                                                                                                      |
 
 ## Community
 
@@ -515,6 +515,7 @@ to a [Matrix room][matrix]).
 [targets]: https://doc.rust-lang.org/nightly/rustc/platform-support.html
 [telemetry]: ./src/telemetry.rs
 
-[^1]: We define **external** dependencies as those that are written in another
-  language and thus can't be installed using the same language-specific package
-  manager that you use to build your code.
+[^1]:
+    We define **external** dependencies as those that are written in another
+    language and thus can't be installed using the same language-specific package
+    manager that you use to build your code.
