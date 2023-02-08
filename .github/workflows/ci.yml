@@ -11,8 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: DeterminateSystems/nix-installer-action@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Check rustfmt
         run: nix develop --command ci-check-rustfmt
 
@@ -21,8 +19,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: DeterminateSystems/nix-installer-action@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Check Spelling
         run: nix develop --command ci-check-spelling
 
@@ -31,8 +27,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: DeterminateSystems/nix-installer-action@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Check nixpkgs-fmt formatting
         run: nix develop --command ci-check-nixpkgs-fmt
 
@@ -41,8 +35,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: DeterminateSystems/nix-installer-action@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Check registry.json formatting
         run: nix develop --command ci-check-registry-format
 
@@ -51,8 +43,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: DeterminateSystems/nix-installer-action@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Check EditorConfig conformance
         run: nix develop --command ci-check-editorconfig
 
@@ -61,8 +51,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: DeterminateSystems/nix-installer-action@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Run tests
         run: nix develop --command ci-test-rust
         # run: nix develop -c -- cargo test -- --include-ignored
@@ -72,8 +60,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: DeterminateSystems/nix-installer-action@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       # Runs clippy as part of the preBuild.
       - name: Build riff
         run: nix build .#packages.x86_64-linux.riff -L
@@ -91,8 +77,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: DeterminateSystems/nix-installer-action@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       # Runs clippy as part of the preBuild.
       - name: Build riff
         run: nix build .#packages.x86_64-darwin.riff -L

@@ -66,8 +66,6 @@ steps:
   - uses: actions/checkout@v3
   - name: Install Nix
     uses: DeterminateSystems/nix-installer-action@main
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
   - name: Install Rust
     uses: actions-rs/toolchain@v1
     with:
