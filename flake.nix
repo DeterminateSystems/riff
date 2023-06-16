@@ -2,7 +2,7 @@
   description = "riff";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-22.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
 
     fenix = {
       url = "github:nix-community/fenix";
