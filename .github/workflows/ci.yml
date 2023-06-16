@@ -6,6 +6,14 @@ on:
     branches: [main]
 
 jobs:
+  NixFlakeCheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: DeterminateSystems/flake-checker-action@v3
+        with:
+          fail-mode: true
+
   Format:
     runs-on: ubuntu-latest
     steps:
