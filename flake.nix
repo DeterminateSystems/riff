@@ -2,10 +2,10 @@
   description = "riff";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
+    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.2305.491476.tar.gz";
 
     fenix = {
-      url = "github:nix-community/fenix";
+      url = "https://flakehub.com/f/nix-community/fenix/0.1.1618.tar.gz";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
